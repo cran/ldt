@@ -1,0 +1,231 @@
+---
+title: "DC: Loan default prediction"
+output: rmarkdown::html_vignette
+bibliography: ldt.bib
+vignette: >
+  %\VignetteIndexEntry{DC: Loan default prediction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE} 
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "  >",
+  warning = FALSE,
+  message = FALSE,
+  echo = TRUE,
+  results = "hide",
+  eval = TRUE
+)
+```
+
+```{r setup}
+library(ldt)
+library(kableExtra)
+```
+
+
+It is recommended to read the following vignettes first:
+
+- [SUR: Determinants of long-run economic growth](sur_growth.html)
+- [SUR: A simulation](sur_simulation.html)
+
+## Introduction
+
+In **ldt**, we _automatically explain_ or _automatically predict_ one or more than one random variable. In this vignette, we design a model set for predicting loan default. Of course, we focus on comparing the performance of _logit_ and _probit_ models. We use AUC as a performance measure:
+
+```{r dc_measure_options}
+measureOptions <- GetMeasureOptions(
+  typesIn = c("aucIn", "costMatrixIn"),
+  typesOut = c("aucOut", "costMatrixOut")
+)
+```
+
+Note that, we calculate both in-sample and out-of-sample AUC. Also, we calculate the error ratio by using the following cost matrix:
+
+\begin{equation}
+\label{eq:error-ratio}
+\begin{bmatrix}
+0.5 & 1 & 1\\
+1.0 & 0 & 0
+\end{bmatrix}
+\end{equation}
+
+which is:
+
+```{r cost_matrix}
+costMatrix <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
+```
+
+Note that this is not a favorable cost matrix in an actual application. One might want to define more thresholds or increase the costs in the third column. 
+
+<p style="margin-left:40px;">
+What is a cost matrix in **ldt**? The general form of a cost matrix in binary case is:
+\begin{equation}
+\begin{bmatrix}
+t_1 & c_{11} & c_{12}\\
+t_2 & c_{21} & c_{22}\\
+\vdots & \vdots&\vdots\\
+t_n & c_{n1} & c_{n2}\\
+\end{bmatrix}
+\end{equation}
+In this presentation, $t_i$ for $i=1,\ldots,n$ is the threshold for the predicted probability. If the actual value is negative (i.e., $y_i=0$), the cost is determined by the first column. Otherwise (i.e., $y_i=1$), the cost is determined by the third column.
+</p>
+
+
+## Data
+In this vignette, we use @dataset_berka data-set and `ldt::Data_BerkaLoan()` function to get a sample for the dependent variable and the potential predictors (or, features):
+
+```{r data_get, eval=FALSE}
+data <- Data_BerkaLoan(positive = c("B", "D"), negative = c("A", "C"))
+#data <- Data_BerkaLoan(positive = c("B"), negative = c("A"))
+```
+
+The data set has a _loan table_ with 682 observations, each labeled as one of the following: 
+
+- A: finished (`r vig_data$berka$A_finished`\%);
+- B: finished with default (`vig_data$berka$B_finished`\%);
+- C: running (`r vig_data$berka$C_running`\%); and
+- D: running with default (`r vig_data$berka$D_running`\%).
+
+Numbers in the parenthesis show the percentage of data in each class. Each loan observation has an _account identification_ that can provide other types of information from other tables, such as the characteristics of the account of the loan and its transactions. Furthermore, each account has a _district identification_ that can provide information about the demographic characteristics of the location of its branch.  The combined table has `r ncol(data)-2` features (including the label) and `r nrow(data)` observations. 
+
+For this example, both _finished_ and _running_ (without default) classes are considered to be _negative_ and both finished and running _with default_ classes to be positive observations. Note that the observations labeled _running_ might introduce measurement errors. Without them, the length of the table is smaller. If you do not want to use this part of the data, uncomment the code in the previous chunk.
+
+The dependent and potential exogenous variables are:
+
+```{r data_define, eval=FALSE}
+y <- data[, c("label"), drop = FALSE]
+x <- data[, 4:ncol(data)]
+```
+
+```{r save_data, eval=FALSE,echo=FALSE}
+vig_data = ldt::vig_data
+vig_data$berka = list()
+vig_data$berka$y = y
+vig_data$berka$x = x[,1:10]
+
+vig_data$berka$A_finished = round(sum(data$status=="A")/length(data$status)*100,1)
+vig_data$berka$B_finished = round(sum(data$status=="B")/length(data$status)*100,1)
+vig_data$berka$C_running =round(sum(data$status=="C")/length(data$status)*100,1)
+vig_data$berka$D_running = round(sum(data$status=="D")/length(data$status)*100,1)
+#usethis::use_data(vig_data, overwrite = TRUE)
+```
+
+Note that the first 2 columns of `data` are `id` and `status`. 
+
+## Estimation 
+
+We are not able to load the data in this vignette, because it needs an external data set and this is not available in this package. But, a part of the data set is saved in the **ldt** package, and we load:
+```{r data_load}
+x = ldt::vig_data$berka$x
+y = ldt::vig_data$berka$y
+```
+If you have downloaded the data set files, do not run this code. Since only `r (sum(y==1)/nrow(y))*200 `\% of the observations are positive, we define and use the following weight vector to balance the data:  
+```{r }
+weight <- as.numeric((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
+```
+
+There are `r ncol(x) ` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `DcSearch_s()` function:
+
+```{r modelset_steps}
+xSizes <- list(c(1, 2), c(3))
+xCounts <- c(NA, 4)
+```
+
+We also need a seed for the RNG and some other options to define the out-of-sample prediction:
+
+```{r seed}
+measureOptions$seed <- 340
+measureOptions$simFixSize <- 10
+measureOptions$trainRatio <- 0.75
+```
+
+Note that the out-of-sample simulation depends on random sampling. Finally, we start the search function:
+
+```{r dc_estimate}
+berka_res <- list(
+  logit = DcSearch_s(
+    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    xSizes = xSizes, counts = xCounts,
+    searchLogit = TRUE, searchProbit = FALSE,
+    searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
+    measureOptions = measureOptions,
+    searchOptions = GetSearchOptions(printMsg = FALSE),
+    savePre = NULL
+  ),
+  probit = DcSearch_s(
+    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    xSizes = xSizes, counts = xCounts,
+    searchLogit = FALSE, searchProbit = TRUE,
+    searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
+    measureOptions = measureOptions,
+    searchOptions = GetSearchOptions(printMsg = FALSE),
+    savePre = NULL
+  )
+)
+```
+
+Since we want to compare the performance of logit and probit models, we run two discrete choice searches. All options are similar, but one is with `searchLogit = TRUE` and the other is with `searchLogit = FALSE` and `searchProbit = TRUE`. The results are reported in the following plot:
+
+```{r plot_logit_probit, echo=FALSE, results='hide', fig.show='hold', fig.cap='Comparing the performance of best logit model and best probit model (cost-matrix and AUC)', out.width='45%'}
+op <- par(cex = 0.6)
+data_cost <- data.frame(
+  cost_in = c(
+    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
+    berka_res$probit$costMatrixOut$target1$model$bests$best1$weight
+  ),
+  cost_out = c(
+    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
+    berka_res$probit$costMatrixIn$target1$model$bests$best1$weight
+  )
+)
+
+data_auc <- data.frame(
+  auc_in = c(
+    berka_res$logit$aucIn$target1$model$bests$best1$weight,
+    berka_res$probit$aucIn$target1$model$bests$best1$weight
+  ),
+  auc_out = c(
+    berka_res$logit$aucOut$target1$model$bests$best1$weight,
+    berka_res$probit$aucOut$target1$model$bests$best1$weight
+  )
+)
+rns <- c("Logit", "Probit")
+cns <- c("In-Sample", "Out-Of-Sample")
+rownames(data_cost) <- rns
+rownames(data_auc) <- rns
+colnames(data_cost) <- cns
+colnames(data_auc) <- cns
+
+
+angle <- c(0, 45)
+density <- 20
+col <- c("black", "red")
+lwd <- 1
+
+barplot(as.matrix(data_cost),
+        beside = T, ylim = c(0, 1),
+        col = col, lwd = lwd, angle = angle, density = density
+)
+legend("top",
+       legend = colnames(data_cost), angle = angle, density = density,
+       fill = col, bg = NULL
+)
+
+barplot(as.matrix(data_auc),
+        beside = T, ylim = c(0, 1),
+        col = col, lwd = lwd, angle = angle, density = density
+)
+legend("top",
+       legend = colnames(data_auc), angle = angle, density = density,
+       fill = col, bg = NULL
+)
+```
+
+
+
+## References
+
+

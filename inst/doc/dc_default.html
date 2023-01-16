@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>DC: Loan default prediction</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">DC: Loan default prediction</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ldt)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span></code></pre></div>
+<p>It is recommended to read the following vignettes first:</p>
+<ul>
+<li><a href="sur_growth.html">SUR: Determinants of long-run economic
+growth</a></li>
+<li><a href="sur_simulation.html">SUR: A simulation</a></li>
+</ul>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In <strong>ldt</strong>, we <em>automatically explain</em> or
+<em>automatically predict</em> one or more than one random variable. In
+this vignette, we design a model set for predicting loan default. Of
+course, we focus on comparing the performance of <em>logit</em> and
+<em>probit</em> models. We use AUC as a performance measure:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>measureOptions <span class="ot">&lt;-</span> <span class="fu">GetMeasureOptions</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aucIn&quot;</span>, <span class="st">&quot;costMatrixIn&quot;</span>),</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;aucOut&quot;</span>, <span class="st">&quot;costMatrixOut&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Note that, we calculate both in-sample and out-of-sample AUC. Also,
+we calculate the error ratio by using the following cost matrix:</p>
+<p><span class="math display">\[\begin{equation}
+\label{eq:error-ratio}
+\begin{bmatrix}
+0.5 &amp; 1 &amp; 1\\
+1.0 &amp; 0 &amp; 0
+\end{bmatrix}
+\end{equation}\]</span></p>
+<p>which is:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>costMatrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="dv">2</span>, <span class="dv">3</span>)</span></code></pre></div>
+<p>Note that this is not a favorable cost matrix in an actual
+application. One might want to define more thresholds or increase the
+costs in the third column.</p>
+<p style="margin-left:40px;">
+What is a cost matrix in <strong>ldt</strong>? The general form of a
+cost matrix in binary case is: <span class="math display">\[\begin{equation}
+\begin{bmatrix}
+t_1 &amp; c_{11} &amp; c_{12}\\
+t_2 &amp; c_{21} &amp; c_{22}\\
+\vdots &amp; \vdots&amp;\vdots\\
+t_n &amp; c_{n1} &amp; c_{n2}\\
+\end{bmatrix}
+\end{equation}\]</span> In this presentation, <span class="math inline">\(t_i\)</span> for <span class="math inline">\(i=1,\ldots,n\)</span> is the threshold for the
+predicted probability. If the actual value is negative (i.e., <span class="math inline">\(y_i=0\)</span>), the cost is determined by the
+first column. Otherwise (i.e., <span class="math inline">\(y_i=1\)</span>), the cost is determined by the
+third column.
+</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>In this vignette, we use <span class="citation">Berka and Sochorova
+(1993)</span> data-set and <code>ldt::Data_BerkaLoan()</code> function
+to get a sample for the dependent variable and the potential predictors
+(or, features):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">Data_BerkaLoan</span>(<span class="at">positive =</span> <span class="fu">c</span>(<span class="st">&quot;B&quot;</span>, <span class="st">&quot;D&quot;</span>), <span class="at">negative =</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#data &lt;- Data_BerkaLoan(positive = c(&quot;B&quot;), negative = c(&quot;A&quot;))</span></span></code></pre></div>
+<p>The data set has a <em>loan table</em> with 682 observations, each
+labeled as one of the following:</p>
+<ul>
+<li>A: finished (29.8%);</li>
+<li>B: finished with default
+(<code>vig_data$berka$B_finished</code>%);</li>
+<li>C: running (59.1%); and</li>
+<li>D: running with default (6.6%).</li>
+</ul>
+<p>Numbers in the parenthesis show the percentage of data in each class.
+Each loan observation has an <em>account identification</em> that can
+provide other types of information from other tables, such as the
+characteristics of the account of the loan and its transactions.
+Furthermore, each account has a <em>district identification</em> that
+can provide information about the demographic characteristics of the
+location of its branch. The combined table has features (including the
+label) and observations.</p>
+<p>For this example, both <em>finished</em> and <em>running</em>
+(without default) classes are considered to be <em>negative</em> and
+both finished and running <em>with default</em> classes to be positive
+observations. Note that the observations labeled <em>running</em> might
+introduce measurement errors. Without them, the length of the table is
+smaller. If you do not want to use this part of the data, uncomment the
+code in the previous chunk.</p>
+<p>The dependent and potential exogenous variables are:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> data[, <span class="fu">c</span>(<span class="st">&quot;label&quot;</span>), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data[, <span class="dv">4</span><span class="sc">:</span><span class="fu">ncol</span>(data)]</span></code></pre></div>
+<p>Note that the first 2 columns of <code>data</code> are
+<code>id</code> and <code>status</code>.</p>
+</div>
+<div id="estimation" class="section level2">
+<h2>Estimation</h2>
+<p>We are not able to load the data in this vignette, because it needs
+an external data set and this is not available in this package. But, a
+part of the data set is saved in the <strong>ldt</strong> package, and
+we load:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>berka<span class="sc">$</span>x</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>berka<span class="sc">$</span>y</span></code></pre></div>
+<p>If you have downloaded the data set files, do not run this code.
+Since only 22.28739% of the observations are positive, we define and use
+the following weight vector to balance the data:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>weight <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>((y <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">*</span> (<span class="fu">nrow</span>(y) <span class="sc">/</span> <span class="fu">sum</span>(y <span class="sc">==</span> <span class="dv">1</span>)) <span class="sc">+</span> (y <span class="sc">==</span> <span class="dv">0</span>))</span></code></pre></div>
+<p>There are 10 potential predictors and the size of the potential
+predicting models is relatively large. We follow a step-wise search
+approach by defining the following two arguments for the
+<code>DcSearch_s()</code> function:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">3</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>xCounts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">4</span>)</span></code></pre></div>
+<p>We also need a seed for the RNG and some other options to define the
+out-of-sample prediction:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>measureOptions<span class="sc">$</span>seed <span class="ot">&lt;-</span> <span class="dv">340</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>measureOptions<span class="sc">$</span>simFixSize <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>measureOptions<span class="sc">$</span>trainRatio <span class="ot">&lt;-</span> <span class="fl">0.75</span></span></code></pre></div>
+<p>Note that the out-of-sample simulation depends on random sampling.
+Finally, we start the search function:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>berka_res <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">logit =</span> <span class="fu">DcSearch_s</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">w =</span> weight, <span class="at">costMatrices =</span> <span class="fu">list</span>(costMatrix),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">xSizes =</span> xSizes, <span class="at">counts =</span> xCounts,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchLogit =</span> <span class="cn">TRUE</span>, <span class="at">searchProbit =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchItems =</span> <span class="fu">GetSearchItems</span>(<span class="at">bestK =</span> <span class="dv">20</span>, <span class="at">inclusion =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">measureOptions =</span> measureOptions,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchOptions =</span> <span class="fu">GetSearchOptions</span>(<span class="at">printMsg =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">savePre =</span> <span class="cn">NULL</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">probit =</span> <span class="fu">DcSearch_s</span>(</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">w =</span> weight, <span class="at">costMatrices =</span> <span class="fu">list</span>(costMatrix),</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">xSizes =</span> xSizes, <span class="at">counts =</span> xCounts,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchLogit =</span> <span class="cn">FALSE</span>, <span class="at">searchProbit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchItems =</span> <span class="fu">GetSearchItems</span>(<span class="at">bestK =</span> <span class="dv">20</span>, <span class="at">inclusion =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">measureOptions =</span> measureOptions,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchOptions =</span> <span class="fu">GetSearchOptions</span>(<span class="at">printMsg =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">savePre =</span> <span class="cn">NULL</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Since we want to compare the performance of logit and probit models,
+we run two discrete choice searches. All options are similar, but one is
+with <code>searchLogit = TRUE</code> and the other is with
+<code>searchLogit = FALSE</code> and <code>searchProbit = TRUE</code>.
+The results are reported in the following plot:</p>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Comparing the performance of best logit model and best probit model (cost-matrix and AUC)" width="45%" /><img src="data:image/png;base64,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" alt="Comparing the performance of best logit model and best probit model (cost-matrix and AUC)" width="45%" />
+<p class="caption">
+Comparing the performance of best logit model and best probit model
+(cost-matrix and AUC)
+</p>
+</div>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-dataset_berka" class="csl-entry">
+Berka, Petr, and Marta Sochorova. 1993. <span>“PKDD’99 Discovery
+Challenge, a Collaborative Effort in Knowledge Discovery from
+Databases.”</span>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

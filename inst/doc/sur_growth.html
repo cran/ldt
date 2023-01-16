@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>SUR: Determinants of long-run economic growth</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">SUR: Determinants of long-run economic
+growth</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ldt)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This vignette is an example in which we talk about the determinants
+of GDP per capita in different economies in the long run. In a typical
+application in <strong>ldt</strong>, the goal is to <em>automatically
+explain</em> or <em>automatically predict</em> one or more than one
+random variable. This example is about the former.</p>
+<p>We try to explain the <em>long-run yearly growth rates</em> of GDP
+per capita by using the long-run yearly growth rates of other variables.
+These <em>potential explanatory variables</em> (or <em>potential
+regressors</em>) are generally related to macroeconomics. More
+information is provided in the other sections.</p>
+<p style="margin-left:40px;">
+What is the long-run yearly growth rate of a variable? Let <span class="math inline">\(x\)</span> be a level variable for which a
+time-series sample <span class="math inline">\(\{x_t\}_{0}^{s}\)</span>
+with yearly frequency is available. We define (continuous) long-run
+yearly growth rate to be given by <span class="math inline">\(\log(x_s/x_0)/s\times 100\)</span> formula.
+</p>
+<p>One complication that arises is the endogeneity problem. To avoid
+this, one approach is to split the data and try to explain the growth
+after a specific point in time by using the information before that
+point. Due to the properties of the data (which is explained in the next
+section), we choose the following split year:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>splitYear <span class="ot">&lt;-</span> <span class="dv">2005</span></span></code></pre></div>
+<p>This means that the goal is to explain the long-run GDP per capita
+growth after 2005 by using the information before this year. By
+information before 2005, we mean the long-run growth rate of all
+available data, including the GDP per capita itself.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>One of the main ideas behind <strong>ldt</strong> is to minimize the
+user’s discretion. Therefore, like many other applications in
+<strong>ldt</strong>, this example is based on a <em>data-set</em> and a
+set of rules that converts this data set to a list of <em>potential
+regressors and/or predictors</em>. Note that, apart from avoiding
+discretion, a rule-based approach in selecting the data might be
+expected because of the word: <em>automatically</em> (see the previous
+section).</p>
+<p>Anyway, we select the <span class="citation">Bank (2022)</span> and
+automatically create the table of the potential regressors. For this
+particular data set, we use <code>ldt::Data_Wdi()</code> function. Note
+that for replication, you should download the data set from the WDI
+website. See the documentation of <code>Data_Wdi()</code> function for
+more information. Note that the size of the WDI data set is large and
+<code>Data_Wdi()</code> function is generally time-consuming.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>wdi_lr_2005 <span class="ot">&lt;-</span> <span class="fu">Data_Wdi</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dirPath =</span> path_to_wdi_directory,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">minYear =</span> <span class="dv">1960</span>, <span class="at">maxYear =</span> splitYear,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">aggFunction =</span> <span class="cf">function</span>(data, code, name, unit, definition, aggMethod) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    isPerc <span class="ot">&lt;-</span> unit <span class="sc">==</span> <span class="st">&quot;%&quot;</span> <span class="sc">||</span> <span class="fu">grepl</span>(<span class="st">&quot;.ZG&quot;</span>, code)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (isPerc) <span class="cn">NA</span> <span class="cf">else</span> <span class="fu">LongrunGrowth</span>(data, <span class="dv">20</span>, <span class="dv">2</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, isPerc)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">keepFunction =</span> <span class="cf">function</span>(X) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">var</span>(X, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">&gt;</span> <span class="fl">1e-12</span> <span class="sc">&amp;&amp;</span> <span class="fu">sum</span>((<span class="fu">is.na</span>(X)) <span class="sc">==</span> <span class="cn">FALSE</span>) <span class="sc">&gt;=</span> <span class="dv">50</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>These lines of code aggregate the data between 1960 and 2005. The
+<code>aggFunction</code> argument defines the aggregation type. It uses
+different types of information (e.g., <code>unit</code> or
+<code>code</code>) and excludes some series from the analysis. In this
+implementation, if <code>unit</code> of a series is a percentage, it is
+excluded from the analysis. Note that, in order to calculate the
+long-run growth rates, we use <code>ldt::LongrunGrowth()</code>
+function. Since we are dealing with an unclean data set, this function
+helps us to handle missing data-points (see the documentation).
+Furthermore, <code>keepFunction</code> argument excludes series with
+relatively large number of <code>NA</code>s or relatively small
+variances.</p>
+<p>As it is pointed out in the previous section, we need two
+data-tables, one with data before 2005 and the other with data after
+this year. Dependent variable is the long-run GDP per capita growth
+after 2005. We use a similar code to create it:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>wdi_lr_2006_21 <span class="ot">&lt;-</span> <span class="fu">Data_Wdi</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dirPath =</span> path_to_wdi_directory,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">minYear =</span> splitYear <span class="sc">+</span> <span class="dv">1</span>, <span class="at">maxYear =</span> <span class="dv">2021</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">aggFunction =</span> <span class="cf">function</span>(data, code, name, unit, definition, aggMethod) {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    isPerc <span class="ot">&lt;-</span> unit <span class="sc">==</span> <span class="st">&quot;%&quot;</span> <span class="sc">||</span> <span class="fu">grepl</span>(<span class="st">&quot;.ZG&quot;</span>, code)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (isPerc) <span class="cn">NA</span> <span class="cf">else</span> <span class="fu">LongrunGrowth</span>(data, <span class="dv">2</span>, <span class="dv">4</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, isPerc)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">keepFunction =</span> <span class="cf">function</span>(X) {</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">var</span>(X, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">&gt;</span> <span class="fl">1e-12</span> <span class="sc">&amp;&amp;</span> <span class="fu">sum</span>((<span class="fu">is.na</span>(X)) <span class="sc">==</span> <span class="cn">FALSE</span>) <span class="sc">&gt;=</span> <span class="dv">50</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>) </span></code></pre></div>
+<p>What remains is cleaning and rearranging data. we use
+<code>ldt::Data_WdiSearchFor()</code> function to find the target
+variable:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>serCode <span class="ot">&lt;-</span> <span class="fu">Data_WdiSearchFor</span>(wdi_lr_2005<span class="sc">$</span>series, <span class="fu">c</span>(<span class="st">&quot;GDP&quot;</span>, <span class="st">&quot;per capita&quot;</span>, <span class="st">&quot;constant&quot;</span>, <span class="st">&quot;us&quot;</span>))[[<span class="dv">1</span>]]<span class="sc">$</span>code</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> wdi_lr_2006_21<span class="sc">$</span>data[, <span class="fu">which</span>(<span class="fu">colnames</span>(wdi_lr_2006_21<span class="sc">$</span>data) <span class="sc">%in%</span> <span class="fu">c</span>(serCode)), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(wdi_lr_2005<span class="sc">$</span>data)</span></code></pre></div>
+<p>We remove highly correlated columns and non-country observations:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> x[, <span class="fu">which</span>(<span class="fu">sapply</span>(x, <span class="cf">function</span>(v) <span class="fu">abs</span>(<span class="fu">cor</span>(y, v, <span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>)) <span class="sc">&lt;</span> <span class="fl">0.999</span>)), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> y[wdi_lr_2005<span class="sc">$</span>countries<span class="sc">$</span>isCountry, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> x[wdi_lr_2005<span class="sc">$</span>countries<span class="sc">$</span>isCountry, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">rownames</span>(x) <span class="sc">!=</span> <span class="fu">names</span>(y))) {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Invalid operation.&quot;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>We rearrange data such that the lag of the dependent variable is in
+the first column. Finally, we add intercept to be one of the potential
+regressors:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ind <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(x) <span class="sc">%in%</span> <span class="fu">c</span>(serCode))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">cbind</span>(x[, ind, <span class="at">drop =</span> F], x[, <span class="dv">1</span><span class="sc">:</span>(ind <span class="sc">-</span> <span class="dv">1</span>), <span class="at">drop =</span> F], x[, ((ind <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(x)), <span class="at">drop =</span> F])</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(x)), <span class="fu">nrow</span>(x), <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="st">&quot;Intercept&quot;</span>)), x)</span></code></pre></div>
+<p>A this point, <code>x</code> is a table with countries in the rows
+and variables in the columns.</p>
+</div>
+<div id="model-set" class="section level2">
+<h2>Model-set</h2>
+<p>In this example, there are one target variable and (originally) 571
+potential regressors. Different combinations of the variables create
+different (potential) regression models. The set of all linear
+regression models is relatively large. For example, the following code
+approximates the size of such a set in which the regressions have at
+least 6 explanatory variables:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>n0 <span class="ot">=</span> vig_data<span class="sc">$</span>wdi<span class="sc">$</span>nxcol_orig</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>n0Choose6 <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">sapply</span>(<span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>), <span class="cf">function</span>(i) <span class="fu">choose</span>(n0, i)))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">prettyNum</span>(n0Choose6, <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="st">&quot;4.738693e+13&quot;</span></span></code></pre></div>
+<p>In other words, our generosity in defining new potential regressors
+is computationally (and exponentially) costly. We can restrict ourselves
+to small regression models or use theoretical information to exclude a
+part of the potential regressors from the analysis.</p>
+<div id="which-subset-of-the-model-set-should-we-estimate" class="section level3">
+<h3>Which subset of the model set should we estimate?</h3>
+<p>Since <strong>ldt</strong> tries to be an atheoretical tool, we
+restrict the model set. <code>ldt::SurSearch_s()</code> function has a
+step-wise search algorithm. It estimates small regressions, and given a
+list of criteria, it omits regressors with poor performance. In other
+words, larger models are not built with variables with relatively low
+explanatory power in the smaller models.</p>
+<p>The steps of <code>SurSearch\_s()</code> function is defined by a
+list of indices and a vector of sizes:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">4</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>xCounts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">5</span>)</span></code></pre></div>
+<p>This means that at the first step, we use all data and estimate
+models with 2 potential regressors; Next, we select 5 <em>best</em>
+potential regressors and estimate models with 4 potential
+regressors.</p>
+</div>
+<div id="what-do-we-mean-by-best-potential-regressors" class="section level3">
+<h3>What do we mean by <em>best</em> potential regressors?</h3>
+<p>For a given regression model, <strong>ldt</strong> calculates two
+types of scores: in-sample and out-of-sample. The latter is calculated
+in a pseudo-out-of-sample simulation (e.g., by calculating the distance
+between the projected value and the actual one), and the former is
+calculated by using all the sample data (e.g., AIC of the regression).
+We select a set of options by the following code:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>measureOptions <span class="ot">&lt;-</span> <span class="fu">GetMeasureOptions</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>), <span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;rmse&quot;</span>, <span class="st">&quot;crps&quot;</span>),</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">simFixSize =</span> <span class="dv">60</span>, <span class="at">trainRatio =</span> <span class="fl">0.75</span>, <span class="at">seed =</span> <span class="dv">340</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>In other words, we are asking <strong>ldt</strong> to use AIC and SIC
+as the two in-sample criteria, and RMSE and CRPS as the two
+out-of-sample ones. There are 60 number of iterations in the simulation
+and 340 is used as the seed. In each iteration, 75 percent of the sample
+is used for estimation and the rest is used for testing.</p>
+</div>
+<div id="what-type-of-information-are-we-looking-for" class="section level3">
+<h3>What type of information are we looking for?</h3>
+<p>Given a regression model, one might discuss the value of the
+estimated coefficients, its sign or statistical significance, or one
+might use it for projection. When model uncertainty presents, one might
+also look for inclusion weights. While <strong>ldt</strong> provides a
+range of options, in this example, we focus on the following:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>searchItems <span class="ot">&lt;-</span> <span class="fu">GetSearchItems</span>(<span class="at">model =</span> <span class="cn">TRUE</span>, <span class="at">bestK =</span> <span class="dv">50</span>, <span class="at">inclusion =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>In other words, we are asking <strong>ldt</strong> to keep the first
+50 best models and also, the inclusion weights.</p>
+</div>
+<div id="how-can-we-deal-with-high-levels-of-multicollinearity" class="section level3">
+<h3>How can we deal with high levels of multicollinearity?</h3>
+<p>When it comes to an automatic approach toward modeling, We might want
+to exclude regressions with high levels of multicollinearity, low
+degrees of freedom (in presence of <code>NA</code>s), relatively large
+AIC, etc. <strong>ldt</strong> provides some options in this regard. In
+the current example, we use the following code:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>checkItems <span class="ot">&lt;-</span> <span class="fu">GetModelCheckItems</span>(<span class="at">maxConditionNumber =</span> <span class="fl">1e15</span>, <span class="at">minDof =</span> <span class="dv">35</span>, <span class="at">minOutSim =</span> <span class="dv">50</span>)</span></code></pre></div>
+<p>In other words, we are asking <strong>ldt</strong> to omit a
+regression with a degrees-of-freedom less than 35, a condition number
+larger than 10^{15}, or a number of valid out-of-sample simulations less
+than 50. We hope that restricting the condition number can deal with the
+multicollinearity problem.</p>
+<p>Another approach in dealing with multicollinearity is to partition
+the regressors and skip the regressions with at least two regressors in
+the same partition. We can use theory to create the partitions or we can
+cluster the variables based on a specific statistical distance. Note
+that such partitioning reduces the number of potential models and
+therefore speeds up the calculations. Of course, in this example
+partitions have just one variable.</p>
+</div>
+<div id="how-can-we-estimate-all-models-with-an-intercept" class="section level3">
+<h3>How can we estimate all models with an intercept?</h3>
+<p>We would like to include the intercept and the lag of the dependent
+variable in all the regressions. <strong>ldt</strong> allows us to fix
+the first <span class="math inline">\(k\)</span> partitions. Since the
+two first variables are intercept and the lag of the dependent variable,
+in the next section, we set <code>numFixXPartitions</code> argument to
+be 2.</p>
+</div>
+</div>
+<div id="estimation" class="section level2">
+<h2>Estimation</h2>
+<p>We are not able to load the data in this vignette, because it needs
+an external data set and this is not available in this package. But, a
+part of the data set is saved in the <strong>ldt</strong> package, and
+we load:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>x</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>y</span></code></pre></div>
+<p>If you have downloaded the data set files, do not run this code.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">SurSearch_s</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">numFixXPartitions =</span> <span class="dv">2</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">xSizes =</span> xSizes, <span class="at">counts =</span> xCounts,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">searchItems =</span> searchItems, <span class="at">modelCheckItems =</span> checkItems, <span class="at">measureOptions =</span> measureOptions,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">searchOptions =</span> <span class="fu">GetSearchOptions</span>(<span class="at">parallel =</span> <span class="cn">TRUE</span>, <span class="at">printMsg =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>The arguments are discussed in the previous sections. Note that
+<code>SurSearch_s()</code> can save the result of different steps in the
+working directory.</p>
+<div id="status" class="section level3">
+<h3>Status</h3>
+<p>We can print the results to get some general information about the
+search process. It prints the number of valid or failed estimations or
+the weight of the best models:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> sur </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">12</span>, searched<span class="sc">:</span> <span class="dv">12</span> (<span class="dv">100</span><span class="sc">%), failed: 0 (0%</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> aic<span class="sc">:</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">NY.GDP.PCAP.KD</span> (<span class="at">best=</span><span class="fl">4.042</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">2.</span> sic<span class="sc">:</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">NY.GDP.PCAP.KD</span> (<span class="at">best=</span><span class="fl">4.085</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">3.</span> rmse<span class="sc">:</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">NY.GDP.PCAP.KD</span> (<span class="at">best=</span><span class="fl">0.047</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">4.</span> crps<span class="sc">:</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">NY.GDP.PCAP.KD</span> (<span class="at">best=</span><span class="fl">0.016</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="cn">NULL</span></span></code></pre></div>
+<p>Note that the weights are related to the in-sample and out-of-sample
+criteria discussed before. See the documentation of
+<code>ldt::GetWeightFromMeasure()</code> or
+<code>GetMeasureFromWeight()</code> functions. Also, an error occurred
+in 0% of the searched models. Note that this number may increase if we
+apply more strict options in <code>modelCheckItems</code> argument.</p>
+</div>
+<div id="best-models" class="section level3">
+<h3>Best models</h3>
+<p>While the best weights are informative, we generally want more
+information about the best models. The returned value (which is an
+<code>ldtsearch</code> object) provides some general information such as
+the indices of the exogenous variables. The <code>summary</code>
+function can be used to estimate the best models:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>search_res_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res, <span class="at">y =</span> y, <span class="at">x =</span> x, <span class="at">test =</span> <span class="cn">FALSE</span>, <span class="at">printMsg =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>However, this returned value contains lots of information and we need
+a way of summarizing them. If the goal is to discuss the coefficients,
+<code>ldt::CoefTable()</code> function can be used to create a table.
+First, we need to create a list of models:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>best_models <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">aic =</span> search_res_sum<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">rmse =</span> search_res_sum<span class="sc">$</span>rmse<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">crps =</span> search_res_sum<span class="sc">$</span>crps<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Next, we should choose the types of information from the regressions,
+we like to display. It gets done based on some keywords from the
+documentation of the <code>CoefTable()</code> function. For example:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>regInfo <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;num_obs&quot;</span>, <span class="st">&quot;No. Obs.&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;num_x&quot;</span>, <span class="st">&quot;No. Exo.&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;sigma2&quot;</span>, <span class="st">&quot;S.E. of Reg.&quot;</span>), </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;r2&quot;</span>, <span class="st">&quot;R Sq.&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>, <span class="st">&quot;AIC&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;sic&quot;</span>, <span class="st">&quot;SIC&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;rmse&quot;</span>, <span class="st">&quot;RMSE&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;crps&quot;</span>, <span class="st">&quot;CRPS&quot;</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Next, we retrieve the names of the variables from the data set. We
+also need some adjustments to escape some characters and to get a more
+informative table:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>vnamefun_wdi <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    {</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">Data_WdiSearchFor</span>(wdi_lr_2005<span class="sc">$</span>series, <span class="at">keywords =</span> <span class="fu">c</span>(x), <span class="at">searchName =</span> <span class="cn">FALSE</span>, <span class="at">findOne =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>name</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) x</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>hnameFun <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>((<span class="cf">if</span> (x <span class="sc">==</span> <span class="st">&quot;aic&quot;</span>) <span class="st">&quot;AIC&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">&quot;sic&quot;</span>) <span class="st">&quot;SIC&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">&quot;rmse&quot;</span>) <span class="st">&quot;RMSE&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">&quot;crps&quot;</span>) <span class="st">&quot;CRPS&quot;</span>), <span class="st">&quot;-based&quot;</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>replaces <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;US$&quot;</span>, <span class="st">&quot;US</span><span class="sc">\\</span><span class="st">$&quot;</span>))</span></code></pre></div>
+<p>Finally, we can get the table and draw it by using
+<strong>kableExtra</strong> package:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">CoefTable</span>(best_models,</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">tableFun =</span> <span class="st">&quot;coef_star&quot;</span>, <span class="at">hnameFun =</span> hnameFun, <span class="at">vnamesFun =</span> vnamefun_wdi, <span class="at">regInfo =</span> regInfo,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">vnamesFun_sub =</span> replaces, <span class="at">vnamesFun_max =</span> <span class="dv">40</span>, <span class="at">formatNumFun =</span> <span class="cf">function</span>(j,x)<span class="fu">round</span>(x,<span class="dv">3</span>),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">formatLatex =</span> <span class="cn">FALSE</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table">
+<caption>
+Long-run GDP per capita growth: best regressions
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:center;">
+AIC-based
+</th>
+<th style="text-align:center;">
+RMSE-based
+</th>
+<th style="text-align:center;">
+CRPS-based
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AG.AGR.TRAC.NO
+</td>
+<td style="text-align:center;">
+0.087<sup></sup>
+</td>
+<td style="text-align:center;">
+0.14<sup>**</sup>
+</td>
+<td style="text-align:center;">
+0.14<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.CON.FERT.PT.ZS
+</td>
+<td style="text-align:center;">
+0.197<sup>**</sup>
+</td>
+<td style="text-align:center;">
+0.189<sup>*</sup>
+</td>
+<td style="text-align:center;">
+0.189<sup>*</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.CON.FERT.ZS
+</td>
+<td style="text-align:center;">
+0.194<sup>**</sup>
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.LND.CROP.ZS
+</td>
+<td style="text-align:center;">
+0.073<sup></sup>
+</td>
+<td style="text-align:center;">
+0.265<sup></sup>
+</td>
+<td style="text-align:center;">
+0.265<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Obs.
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Exo.
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S.E. of Reg.
+</td>
+<td style="text-align:center;">
+3.169
+</td>
+<td style="text-align:center;">
+3.58
+</td>
+<td style="text-align:center;">
+3.58
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+R Sq.
+</td>
+<td style="text-align:center;">
+0.149
+</td>
+<td style="text-align:center;">
+0.018
+</td>
+<td style="text-align:center;">
+0.018
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AIC
+</td>
+<td style="text-align:center;">
+4.042
+</td>
+<td style="text-align:center;">
+4.163
+</td>
+<td style="text-align:center;">
+4.163
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SIC
+</td>
+<td style="text-align:center;">
+4.085
+</td>
+<td style="text-align:center;">
+4.205
+</td>
+<td style="text-align:center;">
+4.205
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RMSE
+</td>
+<td style="text-align:center;">
+0.08
+</td>
+<td style="text-align:center;">
+0.053
+</td>
+<td style="text-align:center;">
+0.053
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRPS
+</td>
+<td style="text-align:center;">
+0.02
+</td>
+<td style="text-align:center;">
+0.017
+</td>
+<td style="text-align:center;">
+0.017
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span> <sup></sup>
+<p>
+Dependent variable is the long-run yearly growth rates of GDP per capita
+of different countries after 2006. Regressors are selected
+automatically. Column headers indicate the criteria used to select the
+best regression. Data is from WDI. Parameters of the equations are
+reported at the top and other properties at the bottom.
+<code>***</code>, <code>**</code>, and <code>*</code> denotes
+significance level of 1%, 5% and 10%, respectively.
+</p>
+</td>
+</tr>
+</tfoot>
+</table>
+<p>Note that the goal of this vignette is not to interpret or discuss
+the coefficients of the best models.</p>
+</div>
+</div>
+<div id="principle-component-analysis" class="section level2">
+<h2>Principle component analysis</h2>
+<p>Another practical approach in dealing with a large number of
+potential regressors in a regression analysis is to use Principal
+Component Analysis (PCA). The estimation process is much faster than the
+previous search approach. However, there are some drawbacks. For
+example, the results might be less instructive, and missing observations
+or determining the number of principal components might become a
+problem.</p>
+<p>To calculate the principle components, we should omit incomplete
+observations (rows with at least one <code>NA</code>). However, before
+removing the rows, we can omit a variable with a relatively large number
+of missing data points (columns with many <code>NA</code>s). In other
+words, to prepare the data for PCA, there is a trade-off between the
+number of variables and the number of observations. One approach is to
+try to maximize the overall number of observations. In this example, we
+use <code>ldt::RemoveNaStrategies()</code> and estimate two types of
+models: one with a relatively large number of observations, and another
+one with a relatively large number of explanatory variables. First, we
+get the available strategies:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>x_ <span class="ot">&lt;-</span> x[, <span class="dv">3</span><span class="sc">:</span><span class="fu">ncol</span>(x), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>strategies <span class="ot">&lt;-</span> <span class="fu">RemoveNaStrategies</span>(x_)</span></code></pre></div>
+<p>Each strategy specifies the number of rows or columns that should be
+removed and also the order. Note that we want to exclude the intercept
+and the lag of the dependent variable from PCA. The <code>NA</code>
+strategies are sorted by the overall number of observations. We can
+print the number of variables and select some of them:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">unlist</span>(<span class="fu">sapply</span>(strategies, <span class="cf">function</span>(s) s<span class="sc">$</span>nCols))[<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>], <span class="st">&quot; ...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="dv">7</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">6</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">5</span> <span class="dv">7</span> <span class="dv">8</span> <span class="dv">8</span>  ...</span></code></pre></div>
+<p>These numbers are the number of variables in each strategy. While the
+choice is not straightforward, we choose the first strategy (with 7
+variables and 1001 observation) and the 2nd strategy (with 8 variables
+and 848 observation) to fulfill our goal. Of course, since we want a
+sensitivity analysis on the number of principal components too, we
+select two values as the thresholds of the cumulative variance ratio. In
+other words, we use the following combination:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>inds <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>pcaCutoffRates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.95</span>, <span class="fl">0.95</span>, <span class="fl">0.6</span>, <span class="fl">0.6</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>xPcaOptions <span class="ot">&lt;-</span> <span class="fu">GetPcaOptions</span>(<span class="at">ignoreFirst =</span> <span class="dv">2</span>, <span class="at">exactCount =</span> <span class="dv">0</span>, <span class="at">max =</span> <span class="dv">8</span>)</span></code></pre></div>
+<p>This means we will estimate 6 models by combining the first two
+<code>NA</code> strategies and three cumulative variance ratios: 0.95,
+0.9, and 0.6. The third line of code is just a setup for ignoring the
+first two regressors and choosing the number of PCs while estimating the
+model. We restrict the number of PCs to be less than 8. This is a
+relatively large number and therefore, as the next step, we ask
+<strong>ldt</strong> to omit insignificant coefficients and re-estimate
+the model, and repeat this process 2 times:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>searchSigMaxIter <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>searchSigMaxProb <span class="ot">&lt;-</span> <span class="fl">0.2</span></span></code></pre></div>
+<p>Note that we choose a relatively large value for the type-I error
+(i.e., 0.2). Next, we prepare the data for each case and use
+<code>ldt::SurEstim()</code> function to estimate and create a list of
+the estimated models:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pca_models <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (ind <span class="cf">in</span> inds) {</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  strat <span class="ot">&lt;-</span> strategies[[ind]]</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  x0 <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  y0 <span class="ot">&lt;-</span> y[<span class="sc">-</span>strat<span class="sc">$</span>rowRemove, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (strat<span class="sc">$</span>colFirst) {</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(strat<span class="sc">$</span>colRemove)<span class="sc">&gt;</span><span class="dv">0</span>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>      x0 <span class="ot">&lt;-</span> x_[, <span class="sc">-</span>strat<span class="sc">$</span>colRemove, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    x0 <span class="ot">&lt;-</span> x0[<span class="sc">-</span>strat<span class="sc">$</span>rowRemove, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    x0 <span class="ot">&lt;-</span> x_[<span class="sc">-</span>strat<span class="sc">$</span>rowRemove, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(strat<span class="sc">$</span>colRemove)<span class="sc">&gt;</span><span class="dv">0</span>)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>      x0 <span class="ot">&lt;-</span> x0[, <span class="sc">-</span>strat<span class="sc">$</span>colRemove, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>  x0 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(x[, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">drop =</span> F][<span class="sc">-</span>strat<span class="sc">$</span>rowRemove, , <span class="at">drop =</span> <span class="cn">FALSE</span>], x0)</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  xPcaOptions<span class="sc">$</span>cutoffRate <span class="ot">&lt;-</span> pcaCutoffRates[[i]]</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>  pca_models[[<span class="fu">length</span>(pca_models) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">SurEstim</span>(y0, x0,</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">addIntercept =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">searchSigMaxIter =</span> searchSigMaxIter,</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">searchSigMaxProb =</span> searchSigMaxProb,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">pcaOptionsX =</span> xPcaOptions,</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">simFixSize =</span> measureOptions<span class="sc">$</span>simFixSize,</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">simTrainRatio =</span> measureOptions<span class="sc">$</span>trainRatio, <span class="at">simSeed =</span> <span class="fu">abs</span>(measureOptions<span class="sc">$</span>seed),</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">simMaxConditionNumber =</span> checkItems<span class="sc">$</span>maxConditionNumber,</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">printMsg =</span> <span class="cn">FALSE</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Note that the main difficulty here is to prepare the data. It arises
+because we want to exclude the first two variables from the PCA. Also,
+note that some options such as the number of simulations are defined in
+the previous section.</p>
+<p>Finally, similar to the previous section, we use the list of
+estimations and create a table:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>regInfo <span class="ot">&lt;-</span> <span class="fu">append</span>(regInfo, </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;num_exo&quot;</span>, <span class="st">&quot;No. Exo. (orig.)&quot;</span>), </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">c</span>(<span class="st">&quot;pca_x_cutoff&quot;</span>, <span class="st">&quot;PCA Cutoff&quot;</span>)), <span class="dv">2</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>regInfo <span class="ot">&lt;-</span> <span class="fu">append</span>(regInfo, <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;[. . .]&quot;</span>)), <span class="dv">0</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>regInfo <span class="ot">&lt;-</span> <span class="fu">append</span>(regInfo, <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;num_rest&quot;</span>, <span class="st">&quot;No. Rest.&quot;</span>)), <span class="dv">6</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">CoefTable</span>(pca_models,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">tableFun =</span> <span class="st">&quot;coef_star&quot;</span>, <span class="at">hnameFun =</span> <span class="cf">function</span>(x) x, <span class="at">vnamesFun_sub =</span> replaces,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">vnamesFun =</span> vnamefun_wdi, <span class="at">vnamesFun_max =</span> <span class="dv">16</span>, <span class="at">regInfo =</span> regInfo, </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">numCoefs =</span> <span class="dv">2</span>, <span class="at">formatNumFun =</span> <span class="cf">function</span>(j,x)<span class="fu">round</span>(x,<span class="dv">3</span>),</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">formatLatex =</span> <span class="cn">FALSE</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(res) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;mod.&quot;</span>, <span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">length</span>(pca_models))) </span></code></pre></div>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table">
+<caption>
+Long-run GDP per capita growth: regressions with PCA
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:center;">
+mod.1
+</th>
+<th style="text-align:center;">
+mod.2
+</th>
+<th style="text-align:center;">
+mod.3
+</th>
+<th style="text-align:center;">
+mod.4
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AG.AGR.TRAC.NO
+</td>
+<td style="text-align:center;">
+0.142<sup>***</sup>
+</td>
+<td style="text-align:center;">
+0.149<sup>***</sup>
+</td>
+<td style="text-align:center;">
+0.182<sup>***</sup>
+</td>
+<td style="text-align:center;">
+0.182<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.CON.FERT.P…
+</td>
+<td style="text-align:center;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:center;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:center;">
+0.148<sup></sup>
+</td>
+<td style="text-align:center;">
+0.148<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+[. . .]
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+<td style="text-align:center;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Obs.
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Exo. (orig.)
+</td>
+<td style="text-align:center;">
+9
+</td>
+<td style="text-align:center;">
+10
+</td>
+<td style="text-align:center;">
+9
+</td>
+<td style="text-align:center;">
+10
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PCA Cutoff
+</td>
+<td style="text-align:center;">
+0.95
+</td>
+<td style="text-align:center;">
+0.95
+</td>
+<td style="text-align:center;">
+0.6
+</td>
+<td style="text-align:center;">
+0.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Exo.
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+7
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+No. Rest.
+</td>
+<td style="text-align:center;">
+5
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S.E. of Reg.
+</td>
+<td style="text-align:center;">
+4.129
+</td>
+<td style="text-align:center;">
+3.414
+</td>
+<td style="text-align:center;">
+3.883
+</td>
+<td style="text-align:center;">
+3.883
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+R Sq.
+</td>
+<td style="text-align:center;">
+-0.11
+</td>
+<td style="text-align:center;">
+0.083
+</td>
+<td style="text-align:center;">
+-0.043
+</td>
+<td style="text-align:center;">
+-0.043
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AIC
+</td>
+<td style="text-align:center;">
+4.307
+</td>
+<td style="text-align:center;">
+4.117
+</td>
+<td style="text-align:center;">
+4.246
+</td>
+<td style="text-align:center;">
+4.246
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SIC
+</td>
+<td style="text-align:center;">
+4.35
+</td>
+<td style="text-align:center;">
+4.16
+</td>
+<td style="text-align:center;">
+4.288
+</td>
+<td style="text-align:center;">
+4.288
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RMSE
+</td>
+<td style="text-align:center;">
+0.1
+</td>
+<td style="text-align:center;">
+0.097
+</td>
+<td style="text-align:center;">
+0.104
+</td>
+<td style="text-align:center;">
+0.104
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRPS
+</td>
+<td style="text-align:center;">
+0.022
+</td>
+<td style="text-align:center;">
+0.022
+</td>
+<td style="text-align:center;">
+0.023
+</td>
+<td style="text-align:center;">
+0.023
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span> <sup></sup>
+<p>
+Dependent variable is the long-run yearly growth rates of GDP per capita
+of different countries after 2006. Regressors are the PC of different
+combinations of the variables. Each column belongs to a specific
+strategy for removing the <code>NA</code>s and selecting the number of
+PCs. The intercept and the lag of the dependent variable are excluded
+from PCA. Other coefficients are not reported. Data is from WDI.
+<code>***</code>, <code>**</code>, and <code>*</code> denotes
+significance level of 1%, 5% and 10%, respectively. <code>(r)</code>
+means the coefficient is restricted.
+</p>
+</td>
+</tr>
+</tfoot>
+</table>
+<p>Again the goal of this vignette is a presentation and therefore, I do
+not compare or discuss the results.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-dataset_worldbank0" class="csl-entry">
+Bank, World. 2022. <span>“World Development Indicators.”</span>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

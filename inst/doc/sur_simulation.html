@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>SUR: A simulation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">SUR: A simulation</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ldt)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span></code></pre></div>
+<p>It is recommended to read the following vignette first:</p>
+<ul>
+<li><a href="sur_growth.html">SUR: Determinants of long-run economic
+growth</a></li>
+</ul>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this vignette, we draw a sample from a known population and talk
+about the automatic variable selection in <strong>ldt</strong> (In <a href="sur_growth.html">another vignette</a> we use an actual data set
+with a similar goal). In this vignette, we focus on a simulation problem
+with two endogenous variables and the following DGP: <span class="math display">\[\begin{align}
+\label{eq:sur-sim-model}
+\begin{pmatrix}y_1\\y_2\end{pmatrix}=&amp;
+\begin{bmatrix}
+1 &amp; 2 &amp; 0\\ 0 &amp; 3 &amp; 4
+\end{bmatrix}\begin{pmatrix}x_1\\x_2\\x_3\end{pmatrix} +
+\begin{pmatrix}e_1\\e_2\end{pmatrix}\\
+&amp;\begin{pmatrix}e_1\\e_2\end{pmatrix}=s
+\begin{bmatrix}
+2 &amp; 1\\ 0 &amp; 2
+\end{bmatrix}\begin{pmatrix}\epsilon_1\\\epsilon_2\end{pmatrix},\quad
+\epsilon_i\sim N(0,1),\\
+&amp;x_i\sim N(\frac{i}{3},1),
+\end{align}\]</span></p>
+<p>where <span class="math inline">\(y_1\)</span> and <span class="math inline">\(y_2\)</span> are endogenous variables, <span class="math inline">\(x_i\)</span> for <span class="math inline">\(i=1,\dots,3\)</span> are exogenous variables,
+<span class="math inline">\(s\)</span> is a constant parameter, <span class="math inline">\(\epsilon_1\)</span> and <span class="math inline">\(\epsilon_2\)</span> are independent, and <span class="math inline">\(e_1\)</span> and <span class="math inline">\(e_2\)</span> are disturbances. It is easy to see
+that <span class="math inline">\(\operatorname{var}(e_1)=5s^2\)</span>,
+<span class="math inline">\(\operatorname{var}(e_2)=4s^2\)</span>, and
+<span class="math inline">\(\operatorname{cov}(e_1,e_2)=2s^2\)</span>.
+Also, note that the model is restricted and each dependent variable is
+explained by 2 variables.</p>
+<p>Furthermore, we assume that there is a sample of size <span class="math inline">\(n\)</span> for <span class="math inline">\(y_1\)</span> and <span class="math inline">\(y_2\)</span> and 18 other variables denoted by
+<span class="math inline">\(z_i\)</span>, where, <span class="math display">\[\begin{equation}
+z_i\sim N(\frac{i}{18},1),\quad \text{ for } i=1,\dots,18.
+\end{equation}\]</span> We assume that <span class="math inline">\(\{z_i\}\)</span> is the set of the potential
+regressors. Note that <span class="math inline">\(z_{6}\)</span>, <span class="math inline">\(z_{12}\)</span> and <span class="math inline">\(z_{18}\)</span> are respectively equal in
+distribution to <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span> and <span class="math inline">\(x_3\)</span> (the means are <span class="math inline">\(1/3\)</span>, <span class="math inline">\(0.5\)</span> and <span class="math inline">\(1\)</span>, respectively).</p>
+<p>In this example, we focus on the ability to select the true random
+variables and to estimate the parameters properly, in some scenarios on
+the <span class="math inline">\(s\)</span> and <span class="math inline">\(n\)</span>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sampleSizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">50</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sMultipliers <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="dv">2</span>)</span></code></pre></div>
+<p>Note that a larger value for <span class="math inline">\(s\)</span>
+(element of <code>sMultipliers</code>) means more dispersed and more
+correlated disturbances and a larger value for <span class="math inline">\(n\)</span> (element of <code>sampleSizes</code>)
+means more degrees of freedom.</p>
+<p>We assume that the number of endogenous variables is known.
+Furthermore, to decrease the size of the model set, we assume that we
+know that the number of regressors is not larger than 3. In other words,
+we will use the following data (If you are not familiar with the
+arguments of the <code>SurSearch_s()</code> function, please read <a href="sur_growth.html">this vignette</a> first):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">3</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>xCounts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">5</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>yGroups <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span></code></pre></div>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>The following function can draw a sample from the described
+population:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>GetSample <span class="ot">&lt;-</span> <span class="cf">function</span>(n, s) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> (<span class="dv">1</span><span class="sc">:</span><span class="dv">18</span>)) {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    z <span class="ot">&lt;-</span> <span class="fu">cbind</span>(z, <span class="fu">rnorm</span>(n, i <span class="sc">/</span> <span class="dv">18</span>, <span class="dv">1</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(z)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> z[, <span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">12</span>, <span class="dv">18</span>)]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  e <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">mvrnorm</span>(n, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>), s <span class="sc">*</span> s <span class="sc">*</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">4</span>), <span class="dv">2</span>, <span class="dv">2</span>)))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> x <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">4</span>), <span class="dv">2</span>, <span class="dv">3</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)) <span class="sc">+</span> e</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(y) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;y1&quot;</span>, <span class="st">&quot;y2&quot;</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(z) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;z&quot;</span>, <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">18</span>, <span class="dv">1</span>))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">y =</span> y, <span class="at">z =</span> z))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Note that with <code>x = z[,c(6,12,18)]</code> we are assuming
+equality of random variables (not just equality in distribution).</p>
+</div>
+<div id="variable-selection" class="section level2">
+<h2>Variable selection</h2>
+<p>In each simulation, a sample is drawn randomly. Therefore, we need a
+seed for the random number generator:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>seed <span class="ot">&lt;-</span> <span class="dv">340</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(seed)</span></code></pre></div>
+<p>Given the sample, we use <code>SurSearch_s()</code> function to find
+the best model. This function will select one best mode for each of the
+evaluation methods. We use the results for AIC, SIC, RMSE, and CRPS
+measures:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>measureOptions <span class="ot">&lt;-</span> <span class="fu">GetMeasureOptions</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;rmse&quot;</span>, <span class="st">&quot;crps&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>measureNames <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;AIC&quot;</span>, <span class="st">&quot;SIC&quot;</span>, <span class="st">&quot;RMSE&quot;</span>, <span class="st">&quot;CRPS&quot;</span>)</span></code></pre></div>
+<p>If you are not familiar with the arguments of the
+<code>SurSearch_s()</code> function, please read <a href="sur_growth.html">this vignette</a> first. The
+<code>measureNames</code> vector is just a display name that we will use
+later.</p>
+<p>In order to compare the performance of different measures, we use the
+following scoring schema:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>GetScore <span class="ot">&lt;-</span> <span class="cf">function</span>(indices1, indices2) {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(indices1) <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(indices2) <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;&amp;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">all</span>(indices1 <span class="sc">==</span> <span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">12</span>)) <span class="sc">&amp;&amp;</span> <span class="fu">all</span>(indices2 <span class="sc">==</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">18</span>))) {</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="dv">1</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  score <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(indices1 <span class="sc">==</span> <span class="dv">6</span>)) score <span class="ot">&lt;-</span> score <span class="sc">+</span> <span class="fl">0.1</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(indices1 <span class="sc">==</span> <span class="dv">12</span>)) score <span class="ot">&lt;-</span> score <span class="sc">+</span> <span class="fl">0.1</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(indices2 <span class="sc">==</span> <span class="dv">12</span>)) score <span class="ot">&lt;-</span> score <span class="sc">+</span> <span class="fl">0.1</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(indices2 <span class="sc">==</span> <span class="dv">18</span>)) score <span class="ot">&lt;-</span> score <span class="sc">+</span> <span class="fl">0.1</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(score)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>This schema uses the indices of the regressors in the (restricted)
+best model and calculates the score. If the indices belong to the true
+model (i.e., <code>indices1=c(6,12)</code> and
+<code>indices2=c(12,18)</code>), the score is 1. otherwise each correct
+index (i.e., 6 and 12 for the first equation and 12 and 18 for the
+second equation) adds 0.1 points to the score. For example, this means
+the maximum score for an incorrect model is 0.4. Such a model has all
+the true explanatory variables and some irrelevant ones. The minimum
+score is zero. This is the score of a model with no correct explanatory
+variable.</p>
+<p>The <code>SurSearch_s()</code> function also reports the inclusion
+weights. The previous function is used to get the score of such a list.
+In this case, <code>indices1</code> and <code>indices2</code> are the
+index of the first 2 explanatory variables in the inclusion list.</p>
+<p>Before we continue, we need a helper function to get the required
+indices from the estimations:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>helper_GetIndices <span class="ot">&lt;-</span> <span class="cf">function</span>(measureRes, measureSumRes) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  isRest1 <span class="ot">&lt;-</span> measureSumRes<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>coefs<span class="sc">$</span>isRestricted</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  isRest2 <span class="ot">&lt;-</span> measureSumRes<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>coefs<span class="sc">$</span>isRestricted</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(isRest1)) {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    mindices1 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>exoIndices)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    mindices1 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>exoIndices[isRest1[, <span class="dv">1</span>] <span class="sc">!=</span> <span class="dv">1</span>])</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(isRest2)) {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    mindices2 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>exoIndices)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    mindices2 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1<span class="sc">$</span>exoIndices[isRest2[, <span class="dv">2</span>] <span class="sc">!=</span> <span class="dv">1</span>])</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  end <span class="ot">&lt;-</span> <span class="fu">nrow</span>(measureRes<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>inclusion)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  iindices1 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>inclusion[<span class="dv">3</span><span class="sc">:</span>end, <span class="dv">1</span>, <span class="at">drop =</span> F],</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>                    <span class="at">index.return =</span> <span class="cn">TRUE</span>, <span class="at">decreasing =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  iindices2 <span class="ot">&lt;-</span> <span class="fu">sort</span>(measureRes<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>inclusion[<span class="dv">3</span><span class="sc">:</span>end, <span class="dv">1</span>, <span class="at">drop =</span> F],</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>                    <span class="at">index.return =</span> <span class="cn">TRUE</span>, <span class="at">decreasing =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">model1 =</span> <span class="fu">sort</span>(mindices1), <span class="at">model2 =</span> <span class="fu">sort</span>(mindices2),</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">inclusion1 =</span> <span class="fu">sort</span>(iindices1<span class="sc">$</span>ix[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]), <span class="at">inclusion2 =</span> <span class="fu">sort</span>(iindices2<span class="sc">$</span>ix[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>])</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>The central piece of this experiment is the following function in
+which we generate a sample, search for the best models for each
+performance measure, and calculate the score of the best models:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>SampleAndEstimate <span class="ot">&lt;-</span> <span class="cf">function</span>(i, res, n, s, xSizes, xCounts, yGroups,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                              measureOptions, searchItems, checkItems) {</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  sample <span class="ot">&lt;-</span> <span class="fu">GetSample</span>(n, s)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  search_res <span class="ot">&lt;-</span> <span class="fu">SurSearch_s</span>(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>z, <span class="at">numTargets =</span> <span class="dv">2</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">xSizes =</span> xSizes, <span class="at">counts =</span> xCounts,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">yGroups =</span> yGroups,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchSigMaxIter =</span> <span class="dv">1</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchSigMaxProb =</span> <span class="fl">0.1</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchItems =</span> searchItems,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">measureOptions =</span> measureOptions,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">modelCheckItems =</span> checkItems,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">searchOptions =</span> <span class="fu">GetSearchOptions</span>(<span class="at">printMsg =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">savePre =</span> <span class="cn">NULL</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  result_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res, <span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>z, <span class="at">test =</span> <span class="cn">FALSE</span>, <span class="at">printMsg =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (i <span class="sc">&lt;</span> <span class="dv">0</span>) {</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">search_res =</span> search_res, <span class="at">result_sum =</span> result_sum))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  j <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (mea <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>, <span class="st">&quot;rmse&quot;</span>, <span class="st">&quot;crps&quot;</span>)) {</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> j <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    h <span class="ot">&lt;-</span> <span class="fu">helper_GetIndices</span>(search_res[[mea]], result_sum[[mea]])</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>model[[i, j]] <span class="ot">&lt;-</span> res<span class="sc">$</span>model[[i, j]] <span class="sc">+</span> <span class="fu">GetScore</span>(h<span class="sc">$</span>model1, h<span class="sc">$</span>model2)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>inclusion[[i, j]] <span class="ot">&lt;-</span> res<span class="sc">$</span>inclusion[[i, j]] <span class="sc">+</span> <span class="fu">GetScore</span>(h<span class="sc">$</span>inclusion1, h<span class="sc">$</span>inclusion2)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Finally, we run the simulation:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>simCount <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sur_sim_res <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (n <span class="cf">in</span> sampleSizes) {</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">model =</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="fu">length</span>(sMultipliers), <span class="fu">length</span>(measureNames),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="fu">paste0</span>(<span class="st">&quot;sigma=&quot;</span>, sMultipliers), measureNames)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>inclusion <span class="ot">&lt;-</span> res<span class="sc">$</span>model</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  i <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (s <span class="cf">in</span> sMultipliers) {</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (iter <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">1</span>, simCount)) {</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      seedi <span class="ot">&lt;-</span> seed <span class="sc">+</span> iter</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      measureOptions<span class="sc">$</span>seed <span class="ot">&lt;-</span> seedi</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      measureOptions<span class="sc">$</span>simFixSize <span class="ot">&lt;-</span> <span class="dv">6</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      measureOptions<span class="sc">$</span>trainRatio <span class="ot">&lt;-</span> <span class="fl">0.75</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      searchItems <span class="ot">&lt;-</span> <span class="fu">GetSearchItems</span>(<span class="at">model =</span> <span class="cn">TRUE</span>, <span class="at">type1 =</span> <span class="cn">FALSE</span>, <span class="at">bestK =</span> <span class="dv">10</span>, <span class="at">inclusion =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      res <span class="ot">&lt;-</span> <span class="fu">SampleAndEstimate</span>(</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        i, res, n, s, xSizes, xCounts, yGroups, measureOptions,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        searchItems, <span class="cn">NULL</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>model <span class="ot">&lt;-</span> res<span class="sc">$</span>model <span class="sc">/</span> simCount</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>inclusion <span class="ot">&lt;-</span> res<span class="sc">$</span>inclusion <span class="sc">/</span> simCount</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  sur_sim_res[[<span class="fu">length</span>(sur_sim_res) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> n, <span class="at">sMultipliers =</span> sMultipliers, <span class="at">res =</span> res)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>} </span></code></pre></div>
+<p>You can increase the number of simulations (We choose a small number
+to decrease the computation time). Note that for each
+<code>n</code><span class="math inline">\(\in\)</span><code>sampleSizes</code> and each
+<code>s</code><span class="math inline">\(\in\)</span><code>sMultipliers</code>, we sample
+and estimate 2 times. This is relatively time-consuming.</p>
+<div id="result" class="section level3">
+<h3>Result</h3>
+<p>Comparing the performance of different measures in selecting the true
+explanatory variables can be interesting. Therefore, in the following
+plot we draw the scores of the best models:</p>
+<div class="figure">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAAqFBMVEUAAAAAADoAAGYAAP8AOpAAZrYA/wA6AAA6ADo6AGY6Ojo6OmY6OpA6ZrY6kNtmAABmADpmAGZmOjpmOmZmOpBmZmZmkJBmkLZmkNtmtv+QOgCQOjqQOmaQZgCQZpCQkLaQ29uQ2/+2ZgC2Zjq2Zma2kDq225C22/+2/9u2///bkDrbkGbb25Db29vb/7bb/9vb////AAD/tmb/25D/27b//7b//9v////6yTblAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAIb0lEQVR4nO2dC3ebNhiG6RyTbk28dcsuabKtdnYL21obz+b//7OBuNjm9oIsoU/2+5w0zQlI6DzR5RMSOEhIL4HrAkiHggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCNAnKA4yHk/Pv1Q0BO2flun37ZevQ4X6jI6g3cM6/b5/pqAOdt+wBmn0QaZKJAwtQSbO9wV9QVUfBHp7z2ENAlAQgIIAWsP816rT+YLDfBfbu/Wo831Gr4lFj41fUZBuRp5DQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggCauzvmUfBmOfh8n9HaYfb8Gs2LbVRDzvcazR1m8YI7zLrTsAb1HkjYB/UfMHS+L3CHGYA1CEBBAG4DBmgN83wUoe8AH0UAB/goAjiQsA/qP2DofF+gIAAFASgIQEEACgIYFzTTL4tIDAsKU0HhOeURh+kaFM4uy49hQbPZLEz/nVUiYbAGAez0QeHlWLI1ioWX4shiHHQZnZHdQDEMvXdkO5IOfXc0xVRj5vPINtFczN96NNlkNVXkpaNJZ/MzD8d+vZv2N58/aO7u8C4+0lw4jBb6+4P8io80Fw6jx7MWDj3qs7Wa2G+v2/v6CzxG9lnexEdagtTrX05f/qJzy9WL+MjxPWn59cj5DjPp8ZGIVQ3JTU2EIMlNTczuDqlNTdQOM4lTESQoDuar+vu4bO4wEzcVAYJ27/+4370/jXhs7zCTNRXREWR/h5mgPhs3sbqJsRnpIWYqImSYb0XEVAQ1sYfmKyVHZnQW7usREtQyLR2Z0Zm4jo8kN7EKl/GRF4ISh/GR1FGsBTfxEYyDXpNmHDQqI5M46LP9EuQgPvKoiVVMGh/50knXmK4eIUHRYv9BWg1STBUf+dYHnTBFfAQEZTd95ApKJoiPfOyka9iNjzztpGtY7LMvQ5DF+Khf0PbtMhbfxCqsxEe9gvZPy/Sr7WNGRmQ0KebrUa+g3cM6tVNbviior3XIEGQ+PuqvQc+v8SKJb2o1SPxn+5iMj/r7oDi1EDVvKEZzuTWowFh8pDeKxfNOQXJEmYmPNIf5+ObndkGBIENG+mzdOGh72yFoI0mQgfjIcKCYfhdmKMna2hmJDe8wKwWp32w2m+zbGaUzxRnVyGwNatmNV4qq/z+xOO2m5mwu5kCc1lREzA6zKp8ucUZyH1+PRO0w68OUuLFTER1Bot5h1iWuL82QqQgMfPsE+fAOMyAOTUWqeE5cH2Sbg7B0KtJZ4zbVjOBS7ijqcdRnH9e044D3ugV1xkdZtEFBJc346CjgpSBFd3xEQQVd8REFHXEcH5W2KOiUIj46vGqMghqopla9KEqmoOA8zr7+0avGhApymLqg7I0oqB3pTcxhaoX0Ttq5IOnDvABBMDMKAplREMiMgkBmFAQyEyKobZlM3Q3PNidvb4NgMVlRRlxF7Vu0uapRZbZRXzVW3y+UoGzxoO05AOeCsnWx1aNdQZsG1cHdw6d8/3/UUnssFGXsgWJd7OXjFDWorYlFj9lXJqhj+61zQWpldf/0bgpBTdQOyZt1KijOatB/f45Kba4ofVdRvaTNhcPeDnCeZDskqz6o2c7cCzJxvm5m+caA+OaT5FFMYfNDIBkHWc2MgqymHpoZCBTtbl4IWn/USH0+2sP8RKNYy77rSP1xJE817G+g6hOUPXyU/okkTzXsb6AKkmJgrAbIwyi5fave0yx5qjFhHxS05JyF0nPRUw0j5w/KrDPEWi1ETzVMnK+dmXp8jVONHrJRbCF6FDNyvsXMKMhq6qGZURDIjIJAZlIEaTzEdOWCsqErDRS3t9n4Fb9ZFnMz9es8eL12Qfdqurx991061Xn5alnMzY7eD3EVgmYNymOloLvf02rzY/pDPje7NkEVnU3s7p/75O+PT8tibqZ+nb8D4doF3av7Ldu7z89//fL5Kf8IptWCNagka2JxVoPW0Q8/pW2tmJtdraAGmaC8xqS9T3ZzM5+b5aPYYrqiiBVkO/XQzCgIZEZBIDMKApnJEBQmh4cCSvLbZNWMQ+31KOYbNosy+EAy6cJh2PBTLPZUAfU6e+FsMd+wWpShB6ZZOAzD/Mmtw//lsWKxpybo7fI4tdGijD0w7cJhswYViz21JpbPN6wWZeiBaRYOC1r6oGKxp5pxHF7Rt1rYLMrgA8m0mxcaFIs9hxmHKlE+35iyKDJGsTaKUayacahfRsFhBUiIIO4wM5SRDhRkNTP3gpx20rZTD83McaDoLvXQzIQEitOnHpqZjEDRQeqhmY3ugy4VHUFm0LrCZIlgGgqykKnhIjhNREHnpqEgC5kaLoLTRAIEeQ4FASgIQEEACgJQEICCABYFrYI3xca5oPxpAOVnUa5GpDlKNDTV/oNaiMQXsicovlnnn8hVLaYPSlXs0KxSj0k04kpx+clX6EL2BEWL4g+7+/a2Wi5G7H8t7mBWqcckGnOlpFjdRheyKKh891Cc/nm7HqtsUgpqvLloQKJxV1JvB4EXmqAGqcJ0PJjbRKMGndw4H3ylVV7X3NWgqnFnRR5dg0b1QVWi4VeqnjN31wflw0O2NLJqfaKyA/WpyirRiFHskGjolVbZfejFgAsxDgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAcgXF9S3abpAr6GWZ/Ou6DIlkQdvbEWsh9pAr6ORtU+6QK2jFPsgLKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCAP8D5xXfDBRxJb4AAAAASUVORK5CYII=" alt="Scores in finding the true model (n=30, 50)" width="45%" /><img src="data:image/png;base64,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" alt="Scores in finding the true model (n=30, 50)" width="45%" />
+<p class="caption">
+Scores in finding the true model (n=30, 50)
+</p>
+</div>
+<p>There is a similar result for the inclusion weights:</p>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Scores in finding the true inclusion variables (n=30, 100, 100)" width="45%" /><img src="data:image/png;base64,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" alt="Scores in finding the true inclusion variables (n=30, 100, 100)" width="45%" />
+<p class="caption">
+Scores in finding the true inclusion variables (n=30, 100, 100)
+</p>
+</div>
+</div>
+</div>
+<div id="estimation" class="section level2">
+<h2>Estimation</h2>
+<p>Apart from finding the correct variables, another important task is
+estimating the unknown parameters. <strong>ldt</strong> provides 4 types
+of information about a parameter: - estimated coefficient and its
+estimated variance; - the value of the cumulative distribution function
+at some specific points; - extreme bounds; and - first four moments of
+the combined distribution. We specify these options by the following
+code:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>searchItems <span class="ot">&lt;-</span> <span class="fu">GetSearchItems</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> <span class="cn">FALSE</span>, <span class="at">type1 =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bestK =</span> <span class="dv">1</span>, <span class="at">cdfs =</span> <span class="fu">seq</span>(<span class="fl">0.8</span>, <span class="fl">1.8</span>, <span class="fl">0.03</span>),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">extremeMultiplier =</span> <span class="dv">2</span>, <span class="at">mixture4 =</span> <span class="cn">TRUE</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>In <code>SurSearch</code>, <code>type1</code> information is the
+estimated parameters. Note that in order to set a proper value for
+<code>cdfs</code>, we need to run the code (at least) twice. This is
+because we need to get some general idea about the range of values of
+estimated coefficients (e.g., by studying the extreme bounds analysis
+result).</p>
+<p>Next, we select the values of <span class="math inline">\(n\)</span>
+and <span class="math inline">\(s\)</span>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<p>Next, we want to estimate two types of coefficients: an unrestricted
+search and a restricted one in which we discard a part of the model set
+with low. We assess the performance by using AIC:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>checkItems <span class="ot">&lt;-</span> <span class="fu">GetModelCheckItems</span>(<span class="at">maxAic =</span> <span class="dv">10</span>)</span></code></pre></div>
+<p>Note that we adjusted the value of <code>maxAic</code> by running the
+code multiple times. This is because, at the first stage, we have no
+information about the magnitude of the AICs.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sur_sim_one <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">unr =</span> <span class="fu">SampleAndEstimate</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">c</span>(<span class="dv">3</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)), measureOptions,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    searchItems, checkItems</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">res =</span> <span class="fu">SampleAndEstimate</span>(</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">c</span>(<span class="dv">3</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)), measureOptions,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    searchItems, checkItems</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>) </span></code></pre></div>
+<p>The number of estimated regressions for the unrestricted and
+restricted model sets are 136 and 18, respectively.</p>
+<p>In this example, we present the results for one of the estimated
+parameters: <span class="math inline">\(\frac{\rho y_1}{\rho
+x_1}\)</span> in the following figure. Note that the actual value of
+this parameter is 1.0 (see the equation in the first section). Also,
+note that we use <code>ldt::PlotCoefs()</code> and
+<code>ldt::GetGldFromMoments()</code> functions.</p>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Estimated coefficient (searches with and without restricting AIC)" width="45%" /><img src="data:image/png;base64,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" alt="Estimated coefficient (searches with and without restricting AIC)" width="45%" />
+<p class="caption">
+Estimated coefficient (searches with and without restricting AIC)
+</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
