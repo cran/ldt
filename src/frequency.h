@@ -392,7 +392,7 @@ public:
 
   /// @brief A pointer to the constructor argument. This class is not the
   /// owner.
-  std::vector<T> *pItems;
+  std::vector<T> *pItems = nullptr;
 
   /// @brief Initializes a new instance of the class
   /// @param value Value of this frequency. It is a member of \p items
@@ -400,7 +400,7 @@ public:
   /// later.
   FrequencyList(T value, std::vector<T> *items);
 
-  virtual ~FrequencyList() override{};
+  virtual ~FrequencyList() override;
 
   /// @brief Gets index of \ref Value in \ref Items
   /// @return The index of \ref Value in \ref Items

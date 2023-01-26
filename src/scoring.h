@@ -1,7 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <iostream>
 #include <iterator>
 #include <vector>
 
@@ -325,11 +323,11 @@ public:
 template <bool hasWeight, bool isBinary> class LDT_EXPORT AUC : public AucBase {
 public:
   /// @brief Initializes a new instance of the class
-  AUC(){};
+  AUC();
 
   /// @brief Initializes a new instance of the class
   /// @param n Number of the observations
-  AUC(Ti n){};
+  AUC(Ti n);
 
   /// @brief Calculate the result
   /// @param y Actual labels. Length = N

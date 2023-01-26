@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
@@ -282,10 +282,12 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
     // this is wrong. Kronecker is with I
     x.IdenKron(m, I_o_x);
     I_o_x.Dot(*pr, I_o_xr);
-    y.Subtract0(I_o_xr, z);     // subtract0 for vec(y)
-    V_o_xR.TrDot0(z, V_o_xRtz); // dot0 for vec(y)
+    y.Subtract0(I_o_xr, z);     // subtract0 for vec(y) ??? see 'else'
+    V_o_xR.TrDot0(z, V_o_xRtz); // dot0 for vec(y) ??? see 'else'
   } else {
-    V_o_xR.TrDot0(y, V_o_xRtz); // dot0 for vec(y)
+    y.Restructure0(Nm, 1); // to vec(y)
+    V_o_xR.TrDot(y, V_o_xRtz);
+    y.Restructure0(N, m);
   }
 
   gamma.Restructure0(qStar, (Ti)1);

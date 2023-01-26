@@ -1,12 +1,16 @@
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
 #include "scoring.h"
 
 using namespace ldt;
+
+template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(){};
+
+template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(Ti n){};
 
 template <bool hasWeight, bool isBinary>
 void AUC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,

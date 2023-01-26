@@ -118,7 +118,7 @@ public:
   /// @param rows Maximum expected number of rows
   /// @param cols Maximum expected number of columns
   Distance(Ti rows, Ti cols);
-  virtual ~Distance(){};
+  virtual ~Distance();
 
   /// @brief Calculates the results
   /// @param data Data

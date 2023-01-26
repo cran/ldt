@@ -15,8 +15,8 @@ namespace ldt {
 /// selecting a subset of columns
 /// @tparam Tw Type of data
 template <class Tw = Tv> class LDT_EXPORT Dataset {
-  bool mHasNaN;
-  bool mSelectColumn;
+  bool mHasNaN = false;
+  bool mSelectColumn = false;
 
 public:
   /// @brief initializes the class
@@ -132,11 +132,11 @@ public:
                      bool center = true, bool scale = true);
 
   /// @brief Gets the center argument
-  bool mCenter;
+  bool mCenter = false;
   /// @brief Gets the scale argument
-  bool mScale;
+  bool mScale = false;
   /// @brief Gets the removeZeroVar argument
-  bool mRemoveZeroVar;
+  bool mRemoveZeroVar = false;
 
   /// @brief Gets or sets whether sample statistics should be calculated
   bool Sample = true;
@@ -172,9 +172,9 @@ public:
 /// @brief A helper class for SVD decomposition
 /// @tparam Tw
 template <class Tw = Tv> class LDT_EXPORT MatrixSvd {
-  Ti W_svd;
-  char mJobU;
-  char mJobVT;
+  Ti W_svd = 0;
+  char mJobU = 0;
+  char mJobVT = 0;
 
 public:
   /// @brief Gets the required storage size

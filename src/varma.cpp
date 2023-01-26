@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
@@ -19,7 +19,7 @@ Varma::Varma(const VarmaSizes &sizes, bool isRestricted, bool doDetails,
                         optimOptions);
 }
 
-//#pragma region Helpers
+// #pragma region Helpers
 
 void Varma::Difference(std::vector<Ti> &polyDiff, const Matrix<Tv> &y,
                        Matrix<Tv> &storage) {
@@ -64,7 +64,8 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
                : (ar->size() > 0 ? ar->at(0)->ColsCount
                                  : (ma->size() > 0 ? ma->at(0)->ColsCount
                                                    : intercept->length()));
-  Ti k = exocoef ? exocoef->ColsCount : 0;
+  bool hasExo = exocoef;
+  Ti k = hasExo ? exocoef->ColsCount : 0;
   Ti p = (Ti)ar->size();
   Ti q = (Ti)ma->size();
 
@@ -97,7 +98,7 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
 
   // create exogenous data from normal distribution
   Matrix<Tv> exodata;
-  if (exocoef) {
+  if (hasExo) {
     exodata = Matrix<Tv>(new std::vector<Tv>((count + horizon) * k), k,
                          count + horizon); // (count + horizon) * k
 
@@ -119,7 +120,7 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
   auto tmp0 = Matrix<Tv>(new Tv[m], m); // m
   auto tmp1 = Matrix<Tv>(new Tv[m], m); // m
   Matrix<Tv> *tmp2 = nullptr;
-  if (k != 0)
+  if (hasExo)
     tmp2 = new Matrix<Tv>(new Tv[k], k); // k
 
   for (Ti i = std::max(p, q); i < count; i++) {
@@ -136,7 +137,7 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
     }
     if (intercept)
       tmp.Add0(*intercept, tmp);
-    if (k != 0) {
+    if (hasExo) {
       exodata.GetColumn0(i, *tmp2);
       exocoef->Dot0(*tmp2, tmp1);
       tmp.Add0(tmp1, tmp);
@@ -169,9 +170,9 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
   return std::tuple<Matrix<Tv>, Matrix<Tv>>(y1, x1);
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region OLS
+// #pragma region OLS
 
 void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
                         const Matrix<Tv> *R, const Matrix<Tv> *r, Tv *work,
@@ -401,9 +402,9 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region ML
+// #pragma region ML
 
 void MlUpdateResid(const Matrix<Tv> &gamma, Varma &model, const Matrix<Tv> *R,
                    const Matrix<Tv> *r, Matrix<Tv> &Pi, Matrix<Tv> &Xi,
@@ -667,4 +668,4 @@ void Varma::EstimateMl(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   }
 }
 
-//#pragma endregion
+// #pragma endregion

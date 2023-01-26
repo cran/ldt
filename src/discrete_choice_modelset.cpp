@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
@@ -337,6 +337,12 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     }
   }
   return modelset;
+}
+
+template <bool hasWeight, DiscreteChoiceModelType modelType>
+DiscreteChoiceModelset<hasWeight, modelType>::~DiscreteChoiceModelset() {
+  for (auto s : Searchers)
+    delete s;
 }
 
 template <bool hasWeight, DiscreteChoiceModelType modelType>

@@ -22,7 +22,6 @@
 #' @param boundFun (function) a function to control the \code{xlim} and \code{ylim}
 #' in the \code{plot}. Its arguments are the computed bounds.
 #' @param legendsTitle (list) a list of titles for legends.
-#' @param legendTitleCex (numeric) sets \code{title.cex} in legends.
 #' @param legendSize (numeric) size of the legend (width or height)
 #' in lines of text (it is passed to \code{oma}).
 #'
@@ -82,7 +81,7 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
                         }
                       },
                       legendsTitle = c("Point", "Bound", "Interval", "Density"),
-                      legendTitleCex = 1.1, legendSize = 5, ...) {
+                      legendSize = 5, ...) {
 
   oldpar <- par(no.readonly = TRUE)
   on.exit(par(oldpar))
@@ -234,7 +233,7 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
     }
     L <- legend(leg_x_f(par("usr"), L$rect), leg_y_f(par("usr"), L$rect),
       xpd = NA, xjust = xjust, yjust = yjust,
-      legend = lgn_lgn, bty = "n", title = legendsTitle[[1]], title.cex = legendTitleCex,
+      legend = lgn_lgn, bty = "n", title = legendsTitle[[1]],
       col = lgn_col, pch = lgn_pch, x.intersp = 1.4,
       pt.cex = 1.5, fill = NA, border = NA
     ) #
@@ -263,7 +262,7 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
 
     L <- legend(leg_x_f(par("usr"), L$rect), leg_y_f(par("usr"), L$rect),
       xpd = NA, xjust = xjust, yjust = yjust,
-      legend = lgn_lgn, bty = "n", title = legendsTitle[[2]], title.cex = legendTitleCex,
+      legend = lgn_lgn, bty = "n", title = legendsTitle[[2]],
       col = lgn_col,
       fill = lgn_fill, border = lgn_fill,
       pch = NA, x.intersp = 1.4
@@ -302,7 +301,7 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
 
     L <- legend(leg_x_f(par("usr"), L$rect), leg_y_f(par("usr"), L$rect),
       xpd = NA, xjust = xjust, yjust = yjust,
-      legend = lgn_lgn, bty = "n", title = legendsTitle[[3]], title.cex = legendTitleCex,
+      legend = lgn_lgn, bty = "n", title = legendsTitle[[3]],
       col = lgn_col, pch = lgn_pch, lty = lgn_lty, lwd = lgn_lwd
     )
   }
@@ -334,7 +333,7 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
 
     L <- legend(leg_x_f(par("usr"), L$rect), leg_y_f(par("usr"), L$rect),
       xpd = NA, xjust = xjust, yjust = yjust,
-      legend = lgn_lgn, bty = "n", title = legendsTitle[[4]], title.cex = legendTitleCex,
+      legend = lgn_lgn, bty = "n", title = legendsTitle[[4]],
       col = lgn_col, lty = lgn_lty, lwd = lgn_lwd,
       pch = NA
     ) # set pch for better placement

@@ -305,6 +305,12 @@ void UpdateSearchItems(bool printMsg, List &searchItems, SearchItems &items,
 }
 
 List GetSearchOptions(bool parallel, int reportInterval, bool printMsg) {
+#ifndef _OPENMP
+  if (parallel){
+    parallel = false;
+    warning("Warning: 'parallel' option is not available.");
+  }
+#endif
   List O = List::create(_["parallel"] = wrap(parallel),
                         _["reportInterval"] = wrap(reportInterval),
                         _["printMsg"] = wrap(printMsg));

@@ -64,7 +64,7 @@ public:
   // #pragma region Constructors
 
   /// @brief Initializes a new instance of the class
-  Matrix<Tw>(){};
+  Matrix<Tw>();
 
   /// @brief Initializes an m x n matrix with no data
   /// @param m number of rows
@@ -102,7 +102,7 @@ public:
   /// @param n number of columns
   Matrix<Tw>(Tw defaultValue, std::vector<Tw> &values, Ti m, Ti n = 1);
 
-  ~Matrix<Tw>() { Data = nullptr; }
+  ~Matrix<Tw>();
 
   // #pragma endregion
 

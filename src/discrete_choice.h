@@ -97,7 +97,7 @@ FromString_DiscreteChoiceModelType(const char *v) {
 /// @brief A base class for discrete choice regression model
 class LDT_EXPORT DiscreteChoiceBase {
 protected:
-  bool mDoDetails;
+  bool mDoDetails = false;
 
 public:
   /// @brief Model type
@@ -274,12 +274,12 @@ extern template class ldt::DiscreteChoice<DiscreteChoiceModelType::kOrdered,
 class LDT_EXPORT DiscreteChoiceExtended {
 
   PcaAnalysisOptions *pPcaOptions = nullptr;
-  bool mDoDetails;
-  Ti mNumChoices;
-  bool mHasWeight;
-  bool mCheckNan;
-  bool mWeightedEval;
-  DiscreteChoiceModelType mModelType;
+  bool mDoDetails = false;
+  Ti mNumChoices = 0;
+  bool mHasWeight = false;
+  bool mCheckNan = false;
+  bool mWeightedEval = false;
+  DiscreteChoiceModelType mModelType = DiscreteChoiceModelType::kBinary;
 
 public:
   /// @brief Gets the required storage size
@@ -305,10 +305,10 @@ public:
   PcaAnalysis Pca;
 
   /// @brief A pointer to the estimated model. The class is its owner.
-  DiscreteChoiceBase *Model;
+  DiscreteChoiceBase *Model = nullptr;
 
   /// @brief A pointer to the given cost matrices. The class does not own it.
-  std::vector<Matrix<Tv>> *pCostMatrices;
+  std::vector<Matrix<Tv>> *pCostMatrices = nullptr;
 
   /// @brief After \ref Calculate, predicted probabilities
   Matrix<Tv> PredProbs;
@@ -409,7 +409,7 @@ public:
   Matrix<Tv> CostRatios;
 
   /// @brief After \ref Calculate, average value of AUC
-  Tv Auc;
+  Tv Auc = 0;
 
   /// @brief Get a simulation class from types. Arguments are passed to the
   /// class or the constructors
@@ -440,11 +440,11 @@ class LDT_EXPORT DiscreteChoiceSim : public DiscreteChoiceSimBase {
 
   Tv mTrainRatio = 0;
   Ti mTrainFixSize = 0;
-  bool mDoFrequecyTable;
-  Ti mCostMatrixCount;
-  Ti mNumChoices;
-  bool mDoAuc;
-  bool mWeightedEval;
+  bool mDoFrequecyTable = false;
+  Ti mCostMatrixCount = 0;
+  Ti mNumChoices = 0;
+  bool mDoAuc = false;
+  bool mWeightedEval = false;
 
 public:
   /// @brief Initializes a new instance of this class
@@ -532,7 +532,7 @@ class LDT_EXPORT DiscreteChoiceSearcher : public Searcher {
   Dataset<Tv> Data;
   DiscreteChoiceSim<hasWeight, modelType, distType> Model;
   DiscreteChoice<modelType, distType> DModel;
-  Ti mNumChoices;
+  Ti mNumChoices = 0;
 
   std::string EstimateOne(Tv *work, Ti *workI) override;
 
@@ -650,10 +650,7 @@ public:
                          Newton &newtonOptions, bool addLogit = true,
                          bool addProbit = false);
 
-  virtual ~DiscreteChoiceModelset() {
-    for (auto s : Searchers)
-      delete s;
-  }
+  virtual ~DiscreteChoiceModelset();
 };
 
 extern template class ldt::DiscreteChoiceModelset<

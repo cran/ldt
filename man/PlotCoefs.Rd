@@ -22,7 +22,6 @@ PlotCoefs(
      }
  },
   legendsTitle = c("Point", "Bound", "Interval", "Density"),
-  legendTitleCex = 1.1,
   legendSize = 5,
   ...
 )
@@ -56,8 +55,6 @@ and for \code{type=normal}, 2.\code{mean}, 3.\code{var}, 4.\code{sdMultiplier}, 
 in the \code{plot}. Its arguments are the computed bounds.}
 
 \item{legendsTitle}{(list) a list of titles for legends.}
-
-\item{legendTitleCex}{(numeric) sets \code{title.cex} in legends.}
 
 \item{legendSize}{(numeric) size of the legend (width or height)
 in lines of text (it is passed to \code{oma}).}

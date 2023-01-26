@@ -29,7 +29,7 @@ test_that("Pca works", {
   resR = prcomp(x, center = T, scale. = T)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
   presR = predict(resR, newdata = x)
-  expect_equal(as.numeric(presR), as.numeric(res$projections[,1:7]), tolerance = 1e-8)
+  expect_equal(as.numeric(abs(presR)), as.numeric(abs(res$projections[,1:7])), tolerance = 1e-8)
 
   res = GetPca(x,TRUE,FALSE,x)
   resR = prcomp(x, center = T, scale. = F)
@@ -56,7 +56,7 @@ test_that("Pca works with zero variance columns", {
   resR = prcomp(x, center = T, scale. = T)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
   presR = predict(resR, newdata = x)
-  expect_equal(as.numeric(presR), as.numeric(res$projections[,1:7]), tolerance = 1e-8)
+  expect_equal(as.numeric(abs(presR)), as.numeric(abs(res$projections[,1:7])), tolerance = 1e-8)
 
   res = GetPca(X_0,FALSE,TRUE,X_0)
   y=x

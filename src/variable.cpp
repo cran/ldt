@@ -3,6 +3,8 @@
 
 using namespace ldt;
 
+template <typename Tw> Variable<Tw>::Variable(){};
+
 template <typename Tw>
 std::unique_ptr<Frequency> Variable<Tw>::GetEndFrequency() const {
   auto end = StartFrequency.get()->Clone();

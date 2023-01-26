@@ -19,7 +19,7 @@ class LDT_EXPORT Descriptive {
 
 public:
   /// @brief A reference to the given data
-  const Matrix<Tv> *pArray;
+  const Matrix<Tv> *pArray = nullptr;
 
   /// @brief Initializes a new instance of the class
   /// @param mat The data as a vector (i.e., dimension is not used, just the
@@ -141,7 +141,7 @@ public:
 
 /// @brief A simple OLS estimator class
 class LDT_EXPORT Ols {
-  bool mDoResid, mDoSigma;
+  bool mDoResid = false, mDoSigma = false;
 
 public:
   /// @brief Initializes a new instance of the class
@@ -181,12 +181,12 @@ public:
 
 /// @brief A simple GLS estimator class
 class LDT_EXPORT Gls {
-  bool mDoResid, mDoSigma;
+  bool mDoResid = false, mDoSigma = false;
 
 public:
   /// @brief Gets the value \p isOmegaInv given to the constructor. It
   /// determines the type of the \p omega function in \ref Calculate
-  bool mIsOmegaInv;
+  bool mIsOmegaInv = false;
 
   /// @brief Initializes
   /// @param N Maximum expected number of observations (i.e., rows in y)

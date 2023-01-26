@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
@@ -119,6 +119,9 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
     }
   }
 }
+
+template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
+Distance<checkNan, method, corrMethod>::~Distance(){};
 
 template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
 Distance<checkNan, method, corrMethod>::Distance(Ti rows, Ti cols) {

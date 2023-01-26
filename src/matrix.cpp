@@ -1,7 +1,7 @@
 
 /*
  Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the LGPL 3.0.
+ Licensed under the GPL 3.0.
  See accompanying file LICENSE
 */
 
@@ -20,6 +20,10 @@
 using namespace ldt;
 
 // #pragma region Constructors
+
+template <typename Tw> Matrix<Tw>::~Matrix<Tw>() { Data = nullptr; }
+
+template <typename Tw> Matrix<Tw>::Matrix() {}
 
 template <typename Tw>
 Matrix<Tw>::Matrix(Ti m, Ti n) : RowsCount{m}, ColsCount{n} {}

@@ -289,7 +289,7 @@ public:
   Ti mTrainFixSize = 0;
 
   /// @brief In \ref Calculate, show current number of iteration
-  Ti Iteration;
+  Ti Iteration = 0;
 
   /// @brief Splits the data
   DataSplit Split;
@@ -304,7 +304,7 @@ public:
   bool KeepErrors = true;
 
   /// @brief A pointer to the list of measures given in the constructor
-  const std::vector<ScoringType> *pMeasuresOut;
+  const std::vector<ScoringType> *pMeasuresOut = nullptr;
 
   /// @brief List of errors. See \ref KeepErrors
   std::map<std::string, Ti> Errors;
@@ -371,7 +371,7 @@ class LDT_EXPORT SurSearcher : public Searcher {
   unsigned int Seed;
 
   Matrix<Ti> EndoIndexes;
-  const Matrix<Tv> *pSource;
+  const Matrix<Tv> *pSource = nullptr;
 
   Dataset<Tv> Data;
   SurExtended DModel;

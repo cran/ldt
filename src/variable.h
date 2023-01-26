@@ -30,7 +30,7 @@ public:
   std::map<std::string, std::string> Fields;
 
   /// @brief Initializes a new instance of this class
-  Variable(){};
+  Variable();
 
   /// @brief Gets the end frequency
   /// @return End frequency

@@ -177,7 +177,7 @@ public:
   Tv vf_diff = NAN;
 
   /// @brief Pointer to the starting value array
-  Matrix<Tv> *X;
+  Matrix<Tv> *X = nullptr;
 
   /// @brief Gradient in the last iteration
   Matrix<Tv> Gradient;

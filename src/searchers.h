@@ -74,15 +74,15 @@ struct LDT_EXPORT SearchMeasureOptions {
   std::vector<ScoringType> MeasuresOut;
 
   /// @brief A fixed size for the training sample
-  Ti TrainFixSize;
+  Ti TrainFixSize = 0;
 
   /// @brief If \ref TrainFixSize is zero, this ratio determines the size of the
   /// training sample
-  double TrainRatio;
+  double TrainRatio = 0;
 
   /// @brief A fixed size for the number of simulations in out-of-sample
   /// simulations
-  Ti SimFixSize;
+  Ti SimFixSize = 0;
 
   /// @brief In some cases such as VARMA, number of simulations can be a
   /// percentage of observations. Use zero to use 'SimFixSize'.
@@ -100,7 +100,7 @@ struct LDT_EXPORT SearchMeasureOptions {
 
   /// @brief Determines the type of evaluation for discrete models. If true,
   /// weights are used in AUC or CostMatrix calculations
-  bool WeightedEval;
+  bool WeightedEval = false;
 
   /// @brief Updates the indices, etc.
   /// @param isOutOfSampleRandom If true, the training sample is randomly
@@ -109,7 +109,7 @@ struct LDT_EXPORT SearchMeasureOptions {
   void Update(bool isOutOfSampleRandom, bool isTimeSeries);
 
   /// @brief After \ref Update, determines the type of the measuring
-  bool mIsTimeSeries, mIsOutOfSampleRandom;
+  bool mIsTimeSeries = false, mIsOutOfSampleRandom = false;
 
   /// @brief After \ref Update, it is the index of the measure in \ref
   /// MeasuresIn or \ref MeasuresOut. If negative, it is not found
@@ -172,7 +172,7 @@ struct LDT_EXPORT SearchModelChecks {
   void Update(const SearchMeasureOptions &measures);
 
   /// @brief After \ref Update, determines the type of checks
-  bool mCheckCN, mCheckCN_all, mCheckPredBound;
+  bool mCheckCN = false, mCheckCN_all = false, mCheckPredBound = false;
 };
 
 /// @brief Items to be kept during a search
@@ -181,11 +181,11 @@ struct LDT_EXPORT SearchItems {
 
   /// @brief Length of the first dimension which is the evaluation measures.
   /// (might be overridden internally, given the data)
-  Ti LengthEvals;
+  Ti LengthEvals = 0;
 
   /// @brief Length of the second dimension which is the target variables.
   /// (might be overridden internally, given the data)
-  Ti LengthTargets;
+  Ti LengthTargets = 0;
 
   /// @brief If true, model evaluation data is kept
   bool KeepModelEvaluations = true;
@@ -195,18 +195,18 @@ struct LDT_EXPORT SearchItems {
   bool KeepInclusionWeights = false;
 
   /// @brief Length of type 1
-  Ti Length1;
+  Ti Length1 = 0;
 
   /// @brief Length of type 2
-  Ti Length2;
+  Ti Length2 = 0;
 
   /// @brief Number of the dependent variable (might be overridden internally,
   /// given the data)
-  Ti LengthDependents;
+  Ti LengthDependents = 0;
 
   /// @brief Number of the exogenous variables (might be overridden internally,
   /// given the data)
-  Ti LengthExogenouses;
+  Ti LengthExogenouses = 0;
 
   /// @brief If larger than zero, it keeps the data regarding the first K count
   /// models
@@ -382,10 +382,10 @@ public:
                            // 'RequestCancel' in the searcher
 
   /// @brief A pointer to the provided \ref SearchModelChecks
-  const SearchModelChecks *pChecks;
+  const SearchModelChecks *pChecks = nullptr;
 
   /// @brief A pointer to the provided \ref SearchMeasureOptions
-  const SearchMeasureOptions *pMeasures;
+  const SearchMeasureOptions *pMeasures = nullptr;
 
   /// @brief Pointer to the provided group mapping
   const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
@@ -480,21 +480,21 @@ public:
                                  // 'RequestCancel' in the searcher
 
   /// @brief A pointer to the provided \ref SearchModelChecks
-  const SearchModelChecks *pChecks;
+  const SearchModelChecks *pChecks = nullptr;
 
   /// @brief A pointer to the provided \ref SearchMeasureOptions
-  const SearchMeasureOptions *pMeasures;
+  const SearchMeasureOptions *pMeasures = nullptr;
 
   /// @brief A pointer to the given list in the constructor. This
   /// class becomes the owner and deletes them
   /// @remark Don't use 'const' for shuffle
-  std::vector<Searcher *> *pSearchers;
+  std::vector<Searcher *> *pSearchers = nullptr;
 
   /// @brief A pointer to the given list in the constructor
-  const std::vector<std::vector<Ti>> *pGroupIndexMap;
+  const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
 
   /// @brief A pointer to the given list in the constructor
-  const std::vector<Ti> *pGroupSizes;
+  const std::vector<Ti> *pGroupSizes = nullptr;
 
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;

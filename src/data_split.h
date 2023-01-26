@@ -10,7 +10,7 @@ namespace ldt {
 
 /// @brief Splits data into train and test sample (for discrete data)
 class LDT_EXPORT DataSplitDiscrete {
-  Ti mNumChoices;
+  Ti mNumChoices = 0;
   Matrix<Tv> Y;
 
   std::vector<Ti> Counts;

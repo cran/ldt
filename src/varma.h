@@ -31,19 +31,19 @@ struct LDT_EXPORT VarmaSizes {
              Ti seasonsCount = 0, bool calculate = true);
 
   /// @brief (Expected) number of observations
-  Ti ObsCount;
+  Ti ObsCount = 0;
 
   /// @brief (Expected) number of equations
-  Ti EqsCount;
+  Ti EqsCount = 0;
 
   /// @brief (Expected) number of exogenous variables
-  Ti ExoCount;
+  Ti ExoCount = 0;
 
   /// @brief Parameters of the ARMA
-  Ti ArP, ArD, ArQ, MaP, MaD, MaQ;
+  Ti ArP = 0, ArD = 0, ArQ = 0, MaP = 0, MaD = 0, MaQ = 0;
 
   /// @brief Number of seasons in the data
-  Ti SeasonsCount;
+  Ti SeasonsCount = 0;
 
   /// @brief Size of AR lags
   Ti ArLength = -1;
@@ -202,15 +202,15 @@ struct LDT_EXPORT VarmaStorage {
                           std::vector<std::string> &result);
 
 private:
-  bool mKeepDetails;
+  bool mKeepDetails = false;
 };
 
 /// @brief VARMA model estimation
 class LDT_EXPORT Varma {
 private:
   bool mIsRestricted = false;
-  bool mDoDetails;
-  bool mCalculateVarCoefs;
+  bool mDoDetails = false;
+  bool mCalculateVarCoefs = false;
 
 public:
   /// @brief Parameters and sizes. It gets updated in the \ref EstimateOls
@@ -265,7 +265,7 @@ public:
 class LDT_EXPORT VarmaArma {
   const VarmaSizes *pSizes;
 
-  Ti mMaInfCount;
+  Ti mMaInfCount = 0;
 
 public:
   Ti WorkSize = 0;
@@ -289,11 +289,11 @@ public:
 
   Ti StorageSize = 0;
 
-  Ti StartIndex;
+  Ti StartIndex = 0;
 
-  Ti mHorizon;
-  Ti mDoVariance;
-  bool mCoefUncertainty;
+  Ti mHorizon = 0;
+  Ti mDoVariance = 0;
+  bool mCoefUncertainty = false;
 
   Matrix<Tv> Forecast;
 
@@ -414,15 +414,15 @@ struct VarmaSimulationDetail {
         VarmaSimulationDetail();
         ~VarmaSimulationDetail();
 
-        Matrix<Tv>* Actuals;
+        Matrix<Tv>* Actuals = nullptr;
 
-        Matrix<Tv>* Forecasts;
+        Matrix<Tv>* Forecasts = nullptr;
 
-        Matrix<Tv>* ForecastsStd;
+        Matrix<Tv>* ForecastsStd = nullptr;
 
-        bool IsValid;
+        bool IsValid = false;
 
-        Ti SampleEnds;
+        Ti SampleEnds = 0;
 
 };*/
 
@@ -436,7 +436,7 @@ public:
 
   Ti StorageSize = 0;
 
-  const VarmaSizes *pSizes;
+  const VarmaSizes *pSizes = nullptr;
 
   Ti mCount = 0;
 
@@ -463,7 +463,7 @@ public:
 
   Ti ValidCounts = 0;
 
-  // std::vector<VarmaSimulationDetail*>* Details;
+  // std::vector<VarmaSimulationDetail*>* Details = nullptr;
 
   VarmaSimulation(){};
 
