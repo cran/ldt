@@ -31,19 +31,19 @@ struct LDT_EXPORT VarmaSizes {
              Ti seasonsCount = 0, bool calculate = true);
 
   /// @brief (Expected) number of observations
-  Ti ObsCount = 0;
+  Ti ObsCount;
 
   /// @brief (Expected) number of equations
-  Ti EqsCount = 0;
+  Ti EqsCount;
 
   /// @brief (Expected) number of exogenous variables
-  Ti ExoCount = 0;
+  Ti ExoCount;
 
   /// @brief Parameters of the ARMA
-  Ti ArP = 0, ArD = 0, ArQ = 0, MaP = 0, MaD = 0, MaQ = 0;
+  Ti ArP, ArD, ArQ, MaP, MaD, MaQ;
 
   /// @brief Number of seasons in the data
-  Ti SeasonsCount = 0;
+  Ti SeasonsCount;
 
   /// @brief Size of AR lags
   Ti ArLength = -1;
@@ -202,7 +202,7 @@ struct LDT_EXPORT VarmaStorage {
                           std::vector<std::string> &result);
 
 private:
-  bool mKeepDetails = false;
+  bool mKeepDetails;
 };
 
 /// @brief VARMA model estimation
@@ -263,7 +263,7 @@ public:
 };
 
 class LDT_EXPORT VarmaArma {
-  const VarmaSizes *pSizes;
+  const VarmaSizes *pSizes = nullptr;
 
   Ti mMaInfCount = 0;
 
@@ -463,7 +463,7 @@ public:
 
   Ti ValidCounts = 0;
 
-  // std::vector<VarmaSimulationDetail*>* Details = nullptr;
+  // std::vector<VarmaSimulationDetail*>* Details;
 
   VarmaSimulation(){};
 

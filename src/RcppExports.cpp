@@ -54,8 +54,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // DcSearch
-SEXP DcSearch(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions, SEXP costMatrices, bool searchLogit, bool searchProbit, SEXP optimOptions, SEXP measureOptions, SEXP modelCheckItems, SEXP searchItems, SEXP searchOptions);
-RcppExport SEXP _ldt_DcSearch(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP optimOptionsSEXP, SEXP measureOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+SEXP DcSearch(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions, SEXP costMatrices, bool searchLogit, bool searchProbit, SEXP optimOptions, SEXP aucOptions, SEXP measureOptions, SEXP modelCheckItems, SEXP searchItems, SEXP searchOptions);
+RcppExport SEXP _ldt_DcSearch(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP optimOptionsSEXP, SEXP aucOptionsSEXP, SEXP measureOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -68,17 +68,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type searchLogit(searchLogitSEXP);
     Rcpp::traits::input_parameter< bool >::type searchProbit(searchProbitSEXP);
     Rcpp::traits::input_parameter< SEXP >::type optimOptions(optimOptionsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type aucOptions(aucOptionsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type measureOptions(measureOptionsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type modelCheckItems(modelCheckItemsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type searchItems(searchItemsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(DcSearch(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, measureOptions, modelCheckItems, searchItems, searchOptions));
+    rcpp_result_gen = Rcpp::wrap(DcSearch(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, measureOptions, modelCheckItems, searchItems, searchOptions));
     return rcpp_result_gen;
 END_RCPP
 }
 // DcEstim
-SEXP DcEstim(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX, SEXP pcaOptionsX, SEXP costMatrices, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, bool weightedEval, bool printMsg);
-RcppExport SEXP _ldt_DcEstim(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP distTypeSEXP, SEXP newXSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP weightedEvalSEXP, SEXP printMsgSEXP) {
+SEXP DcEstim(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX, SEXP pcaOptionsX, SEXP costMatrices, SEXP aucOptions, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, bool weightedEval, bool printMsg);
+RcppExport SEXP _ldt_DcEstim(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP distTypeSEXP, SEXP newXSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP aucOptionsSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP weightedEvalSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -89,13 +90,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type costMatrices(costMatricesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type aucOptions(aucOptionsSEXP);
     Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
     Rcpp::traits::input_parameter< double >::type simTrainRatio(simTrainRatioSEXP);
     Rcpp::traits::input_parameter< int >::type simTrainFixSize(simTrainFixSizeSEXP);
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
     Rcpp::traits::input_parameter< bool >::type weightedEval(weightedEvalSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(DcEstim(y, x, w, distType, newX, pcaOptionsX, costMatrices, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg));
+    rcpp_result_gen = Rcpp::wrap(DcEstim(y, x, w, distType, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -384,6 +386,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// GetRocOptions
+List GetRocOptions(double lowerThreshold, double upperThreshold, double epsilon, bool pessimistic, SEXP costs, SEXP costMatrix);
+RcppExport SEXP _ldt_GetRocOptions(SEXP lowerThresholdSEXP, SEXP upperThresholdSEXP, SEXP epsilonSEXP, SEXP pessimisticSEXP, SEXP costsSEXP, SEXP costMatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lowerThreshold(lowerThresholdSEXP);
+    Rcpp::traits::input_parameter< double >::type upperThreshold(upperThresholdSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< bool >::type pessimistic(pessimisticSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type costs(costsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type costMatrix(costMatrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetRocOptions(lowerThreshold, upperThreshold, epsilon, pessimistic, costs, costMatrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // GetNelderMeadOptions
 List GetNelderMeadOptions(int maxIterations, double epsilon, double alpha, double beta, double gamma, double scale);
 RcppExport SEXP _ldt_GetNelderMeadOptions(SEXP maxIterationsSEXP, SEXP epsilonSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP scaleSEXP) {
@@ -536,16 +554,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetAuc
-double GetAuc(SEXP y, SEXP scores, SEXP weights);
-RcppExport SEXP _ldt_GetAuc(SEXP ySEXP, SEXP scoresSEXP, SEXP weightsSEXP) {
+// GetRoc
+List GetRoc(SEXP y, SEXP scores, SEXP weights, SEXP options, bool printMsg);
+RcppExport SEXP _ldt_GetRoc(SEXP ySEXP, SEXP scoresSEXP, SEXP weightsSEXP, SEXP optionsSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
     Rcpp::traits::input_parameter< SEXP >::type scores(scoresSEXP);
     Rcpp::traits::input_parameter< SEXP >::type weights(weightsSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetAuc(y, scores, weights));
+    Rcpp::traits::input_parameter< SEXP >::type options(optionsSEXP);
+    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetRoc(y, scores, weights, options, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -767,8 +787,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_GetDistance", (DL_FUNC) &_ldt_GetDistance, 4},
     {"_ldt_ClusterH", (DL_FUNC) &_ldt_ClusterH, 3},
     {"_ldt_ClusterHGroup", (DL_FUNC) &_ldt_ClusterHGroup, 6},
-    {"_ldt_DcSearch", (DL_FUNC) &_ldt_DcSearch, 13},
-    {"_ldt_DcEstim", (DL_FUNC) &_ldt_DcEstim, 13},
+    {"_ldt_DcSearch", (DL_FUNC) &_ldt_DcSearch, 14},
+    {"_ldt_DcEstim", (DL_FUNC) &_ldt_DcEstim, 14},
     {"_ldt_F_CrossSection", (DL_FUNC) &_ldt_F_CrossSection, 1},
     {"_ldt_F_Yearly", (DL_FUNC) &_ldt_F_Yearly, 1},
     {"_ldt_F_Quarterly", (DL_FUNC) &_ldt_F_Quarterly, 2},
@@ -792,6 +812,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_ToString_F0", (DL_FUNC) &_ldt_ToString_F0, 1},
     {"_ldt_Parse_F", (DL_FUNC) &_ldt_Parse_F, 2},
     {"_ldt_Sequence_F", (DL_FUNC) &_ldt_Sequence_F, 2},
+    {"_ldt_GetRocOptions", (DL_FUNC) &_ldt_GetRocOptions, 6},
     {"_ldt_GetNelderMeadOptions", (DL_FUNC) &_ldt_GetNelderMeadOptions, 6},
     {"_ldt_GetPcaOptions", (DL_FUNC) &_ldt_GetPcaOptions, 4},
     {"_ldt_GetLmbfgsOptions", (DL_FUNC) &_ldt_GetLmbfgsOptions, 4},
@@ -802,7 +823,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_GetMeasureOptions", (DL_FUNC) &_ldt_GetMeasureOptions, 8},
     {"_ldt_GetWeightFromMeasure", (DL_FUNC) &_ldt_GetWeightFromMeasure, 2},
     {"_ldt_GetMeasureFromWeight", (DL_FUNC) &_ldt_GetMeasureFromWeight, 2},
-    {"_ldt_GetAuc", (DL_FUNC) &_ldt_GetAuc, 3},
+    {"_ldt_GetRoc", (DL_FUNC) &_ldt_GetRoc, 5},
     {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 8},
     {"_ldt_GldQuantile", (DL_FUNC) &_ldt_GldQuantile, 5},
     {"_ldt_GldDensityQuantile", (DL_FUNC) &_ldt_GldDensityQuantile, 5},

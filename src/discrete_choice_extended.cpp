@@ -59,10 +59,10 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     WorkSize = std::max(WorkSize, rows + mNumChoices - 2);
     if (costMatrices) {
       if (hasWeight && weightedEval) {
-        auto cost = CostMatrix<true>(costMatrices->size());
+        auto cost = FrequencyCost<true>(costMatrices->size());
         StorageSize += cost.StorageSize;
       } else {
-        auto cost = CostMatrix<false>(costMatrices->size());
+        auto cost = FrequencyCost<false>(costMatrices->size());
         StorageSize += cost.StorageSize;
       }
     }
@@ -73,7 +73,8 @@ DiscreteChoiceExtended::~DiscreteChoiceExtended() { delete Model; }
 
 void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
                                        Tv *work, bool olsInitial,
-                                       const Matrix<Tv> *xForecast) {
+                                       const Matrix<Tv> *xForecast,
+                                       RocOptions &aucOptions) {
   // you can add colIndexes as an argument, but as I wrote in the constructor,
   // you should handle forecast indexation too
 
@@ -147,36 +148,35 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     p += numObs * mNumChoices;
     Model->GetProbabilities(X, Projections, work);
 
-    if (mHasWeight && mWeightedEval) {
-      if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = AUC<true, true>(numObs);
-        auc.Calculate(Y, Projections, &W, nullptr);
-        Auc = auc.Result;
+    std::unique_ptr<RocBase> auc0;
+    if (mModelType == DiscreteChoiceModelType::kBinary) {
+      if (aucOptions.Costs.Data) {
+        if (mHasWeight && mWeightedEval)
+          auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
+        else
+          auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(numObs));
       } else {
-        auto auc = AUC<true, false>(numObs);
-        auc.Calculate(Y, Projections, &W, nullptr);
-        Auc = auc.Result;
+        if (mHasWeight && mWeightedEval)
+          auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
+        else
+          auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(numObs));
       }
     } else {
-      if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = AUC<false, true>(numObs);
-        auc.Calculate(Y, Projections, nullptr, nullptr);
-        Auc = auc.Result;
-      } else {
-        auto auc = AUC<false, false>(numObs);
-        auc.Calculate(Y, Projections, nullptr, nullptr);
-        Auc = auc.Result;
-      }
+      throw std::logic_error("Not implemented discrete choice model type");
     }
+    auto auc = auc0.get();
+    auc->Calculate(Y, Projections, mHasWeight && mWeightedEval ? &W : nullptr,
+                   aucOptions);
+    Auc = auc->Result;
 
     if (pCostMatrices) {
       if (mHasWeight && mWeightedEval) {
-        auto cost = CostMatrix<true>(pCostMatrices->size());
+        auto cost = FrequencyCost<true>(pCostMatrices->size());
         cost.Calculate(*pCostMatrices, Y, Projections, &W, &storage[p]);
         p += cost.StorageSize;
         CostRatioAvg = cost.AverageRatio;
       } else {
-        auto cost = CostMatrix<false>(pCostMatrices->size());
+        auto cost = FrequencyCost<false>(pCostMatrices->size());
         cost.Calculate(*pCostMatrices, Y, Projections, nullptr, &storage[p]);
         p += cost.StorageSize;
         CostRatioAvg = cost.AverageRatio;

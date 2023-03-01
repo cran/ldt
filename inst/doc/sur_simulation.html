@@ -394,9 +394,9 @@ Furthermore, to decrease the size of the model set, we assume that we
 know that the number of regressors is not larger than 3. In other words,
 we will use the following data (If you are not familiar with the
 arguments of the <code>SurSearch_s()</code> function, please read <a href="sur_growth.html">this vignette</a> first):</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">3</span>))</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)), <span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">3</span>)))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>xCounts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">5</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>yGroups <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span></code></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>yGroups <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)))</span></code></pre></div>
 </div>
 <div id="data" class="section level2">
 <h2>Data</h2>
@@ -615,11 +615,11 @@ information about the magnitude of the AICs.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sur_sim_one <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">unr =</span> <span class="fu">SampleAndEstimate</span>(</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">c</span>(<span class="dv">3</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)), measureOptions,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">3</span>)), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))), measureOptions,</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    searchItems, checkItems</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">res =</span> <span class="fu">SampleAndEstimate</span>(</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">c</span>(<span class="dv">3</span>), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)), measureOptions,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="dv">1</span>, <span class="cn">NULL</span>, n, s, <span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">3</span>)), <span class="fu">c</span>(<span class="cn">NA</span>), <span class="fu">list</span>(<span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))), measureOptions,</span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    searchItems, checkItems</span>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>) </span></code></pre></div>

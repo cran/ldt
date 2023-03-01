@@ -1,5 +1,5 @@
 
-x <-as.data.frame(matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
+x <- matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
                            26.695,21.992,68.033,98.872,61.154,71.842,66.922,
                            31.142,58.429,45.123,80.99,26.345,50.096,36.478,
                            29.377,27.141,65.037,72.621,63.391,68.125,60.369,
@@ -21,10 +21,10 @@ x <-as.data.frame(matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
                            62.295,18.609,61.597,22.438,67.702,83.393,96.283,
                            64.895,34.39,42.212,52.377,24.745,42.534,64.688,
                            7.392,82.462,22.022,68.858,55.901,98.156,96.029),
-                         nrow =22, ncol=7))
+                         nrow =22, ncol=7)
+colnames(x) <- paste0("V", c(1:ncol(x)))
 
-
-RES = SurSearch(x[,c(1,2)], x[,3:7], 2, yGroups = list(c(1,2)), xSizes = c(1,2,3,4,5),
+RES = SurSearch(x[,c(1,2)], x[,3:7], 2, yGroups = list(as.integer(c(1,2))), xSizes = as.integer(c(1,2,3,4,5)),
                 searchOptions = GetSearchOptions(printMsg = FALSE),
                 searchItems = GetSearchItems(type1 = TRUE, cdfs = c(0,1),
                                              all = TRUE, bestK = 3,inclusion = TRUE,

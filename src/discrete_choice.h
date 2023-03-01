@@ -354,8 +354,9 @@ public:
   /// @param olsInitial If true, OLS is used to initialize the coefficients.
   /// Otherwise, current values are used.
   /// @param xForecast If not null, exogenous data for forecasting
+  /// @param aucOptions Options for calculating AUC
   void Calculate(const Matrix<Tv> &data, Tv *storage, Tv *work, bool olsInitial,
-                 const Matrix<Tv> *xForecast);
+                 const Matrix<Tv> *xForecast, RocOptions &aucOptions);
 };
 
 // todo: add DiscreteChoiceFrequencyTable class
@@ -423,7 +424,7 @@ public:
   virtual void Calculate(const Matrix<Tv> &data,
                          const std::vector<Matrix<Tv>> *costMatrixes,
                          Tv *storage, Tv *work, Ti *workI, bool &cancel,
-                         bool checkSizes = true,
+                         RocOptions &aucOptions, bool checkSizes = true,
                          std::set<const char *> *errors = nullptr,
                          Ti maxInvalidSim = INT32_MAX) = 0;
 };
@@ -468,7 +469,7 @@ public:
   /// @param weightedEval If true, weights are used in evaluations
   DiscreteChoiceSim(Ti rows, Ti cols, Ti numChoices, Tv trainPercentage,
                     Ti trainFixSize, Ti costMatrixCount, bool doAuc,
-                    bool doFrequencyTable,
+                    bool doFrequencyTable = false,
                     PcaAnalysisOptions *pcaOptions = nullptr,
                     bool weightedEval = false);
 
@@ -482,6 +483,7 @@ public:
   /// @param work Work array of size \ref WorkSize (real)
   /// @param workI Work array of size \ref WorkSize  (integer)
   /// @param cancel A reference to be used for cancelling the operations
+  /// @brief aucOptions Options for calculating AUC
   /// @param checkSizes If true, length of work and storage arrays are checked.
   /// @param errors If not null, on exit it contains the list of errors occurred
   /// @param maxInvalidSim A maximum value for the number of invalid simulations
@@ -489,7 +491,7 @@ public:
   virtual void Calculate(const Matrix<Tv> &data,
                          const std::vector<Matrix<Tv>> *costMatrixes,
                          Tv *storage, Tv *work, Ti *workI, bool &cancel,
-                         bool checkSizes = true,
+                         RocOptions &aucOptions, bool checkSizes = true,
                          std::set<const char *> *errors = nullptr,
                          Ti maxInvalidSim = INT32_MAX) override;
 };
@@ -539,10 +541,10 @@ class LDT_EXPORT DiscreteChoiceSearcher : public Searcher {
   std::vector<Ti> Indexes;
   Matrix<Ti> ExoIndexes;
   Matrix<Tv> Weights;
-  std::unique_ptr<CostMatrixBase> CostIn;
+  std::unique_ptr<FrequencyCostBase> CostIn;
   Matrix<Tv> Probs;
-  std::unique_ptr<AucBase> AucIn;
-  Matrix<Tv> AucWeightsMc;
+  std::unique_ptr<RocBase> AucIn;
+  RocOptions *pAucOptions;
 
 public:
   /// @brief Initializes a new instance of the class
@@ -560,15 +562,14 @@ public:
   /// @param seed A seed for the simulations. It can be negative for replicating
   /// the results
   /// @param newtonOptions Optimization options
-  DiscreteChoiceSearcher(SearchOptions &searchOptions,
-                         const SearchItems &searchItems,
-                         const SearchMeasureOptions &measures,
-                         const SearchModelChecks &checks, Ti SizeG,
-                         const std::vector<std::vector<Ti>> &groupIndexMap,
-                         const std::vector<Ti> &groupSizes, Ti fixFirstG,
-                         const Matrix<Tv> &source, Ti numChoices,
-                         const std::vector<Matrix<Tv>> &costMatrixes,
-                         unsigned int seed, Newton &newtonOptions);
+  /// @param aucOptions Options for calculating AUC
+  DiscreteChoiceSearcher(
+      SearchOptions &searchOptions, const SearchItems &searchItems,
+      const SearchMeasureOptions &measures, const SearchModelChecks &checks,
+      Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
+      const std::vector<Ti> &groupSizes, Ti fixFirstG, const Matrix<Tv> &source,
+      Ti numChoices, const std::vector<Matrix<Tv>> &costMatrixes,
+      unsigned int seed, Newton &newtonOptions, RocOptions &aucOptions);
 };
 
 /// @brief A base class for a model set for discrete choice
@@ -611,7 +612,7 @@ public:
                SearchModelChecks &checks, const std::vector<Ti> &sizes,
                const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
                std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit,
-               bool addProbit, Newton &newtonOptions);
+               bool addProbit, Newton &newtonOptions, RocOptions &aucOptions);
 
   /// @brief It checks inputs and calls 'ModelSet.Start(...)'
   /// @param work Work array with size given in the base class (real)
@@ -639,6 +640,7 @@ public:
   /// @param groupIndexMaps A group for the exogenous data. It is passed to the
   /// base class
   /// @param newtonOptions Optimization options
+  /// @param aucOptions Options for calculating AUC
   /// @param addLogit If true, logit models are included in the model set
   /// @param addProbit If true, probit models are included in the model set
   DiscreteChoiceModelset(SearchOptions &searchOptions, SearchItems &searchItems,
@@ -647,8 +649,8 @@ public:
                          const std::vector<Ti> &sizes, const Matrix<Tv> &source,
                          std::vector<Matrix<Tv>> &costMatrixes,
                          std::vector<std::vector<Ti>> &groupIndexMaps,
-                         Newton &newtonOptions, bool addLogit = true,
-                         bool addProbit = false);
+                         Newton &newtonOptions, RocOptions &aucOptions,
+                         bool addLogit = true, bool addProbit = false);
 
   virtual ~DiscreteChoiceModelset();
 };

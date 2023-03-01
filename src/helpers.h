@@ -130,12 +130,19 @@ LDT_EXPORT void Rethrow(const char *msg, bool logic = true);
 /// @param v The array
 /// @param length Length of the array
 /// @param result A place to keep the sorting indices
+/// @param ascending If true, it sorts in an ascending order
 template <typename Tw = Tv>
-void SortIndexes(const Tw *v, Ti length, std::vector<Ti> &result) {
+void SortIndexes(const Tw *v, Ti length, std::vector<Ti> &result,
+                 bool ascending = true) {
   result.resize(length);
   std::iota(result.begin(), result.end(), 0);
-  std::stable_sort(result.begin(), result.end(),
-                   [&v](Ti i1, Ti i2) { return v[i1] < v[i2]; });
+  if (ascending) {
+    std::stable_sort(result.begin(), result.end(),
+                     [&v](Ti i1, Ti i2) { return v[i1] < v[i2]; });
+  } else {
+    std::stable_sort(result.begin(), result.end(),
+                     [&v](Ti i1, Ti i2) { return v[i1] > v[i2]; });
+  }
 }
 
 /// @brief Sorts a vector and keeps the sorting indices (for a description,
@@ -143,12 +150,19 @@ void SortIndexes(const Tw *v, Ti length, std::vector<Ti> &result) {
 /// @tparam Tw Type of data
 /// @param v The vector
 /// @param result A place to keep the sorting indices
+/// @param ascending If true, it sorts in an ascending order
 template <typename Tw = Tv>
-void SortIndexes(const std::vector<Tw> &v, std::vector<Ti> &result) {
+void SortIndexes(const std::vector<Tw> &v, std::vector<Ti> &result,
+                 bool ascending = true) {
   result.resize(v.size());
   std::iota(result.begin(), result.end(), 0);
-  std::stable_sort(result.begin(), result.end(),
-                   [&v](Ti i1, Ti i2) { return v.at(i1) < v.at(i2); });
+  if (ascending) {
+    std::stable_sort(result.begin(), result.end(),
+                     [&v](Ti i1, Ti i2) { return v.at(i1) < v.at(i2); });
+  } else {
+    std::stable_sort(result.begin(), result.end(),
+                     [&v](Ti i1, Ti i2) { return v.at(i1) > v.at(i2); });
+  }
 }
 
 inline static void Split(const std::string &str, const std::string &delim,

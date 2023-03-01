@@ -121,7 +121,7 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
 }
 
 template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
-Distance<checkNan, method, corrMethod>::~Distance(){};
+Distance<checkNan, method, corrMethod>::~Distance() {}
 
 template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
 Distance<checkNan, method, corrMethod>::Distance(Ti rows, Ti cols) {

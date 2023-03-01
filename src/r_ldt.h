@@ -61,7 +61,7 @@ void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
                    const char *length1Informtion = "Coefficients",
                    bool isDc = false);
 
-NumericMatrix insert_intercept(SEXP a);
+NumericMatrix insert_intercept(NumericMatrix a);
 
 NumericMatrix cbind_matrix(NumericMatrix a, NumericMatrix b);
 
@@ -94,6 +94,34 @@ std::vector<std::string> GetDefaultColNames(std::string pre, int length);
 
 // clang-format off
 
+//' Options for ROC and AUC
+//'
+//' @param lowerThreshold (double) Lower bound for calculating partial AUC.
+//' @param upperThreshold (double) Upper bound for calculating partial AUC.
+//' @param epsilon (double) A value to ignore small floating point differences in comparing scores.
+//' @param pessimistic (bool) If true, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to roc analysis, fig. 6).
+//' @param costs (numeric vector) cost of each observations. If null, cost of all observations will be 1.
+//' @param costMatrix (numeric matrix) a 2x2 cost matrix in which: (1,1) is cost of TN,
+//' (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
+//' column is multiplied by the corresponding value in costs vector (see
+//' Fawcett (2006), ROC graphs with instance-varying costs).
+//'
+//' @return A list with the given options.
+//'
+//' @export
+// [[Rcpp::export]]
+ List GetRocOptions(double lowerThreshold = 0, double upperThreshold = 1, double epsilon = 1e-12,
+                    bool pessimistic = false, SEXP costs = R_NilValue, SEXP costMatrix = R_NilValue);
+
+// clang-format on
+
+void CheckRocOptions(List options);
+
+void UpdateRocOptions(bool printMsg, List &rocOptionsR,
+                      ldt::RocOptions &options, const char *startMsg);
+
+// clang-format off
+
 //' Options for Nelder-Mead Optimization
 //'
 //' @param maxIterations (int) Maximum number of iterations.
@@ -107,9 +135,9 @@ std::vector<std::string> GetDefaultColNames(std::string pre, int length);
 //'
 //' @export
 // [[Rcpp::export]]
-List GetNelderMeadOptions(int maxIterations = 100, double epsilon = 1e-8,
-                          double alpha = 1, double beta = 0.5, double gamma = 2,
-                          double scale = 1);
+ List GetNelderMeadOptions(int maxIterations = 100, double epsilon = 1e-8,
+                           double alpha = 1, double beta = 0.5, double gamma = 2,
+                           double scale = 1);
 // clang-format on
 
 void CheckNelderMeadOptions(List options);
@@ -128,7 +156,7 @@ void CheckNelderMeadOptions(List options);
 //' @export
 // [[Rcpp::export]]
 List GetPcaOptions(int ignoreFirst = 1, int exactCount = 0,
-                   double cutoffRate = 0.8, int max = 1000);
+                    double cutoffRate = 0.8, int max = 1000);
 
 // clang-format on
 
@@ -151,7 +179,7 @@ void UpdatePcaOptions(bool printMsg, List &pcaOptionsR, bool hasPca,
 //' @export
 // [[Rcpp::export]]
 List GetLmbfgsOptions(int maxIterations = 100, double factor = 1e7,
-                      double projectedGradientTol = 0, int maxCorrections = 5);
+                       double projectedGradientTol = 0, int maxCorrections = 5);
 // clang-format on
 
 void CheckLmbfgsOptions(List options);
@@ -173,7 +201,7 @@ void UpdateLmbfgsOptions(bool printMsg, List &lmbfgsOptions,
 //' @export
 // [[Rcpp::export]]
 List GetNewtonOptions(int maxIterations = 100, double functionTol = 1e-4,
-                      double gradientTol = 0, bool useLineSearch = true);
+                       double gradientTol = 0, bool useLineSearch = true);
 // clang-format on
 
 void CheckNewtonOptions(List options);
@@ -201,9 +229,9 @@ void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
 //' @export
 // [[Rcpp::export]]
 List GetSearchItems(bool model = true, bool type1 = false, bool type2 = false,
-                    int bestK = 1, bool all = false, bool inclusion = false,
-                    SEXP cdfs = R_NilValue, double extremeMultiplier = 0,
-                    bool mixture4 = false);
+                     int bestK = 1, bool all = false, bool inclusion = false,
+                     SEXP cdfs = R_NilValue, double extremeMultiplier = 0,
+                     bool mixture4 = false);
 // clang-format on
 
 void CheckSearchItems(List options);
@@ -229,7 +257,7 @@ void UpdateSearchItems(bool printMsg, List &searchItems,
 //' @export
 // [[Rcpp::export]]
 List GetSearchOptions(bool parallel = false, int reportInterval = 2,
-                      bool printMsg = false);
+                       bool printMsg = false);
 // clang-format on
 
 void CheckSearchOptions(List options);
@@ -257,12 +285,12 @@ void UpdateSearchOptions(List &searchOptions, ldt::SearchOptions &options,
 //' @export
 // [[Rcpp::export]]
 List GetModelCheckItems(
-    bool estimation = true,
-    double maxConditionNumber =
-        1.7e308, // TODO: INFINITY or R_PosInf throws warning
-    int minObsCount = 0, int minDof = 0, int minOutSim = 0,
-    double minR2 = -1.7e308, double maxAic = 1.7e308, double maxSic = 1.7e308,
-    bool prediction = false, double predictionBoundMultiplier = 4);
+     bool estimation = true,
+     double maxConditionNumber =
+       1.7e308, // TODO: INFINITY or R_PosInf throws warning
+       int minObsCount = 0, int minDof = 0, int minOutSim = 0,
+       double minR2 = -1.7e308, double maxAic = 1.7e308, double maxSic = 1.7e308,
+       bool prediction = false, double predictionBoundMultiplier = 4);
 // clang-format on
 
 void CheckModelCheckItems(List options);
@@ -276,8 +304,8 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
 
 //' Options for 'Measuring Performance'
 //'
-//' @param typesIn (nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{costMatrixIn}, \code{aucIn}. Null means no measure.
-//' @param typesOut (nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{costMatrixOut}, \code{aucOut}. Null means no measure.
+//' @param typesIn (nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{aucIn}. Null means no measure.
+//' @param typesOut (nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, \code{aucOut}. Null means no measure.
 //' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation.
 //' @param trainFixSize (int) Number of data-points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
 //' @param trainRatio (double) Number of data-points, as a ratio of the available size, in the training sample in the pseudo out-of-sample simulation.
@@ -289,9 +317,9 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
 //' @export
 // [[Rcpp::export]]
 List GetMeasureOptions(SEXP typesIn = R_NilValue, SEXP typesOut = R_NilValue,
-                       int simFixSize = 10, double trainRatio = 0.75,
-                       int trainFixSize = 0, int seed = 0,
-                       SEXP horizons = R_NilValue, bool weightedEval = false);
+                        int simFixSize = 10, double trainRatio = 0.75,
+                        int trainFixSize = 0, int seed = 0,
+                        SEXP horizons = R_NilValue, bool weightedEval = false);
 // clang-format on
 
 void CheckMeasureOptions(List options);

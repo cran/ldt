@@ -12,6 +12,7 @@ DcEstim(
   newX = NULL,
   pcaOptionsX = NULL,
   costMatrices = NULL,
+  aucOptions = NULL,
   simFixSize = 200L,
   simTrainRatio = 0.5,
   simTrainFixSize = 0L,
@@ -34,6 +35,8 @@ DcEstim(
 \item{pcaOptionsX}{(list) A list of options in order to use principal components of the \code{x}, instead of the actual values. set null to disable. Use \code{\link[=GetPcaOptions]{GetPcaOptions()}} for initialization.}
 
 \item{costMatrices}{(list of matrices) Each cost table determines how you score the calculated probabilities.}
+
+\item{aucOptions}{(nullable list) AUC calculation options. see \code{[GetRocOptions()]}.}
 
 \item{simFixSize}{(int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. (see \code{\link[=GetMeasureOptions]{GetMeasureOptions()}}).}
 

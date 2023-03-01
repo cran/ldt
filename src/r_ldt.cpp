@@ -25,10 +25,14 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
     throw std::logic_error("Invalid 'y'. It is empty.");
   if (minExpectedX > 0 && x == R_NilValue)
     throw std::logic_error("Invalid 'x'. It is empty.");
-  if (minExpectedW > 0 && y == R_NilValue)
+  if (minExpectedW > 0 && w == R_NilValue)
     throw std::logic_error("Invalid 'w'. It is empty.");
 
-  NumericMatrix y0 = internal::convert_using_rfunction(y, "as.matrix");
+  NumericMatrix y0;
+  if (y != R_NilValue && is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
+  else
+    y0 = as<NumericMatrix>(y);
 
   if (y0.nrow() == 0 && y0.ncol() == 0)
     throw std::logic_error("Invalid data: 'y' is empty.");
@@ -47,9 +51,11 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
       colNames.push_back(std::string("Y") + std::to_string(i + 1));
 
   if (w != R_NilValue) {
-    NumericVector w0 = internal::convert_using_rfunction(w, "as.numeric");
+    if (is<NumericMatrix>(w) == false)
+      throw std::logic_error("'w' must be a 'numeric matrix'.");
+    auto w0 = as<NumericMatrix>(w);
     w_ = &w0[0];
-    wRows = w0.length();
+    wRows = w0.nrow();
     colNames.push_back("Weight");
   }
 
@@ -60,7 +66,9 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
   }
 
   if (x != R_NilValue) {
-    NumericMatrix x0 = internal::convert_using_rfunction(x, "as.matrix");
+    if (is<NumericMatrix>(x) == false)
+      throw std::logic_error("'x' must be a 'numeric matrix'.");
+    NumericMatrix x0 = as<NumericMatrix>(x);
     if (x0.nrow() == 0 && x0.ncol() == 0)
       throw std::logic_error("Invalid data: 'x' is empty.");
     x_ = &x0[0];
@@ -80,9 +88,9 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
 
     // handle new data if x exists
     if (newX != R_NilValue) {
-
-      NumericMatrix newX0 =
-          internal::convert_using_rfunction(newX, "as.matrix");
+      if (is<NumericMatrix>(newX) == false)
+        throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      NumericMatrix newX0 = as<NumericMatrix>(newX);
 
       newX_ = &newX0[0];
       newxCols = newX0.ncol();
@@ -118,7 +126,8 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
   my.SetData(y_, yRows, yCols);
   if (w_)
     mw.SetData(w_, wRows, 1);
-  mnewX.SetData(newX_, newxRows, newxCols);
+  if (newX_)
+    mnewX.SetData(newX_, newxRows, newxCols);
 
   if (printMsg) {
     Rprintf("Data:\n");
@@ -129,7 +138,7 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
     Rprintf("    - Adds 'Intercept' = %s\n", addIntercept ? "true" : "false");
   }
 
-  int mat_rows = my.RowsCount + (appendNewX ? mnewX.RowsCount : 0);
+  int mat_rows = my.RowsCount + (appendNewX ? newxRows : 0);
   int mat_cols = mx.ColsCount + my.ColsCount + mw.ColsCount + (int)addIntercept;
   auto mat_data = std::unique_ptr<double[]>(new double[mat_rows * mat_cols]);
   result.SetData(NAN, mat_data.get(), mat_rows, mat_cols);
@@ -194,8 +203,9 @@ void GetSizes(bool printMsg, std::vector<int> &result, SEXP &sizes,
   if (sizes == R_NilValue)
     result.push_back(1);
   else {
-    IntegerVector sizes_ =
-        internal::convert_using_rfunction(sizes, "as.integer");
+    if (is<IntegerVector>(sizes) == false)
+      throw std::logic_error("'sizes' must be an 'integer vector'.");
+    IntegerVector sizes_ = as<IntegerVector>(sizes);
     for (int i = 0; i < sizes_.length(); i++)
       result.push_back((sizes_[i]));
   }
@@ -219,11 +229,13 @@ void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
                    bool isX) {
 
   if (partitions != R_NilValue) {
-    List partitions0 =
-        (List)internal::convert_using_rfunction(partitions, "as.list");
+    if (is<List>(partitions) == false)
+      throw std::logic_error("'partitions' must be a 'List'.");
+    List partitions0 = as<List>(partitions);
     for (int i = 0; i < partitions0.length(); i++) {
-      IntegerVector par_i = (IntegerVector)internal::convert_using_rfunction(
-          partitions0[i], "as.integer");
+      if (is<IntegerVector>(partitions0[i]) == false)
+        throw std::logic_error("'partitions[i]' must be an 'integer vector'.");
+      IntegerVector par_i = as<IntegerVector>(partitions0[i]);
       auto ar = std::vector<int>();
       for (int j = 0; j < par_i.length(); j++) {
         ar.push_back(par_i[j] + adjustPos -
@@ -269,10 +281,14 @@ void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
                SEXP &groups, int variableCount, int adjustPos, bool isX) {
 
   if (groups != R_NilValue) {
-    List groups0 = (List)internal::convert_using_rfunction(groups, "as.list");
+
+    if (is<List>(groups) == false)
+      throw std::logic_error("'groups' must be a 'List'.");
+    List groups0 = as<List>(groups);
     for (int i = 0; i < groups0.length(); i++) {
-      IntegerVector gro_i = (IntegerVector)internal::convert_using_rfunction(
-          groups0[i], "as.integer");
+      if (is<IntegerVector>(groups0[i]) == false)
+        throw std::logic_error("'groups[i]' must be an 'integer vector'.");
+      IntegerVector gro_i = as<IntegerVector>(groups0[i]);
       auto ar = std::vector<int>();
       for (int j = 0; j < gro_i.length(); j++) {
         ar.push_back(gro_i[j] + adjustPos -
@@ -454,11 +470,10 @@ NumericMatrix cbind_matrix(NumericMatrix a, NumericMatrix b) {
   return result;
 }
 
-NumericMatrix insert_intercept(SEXP mat) {
+NumericMatrix insert_intercept(NumericMatrix a) {
   StringVector nms;
   NumericMatrix result;
 
-  NumericMatrix a = internal::convert_using_rfunction(mat, "as.matrix");
   int n1 = a.ncol();
   result = no_init_matrix(a.nrow(), n1 + 1);
   nms = StringVector(n1 + 1);

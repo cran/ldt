@@ -19,9 +19,9 @@ sampleSizes <- c(30, 50)
 sMultipliers <- c(0.1, 2)
 
 ## ----def_search_assumptions---------------------------------------------------
-xSizes <- list(c(1, 2), c(3))
+xSizes <- list(as.integer(c(1, 2)), as.integer(c(3)))
 xCounts <- c(NA, 5)
-yGroups <- list(c(1, 2))
+yGroups <- list(as.integer(c(1, 2)))
 
 ## -----------------------------------------------------------------------------
 GetSample <- function(n, s) {
@@ -201,11 +201,11 @@ checkItems <- GetModelCheckItems(maxAic = 10)
 
 sur_sim_one <- list(
   unr = SampleAndEstimate(
-    -1, NULL, n, s, c(3), c(NA), list(c(1, 2)), measureOptions,
+    -1, NULL, n, s, as.integer(c(3)), c(NA), list(as.integer(c(1, 2))), measureOptions,
     searchItems, checkItems
   ),
   res = SampleAndEstimate(
-    -1, NULL, n, s, c(3), c(NA), list(c(1, 2)), measureOptions,
+    -1, NULL, n, s, as.integer(c(3)), c(NA), list(as.integer(c(1, 2))), measureOptions,
     searchItems, checkItems
   )
 ) 

@@ -4,7 +4,13 @@
 \alias{RemoveNaStrategies}
 \title{Remove NA and Count the Number of Observations in Different Scenarios}
 \usage{
-RemoveNaStrategies(data, countFun = function(nRows, nCols) nRows * nCols)
+RemoveNaStrategies(
+  data,
+  countFun = function(nRows, nCols) nRows * nCols,
+  rowIndices = NULL,
+  colIndices = NULL,
+  printMsg = FALSE
+)
 }
 \arguments{
 \item{data}{A matrix with NA}
@@ -12,6 +18,12 @@ RemoveNaStrategies(data, countFun = function(nRows, nCols) nRows * nCols)
 \item{countFun}{a function to determine how strategies are sorted.
 Default counts the number of observations. You might want to give columns a
 higher level of importance for example by using \code{nRows*nCols^1.5}.}
+
+\item{rowIndices}{Indices of sorted rows to search. Use it to create jumps for large number of rows (E.g., if the first sorted strategies suggest small number of columns and you are looking for other strategies). Use \code{NULL} to disable}
+
+\item{colIndices}{similar to \code{rowsMaxCount} for columns.}
+
+\item{printMsg}{If \code{TRUE}, it prints progress.}
 }
 \value{
 a list of lists with four elements:

@@ -9,7 +9,7 @@
 
 using namespace ldt;
 
-//#pragma region Options
+// #pragma region Options
 
 void SearchItems::Update(const SearchMeasureOptions measures, Ti targetCount,
                          Ti DepenCount, Ti exoCount) {
@@ -63,10 +63,10 @@ void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   mIndexOfCrps = IndexOf(MeasuresOut, ScoringType::kCrps);
 
   // discrete choice
-  mIndexOfCostMatrixIn = IndexOf(MeasuresIn, GoodnessOfFitType::kCostMatrix);
+  mIndexOfCostMatrixIn = IndexOf(MeasuresIn, GoodnessOfFitType::kFrequencyCost);
   mIndexOfAucIn = IndexOf(MeasuresIn, GoodnessOfFitType::kAuc);
 
-  mIndexOfCostMatrixOut = IndexOf(MeasuresOut, ScoringType::kCostMatrix);
+  mIndexOfCostMatrixOut = IndexOf(MeasuresOut, ScoringType::kFrequencyCost);
   mIndexOfAucOut = IndexOf(MeasuresOut, ScoringType::kAuc);
 }
 
@@ -103,9 +103,9 @@ void SearchModelChecks::Update(const SearchMeasureOptions &measures) {
     Estimation = true;
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region EstimationKeep
+// #pragma region EstimationKeep
 
 EstimationKeep::EstimationKeep(Tv weight, const Matrix<Ti> *exogenouses,
                                const Matrix<Ti> *extra,
@@ -142,9 +142,9 @@ EstimationKeep::~EstimationKeep() {
     delete[] Extra.Data;
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region SearcherSummary
+// #pragma region SearcherSummary
 
 SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
                                  const SearchItems *option) {
@@ -245,4 +245,4 @@ void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
   }
 }
 
-//#pragma endregion
+// #pragma endregion

@@ -54,15 +54,16 @@ ClusterHGroup <- function(data, nGroups = 2L, threshold = 0, distance = "correla
 
 #' Discrete Choice Search
 #'
-#' @param y (numeric vector) endogenous data with variables in the columns.
+#' @param y (numeric matrix) endogenous data with variable in the column.
 #' @param x (numeric matrix) exogenous data with variables in the columns.
 #' @param w (numeric vector) weights of the observations in \code{y}. null means equal weights.
 #' @param xSizes (nullable int vector) Number of exogenous variables in the regressions. E.g., c(1,2) means the model set contains all the regressions with 1 and 2 exogenous variables. If null, c(1) is used.
 #' @param xPartitions (nullable list of int vector) a partition over the indexes of the exogenous variables. No regression is estimated with two variables in the same group. If null, each variable is placed in its own group and the size of the model set is maximized.
-#' @param costMatrices (list ofnumeric matrix) each cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
+#' @param costMatrices (list of numeric matrix) each frequency cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a frequency cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
 #' @param searchLogit (bool) if \code{TRUE}, logit regressions are added to the model set.
 #' @param searchProbit (bool) if \code{TRUE}, probit regressions are added to the model set.
-#' @param optimOptions (list) Newton optimization options. see \code{[GetNewtonOptions()]}. Use null for default values.
+#' @param optimOptions (nullable list) Newton optimization options. see \code{[GetNewtonOptions()]}.
+#' @param aucOptions (nullable list) AUC calculation options. see \code{[GetRocOptions()]}.
 #' @param measureOptions (nullable list) see \code{[GetMeasureOptions()]}.
 #' @param modelCheckItems (nullable list) see \code{[GetModelCheckItems()]}.
 #' @param searchItems (nullable list) see \code{[GetSearchItems()]}.
@@ -71,8 +72,8 @@ ClusterHGroup <- function(data, nGroups = 2L, threshold = 0, distance = "correla
 #' @return A list
 #'
 #' @export
-DcSearch <- function(y, x, w = NULL, xSizes = NULL, xPartitions = NULL, costMatrices = NULL, searchLogit = TRUE, searchProbit = FALSE, optimOptions = NULL, measureOptions = NULL, modelCheckItems = NULL, searchItems = NULL, searchOptions = NULL) {
-    .Call('_ldt_DcSearch', PACKAGE = 'ldt', y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, measureOptions, modelCheckItems, searchItems, searchOptions)
+DcSearch <- function(y, x, w = NULL, xSizes = NULL, xPartitions = NULL, costMatrices = NULL, searchLogit = TRUE, searchProbit = FALSE, optimOptions = NULL, aucOptions = NULL, measureOptions = NULL, modelCheckItems = NULL, searchItems = NULL, searchOptions = NULL) {
+    .Call('_ldt_DcSearch', PACKAGE = 'ldt', y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, measureOptions, modelCheckItems, searchItems, searchOptions)
 }
 
 #' Estimates an Discrete Choice Model
@@ -84,6 +85,7 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL, xPartitions = NULL, costMatr
 #' @param newX (numeric matrix) If not null, probabilities are projected for each row of this matrix.
 #' @param pcaOptionsX (list) A list of options in order to use principal components of the \code{x}, instead of the actual values. set null to disable. Use [GetPcaOptions()] for initialization.
 #' @param costMatrices (list of matrices) Each cost table determines how you score the calculated probabilities.
+#' @param aucOptions (nullable list) AUC calculation options. see \code{[GetRocOptions()]}.
 #' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. (see [GetMeasureOptions()]).
 #' @param simTrainRatio (double) Size of the training sample as a ratio of the number of the observations. It is effective only if \code{simTrainFixSize} is zero.
 #' @param simTrainFixSize (int) A fixed size for the training sample. If zero, \code{simTrainRatio} is used.
@@ -94,8 +96,8 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL, xPartitions = NULL, costMatr
 #' @return A list:
 #'
 #' @export
-DcEstim <- function(y, x, w = NULL, distType = "logit", newX = NULL, pcaOptionsX = NULL, costMatrices = NULL, simFixSize = 200L, simTrainRatio = 0.5, simTrainFixSize = 0L, simSeed = 0L, weightedEval = FALSE, printMsg = FALSE) {
-    .Call('_ldt_DcEstim', PACKAGE = 'ldt', y, x, w, distType, newX, pcaOptionsX, costMatrices, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg)
+DcEstim <- function(y, x, w = NULL, distType = "logit", newX = NULL, pcaOptionsX = NULL, costMatrices = NULL, aucOptions = NULL, simFixSize = 200L, simTrainRatio = 0.5, simTrainFixSize = 0L, simSeed = 0L, weightedEval = FALSE, printMsg = FALSE) {
+    .Call('_ldt_DcEstim', PACKAGE = 'ldt', y, x, w, distType, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg)
 }
 
 #' Creates a Cross-Section Frequency
@@ -536,6 +538,25 @@ Sequence_F <- function(start, length) {
     .Call('_ldt_Sequence_F', PACKAGE = 'ldt', start, length)
 }
 
+#' Options for ROC and AUC
+#'
+#' @param lowerThreshold (double) Lower bound for calculating partial AUC.
+#' @param upperThreshold (double) Upper bound for calculating partial AUC.
+#' @param epsilon (double) A value to ignore small floating point differences in comparing scores.
+#' @param pessimistic (bool) If true, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to roc analysis, fig. 6).
+#' @param costs (numeric vector) cost of each observations. If null, cost of all observations will be 1.
+#' @param costMatrix (numeric matrix) a 2x2 cost matrix in which: (1,1) is cost of TN,
+#' (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
+#' column is multiplied by the corresponding value in costs vector (see
+#' Fawcett (2006), ROC graphs with instance-varying costs).
+#'
+#' @return A list with the given options.
+#'
+#' @export
+GetRocOptions <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12, pessimistic = FALSE, costs = NULL, costMatrix = NULL) {
+    .Call('_ldt_GetRocOptions', PACKAGE = 'ldt', lowerThreshold, upperThreshold, epsilon, pessimistic, costs, costMatrix)
+}
+
 #' Options for Nelder-Mead Optimization
 #'
 #' @param maxIterations (int) Maximum number of iterations.
@@ -652,8 +673,8 @@ GetModelCheckItems <- function(estimation = TRUE, maxConditionNumber = 1.7e308, 
 
 #' Options for 'Measuring Performance'
 #'
-#' @param typesIn (nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{costMatrixIn}, \code{aucIn}. Null means no measure.
-#' @param typesOut (nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{costMatrixOut}, \code{aucOut}. Null means no measure.
+#' @param typesIn (nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{aucIn}. Null means no measure.
+#' @param typesOut (nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, \code{aucOut}. Null means no measure.
 #' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation.
 #' @param trainFixSize (int) Number of data-points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
 #' @param trainRatio (double) Number of data-points, as a ratio of the available size, in the training sample in the pseudo out-of-sample simulation.
@@ -696,22 +717,37 @@ GetMeasureFromWeight <- function(value, measureName) {
     .Call('_ldt_GetMeasureFromWeight', PACKAGE = 'ldt', value, measureName)
 }
 
-#' Gets the Area Under the receiver Operating Characteristic (ROC) Curve
+#' ROC curve for a binary case
 #'
-#' @param y (numeric vector) actual values.
-#' @param scores (numeric matrix) a matrix with scores in the columns.
-#' @param weights (numeric vector) weights of the observations
+#' It does not draw the ROC, but calculatates the required points. It also
+#' Calculates the AUC with different options
 #'
-#' @return value of the AUC
+#' @param y (numeric vector, \code{Nx1}) Actual values
+#' @param scores (numeric vector, \code{Nx1}) Calculated probabilities for the negative observations
+#' @param weights (numeric vector, \code{Nx1}) Weights of the observations. Use \code{NULL} for equal weights.
+#' @param options (list) More options. See [GetRocOptions()] function for details.
+#' @param printMsg (bool) Set true to report some details.
+#'
+#' @return A list with the following items:
+#' \item{N}{(integer) Number of observations}
+#' \item{AUC}{(numeric) Value of AUC}
+#' \item{Points}{(numeric matrix) Points for ploting ROC}
+#'
 #' @export
 #'
 #' @examples
-#' y = c(0,1,0,1,0,1,0,1)
-#' scores = matrix(c( 0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1,
-#'                    0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9), 8, 2)
-#' res = GetAuc(y,scores,NULL)
-GetAuc <- function(y, scores, weights = NULL) {
-    .Call('_ldt_GetAuc', PACKAGE = 'ldt', y, scores, weights)
+#' y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
+#' scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
+#' res1 = GetRoc(y,scores, printMsg = FALSE)
+#' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
+#' costMatrix = matrix(c(0.02,-1,-3,3),2,2)
+#' opt <- GetRocOptions(costs = costs, costMatrix = costMatrix)
+#' res2 = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+#' #plot(res1$Points)
+#' #lines(res2$Points)
+#'
+GetRoc <- function(y, scores, weights = NULL, options = NULL, printMsg = FALSE) {
+    .Call('_ldt_GetRoc', PACKAGE = 'ldt', y, scores, weights, options, printMsg)
 }
 
 #' Gets the GLD-FKML Parameters from the moments

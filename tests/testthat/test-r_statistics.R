@@ -113,16 +113,36 @@ test_that("Combine4Moments works", {
 
 test_that("Auc works for binary and no weights", {
 
-  y = c(0,1,0,1,0,1,0,1)
-  scores = matrix(c(
-    0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1,
-    0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9),8,2)
+  y = c(1, 0, 1, 0, 1, 1)
+  scores = c(0.1, 0.9, 0.1, 0.9, 0.1, 0.9)
 
-  res = GetAuc(y,scores,NULL)
+  res = GetRoc(y,scores,NULL, printMsg = FALSE)
   #resR = pROC::roc(y,scores[,1])
-  #aucR = 1- as.numeric(resR$auc)
-  aucR = 0.46875
-  expect_equal(as.numeric(res), aucR, tolerance = 1e-4)
+  expect_equal(res$AUC, 0.875, tolerance = 1e-14)
+
+  #partial
+  y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
+  scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
+  opt <- GetRocOptions(0.2,0.8)
+  res = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+  expect_equal(res$AUC, 0.44 / 0.6, tolerance = 1e-14)
+
+  # weighted
+  y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1) # zero weight for the last observation
+  scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1, 0.8)
+  weights <- c(1,1,1,1,1,1,1,1,1,1,0)
+  res = GetRoc(y,scores,weights,options = opt, printMsg = FALSE)
+  expect_equal(res$AUC, 0.44 / 0.6, tolerance = 1e-14)
+
+  # varying cost
+  y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
+  scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
+  costs <- c(1,1,1,1,1,1,1,1,1,1)
+  costMatrix = matrix(c(0.02,-1,-10,10),2,2)
+  opt <- GetRocOptions(costs = costs, costMatrix = costMatrix)
+  res = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+  #expect_equal(res$AUC, ?, tolerance = 1e-14) TODO
+
 })
 
 test_that("Long-run growth works (discrete)", {

@@ -4,6 +4,77 @@
 using namespace Rcpp;
 using namespace ldt;
 
+List GetRocOptions(double lowerThreshold, double upperThreshold, double epsilon,
+                   bool pessimistic, SEXP costs, SEXP costMatrix) {
+  List O = List::create(
+      _["lowerThreshold"] = wrap(lowerThreshold),
+      _["upperThreshold"] = wrap(upperThreshold), _["epsilon"] = wrap(epsilon),
+      _["pessimistic"] = wrap(pessimistic), _["costs"] = wrap(costs),
+      _["costMatrix"] = wrap(costMatrix));
+  CheckRocOptions(O);
+  return O;
+}
+
+void CheckRocOptions(List options) {
+  if (as<double>(options["lowerThreshold"]) < 0)
+    throw std::logic_error(
+        "Invalid ROC option. 'lowerThreshold' cannot be negative.");
+  if (as<double>(options["upperThreshold"]) > 1)
+    throw std::logic_error(
+        "Invalid ROC option. 'upperThreshold' cannot be larger than 1.");
+  if (as<double>(options["epsilon"]) < 0 || as<double>(options["epsilon"]) > 1)
+    throw std::logic_error(
+        "Invalid ROC option. 'epsilon' must be positive and less than 1.");
+
+  if (options["costs"] != R_NilValue) {
+    if (is<NumericVector>(options["costs"]) == false)
+      throw std::logic_error(
+          "Invalid ROC option. 'costs' must be a numeric vector.");
+    if (is<NumericMatrix>(options["costMatrix"]) == false)
+      throw std::logic_error(
+          "Invalid ROC option. 'costMatrix' must be a numeric matrix.");
+    if (options["costMatrix"] == R_NilValue)
+      throw std::logic_error("Invalid ROC option. 'costMatrix' cannot be NULL "
+                             "when there is a cost vector.");
+    auto costMatrix0 = (NumericMatrix)options["costMatrix"];
+    if (costMatrix0.nrow() != 2 || costMatrix0.ncol() != 2)
+      throw std::logic_error(
+          "Invalid ROC option. 'costMatrix' must be a 2x2 matrix.");
+  }
+}
+
+void UpdateRocOptions(bool printMsg, List &rocOptionsR, RocOptions &options,
+                      const char *startMsg) {
+
+  if (printMsg)
+    Rprintf("%s:\n", startMsg);
+
+  options.NormalizePoints = true;
+  options.LowerThreshold = as<double>(rocOptionsR["lowerThreshold"]);
+  options.UpperThreshold = as<double>(rocOptionsR["upperThreshold"]);
+  options.Epsilon = as<double>(rocOptionsR["epsilon"]);
+
+  if (rocOptionsR["costs"] != R_NilValue) {
+    auto costs0 = as<NumericVector>(rocOptionsR["costs"]);
+    auto costMatrix0 = as<NumericMatrix>(rocOptionsR["costMatrix"]);
+    options.Costs.SetData(&costs0[0], costs0.length(), 1);
+    options.CostMatrix.SetData(&costMatrix0[0], 2, 2);
+  }
+
+  if (printMsg) {
+    if ((std::isnan(options.LowerThreshold) || options.LowerThreshold == 0) &&
+        (std::isnan(options.UpperThreshold) || options.UpperThreshold == 1))
+      Rprintf("    - Not Partial\n");
+    else
+      Rprintf("    - Partial (%f, %f):\n", options.LowerThreshold,
+              options.UpperThreshold);
+    Rprintf("    - Epsilon = %f\n", options.Epsilon);
+    if (options.Costs.Data) {
+      Rprintf("    - Varing Cost\n");
+    }
+  }
+}
+
 List GetNelderMeadOptions(int maxIterations, double epsilon, double alpha,
                           double beta, double gamma, double scale) {
   List O = List::create(_["maxIterations"] = wrap(maxIterations),
@@ -43,8 +114,8 @@ void CheckNelderMeadOptions(Rcpp::List options) {
 List GetPcaOptions(int ignoreFirst, int exactCount, double cutoffRate,
                    int max) {
   List O = List::create(
-    _["ignoreFirst"] = wrap(ignoreFirst), _["exactCount"] = wrap(exactCount),
-    _["cutoffRate"] = wrap(cutoffRate), _["max"] = wrap(max));
+      _["ignoreFirst"] = wrap(ignoreFirst), _["exactCount"] = wrap(exactCount),
+      _["cutoffRate"] = wrap(cutoffRate), _["max"] = wrap(max));
   CheckPcaOptions(O);
   return O;
 }
@@ -90,8 +161,8 @@ void UpdatePcaOptions(bool printMsg, List &pcaOptionsR, bool hasPca,
           Rprintf("    - Uses the first %i components.\n", options.ExactCount);
         else {
           Rprintf("    - Uses a cutoff rate of %f to select the number of the "
-                    "components.\n",
-                    options.CutoffRate);
+                  "components.\n",
+                  options.CutoffRate);
           Rprintf("    - Uses at most %i number of the components.\n",
                   options.CutoffCountMax);
         }
@@ -136,7 +207,7 @@ void UpdateLmbfgsOptions(bool printMsg, List &lmbfgsOptions,
   options.Factor = as<double>(lmbfgsOptions["factor"]);
   options.IterationMax = as<int>(lmbfgsOptions["maxIterations"]);
   options.ProjectedGradientTol =
-    as<double>(lmbfgsOptions["projectedGradientTol"]);
+      as<double>(lmbfgsOptions["projectedGradientTol"]);
   options.mMaxCorrections = as<int>(lmbfgsOptions["maxCorrections"]);
   ;
 
@@ -195,7 +266,11 @@ List GetSearchItems(bool model, bool type1, bool type2, int bestK, bool all,
                     bool mixture4) {
   NumericVector cdfs_;
   if (cdfs != R_NilValue)
-    cdfs_ = internal::convert_using_rfunction(cdfs, "as.numeric");
+  {
+    if (is<NumericVector>(cdfs) == false)
+      throw std::logic_error("'cdfs' must be a 'numeric vector'.");
+    cdfs_ = as<NumericVector>(cdfs);
+  }
   else
     cdfs_ = NumericVector();
 
@@ -306,7 +381,7 @@ void UpdateSearchItems(bool printMsg, List &searchItems, SearchItems &items,
 
 List GetSearchOptions(bool parallel, int reportInterval, bool printMsg) {
 #ifndef _OPENMP
-  if (parallel){
+  if (parallel) {
     parallel = false;
     warning("Warning: 'parallel' option is not available.");
   }
@@ -343,13 +418,13 @@ List GetModelCheckItems(bool estimation, double maxConditionNumber,
                         double minR2, double maxAic, double maxSic,
                         bool prediction, double predictionBoundMultiplier) {
   List O = List::create(
-    _["estimation"] = wrap(estimation),
-    _["maxConditionNumber"] = wrap(maxConditionNumber),
-    _["minObsCount"] = wrap(minObsCount), _["minDof"] = wrap(minDof),
-    _["minOutSim"] = wrap(minOutSim), _["maxSic"] = wrap(maxSic),
-    _["minR2"] = wrap(minR2), _["maxAic"] = wrap(maxAic),
-    _["maxSic"] = wrap(maxSic), _["prediction"] = wrap(prediction),
-    _["predictionBoundMultiplier"] = wrap(predictionBoundMultiplier));
+      _["estimation"] = wrap(estimation),
+      _["maxConditionNumber"] = wrap(maxConditionNumber),
+      _["minObsCount"] = wrap(minObsCount), _["minDof"] = wrap(minDof),
+      _["minOutSim"] = wrap(minOutSim), _["maxSic"] = wrap(maxSic),
+      _["minR2"] = wrap(minR2), _["maxAic"] = wrap(maxAic),
+      _["maxSic"] = wrap(maxSic), _["prediction"] = wrap(prediction),
+      _["predictionBoundMultiplier"] = wrap(predictionBoundMultiplier));
   CheckModelCheckItems(O);
   return O;
 }
@@ -365,11 +440,11 @@ void CheckModelCheckItems(List options) {
     throw std::logic_error(
         "Invalid model-Check option. 'minOutSim' cannot be negative.");
   if (as<double>(options["maxConditionNumber"]) < 0)
-    throw std::logic_error(
-        "Invalid model-Check option. 'maxConditionNumber' cannot be negative.");
+    throw std::logic_error("Invalid model-Check option. 'maxConditionNumber' "
+                           "cannot be negative.");
   if (as<double>(options["predictionBoundMultiplier"]) < 0)
     throw std::logic_error("Invalid model-Check option. "
-                             "'predictionBoundMultiplier' cannot be negative.");
+                           "'predictionBoundMultiplier' cannot be negative.");
 }
 
 void UpdateModelCheckItems(bool printMsg, List &checkOptions,
@@ -382,7 +457,7 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
   checks.MinDof = as<int>(checkOptions["minDof"]);
   checks.MinOutSim = as<int>(checkOptions["minOutSim"]);
   checks.PredictionBoundMultiplier =
-    as<double>(checkOptions["predictionBoundMultiplier"]);
+      as<double>(checkOptions["predictionBoundMultiplier"]);
 
   checks.MinR2 = as<double>(checkOptions["minR2"]);
   checks.MaxAic = as<double>(checkOptions["maxAic"]);
@@ -452,17 +527,19 @@ List GetMeasureOptions(SEXP typesIn, SEXP typesOut, int simFixSize,
     typesOut_ = StringVector(0);
 
   IntegerVector horizons_;
-  if (horizons != R_NilValue)
-    horizons_ = internal::convert_using_rfunction(horizons, "as.integer");
+  if (horizons != R_NilValue){
+    if (is<IntegerVector>(horizons) == false)
+      throw std::logic_error("'horizons' must be an 'integer vector'.");
+    horizons_ = as<IntegerVector>(horizons);
+  }
   else
     horizons_ = {1};
 
-  List O = List::create(_["typesIn"] = typesIn_, _["typesOut"] = typesOut_,
-                        _["simFixSize"] = wrap(simFixSize),
-                        _["trainRatio"] = wrap(trainRatio),
-                        _["trainFixSize"] = wrap(trainFixSize),
-                        _["seed"] = wrap(seed), _["horizons"] = horizons_,
-                        _["weightedEval"] = weightedEval);
+  List O = List::create(
+      _["typesIn"] = typesIn_, _["typesOut"] = typesOut_,
+      _["simFixSize"] = wrap(simFixSize), _["trainRatio"] = wrap(trainRatio),
+      _["trainFixSize"] = wrap(trainFixSize), _["seed"] = wrap(seed),
+      _["horizons"] = horizons_, _["weightedEval"] = weightedEval);
 
   CheckMeasureOptions(O);
   return O;
@@ -503,13 +580,13 @@ void CheckMeasureOptions(List options) {
     if (as<int>(options["trainFixSize"]) < 0)
       throw std::logic_error(
           "Invalid Measure option. 'trainFixSize' cannot be negative.");
-    // if (options["seed"] < 0)  It can be negative for similar distribution of
-    // the seeds in the searchers
+    // if (options["seed"] < 0)  It can be negative for similar distribution
+    // of the seeds in the searchers
 
     if (as<double>(options["trainRatio"]) == 0 &&
         as<int>(options["trainFixSize"]) == 0)
       throw std::logic_error("Invalid Measure option. Both 'trainRatio' and "
-                               "'trainFixSize' are zero.");
+                             "'trainFixSize' are zero.");
   }
 }
 
@@ -626,10 +703,10 @@ void UpdateMeasureOptions(bool printMsg, List &measureOptions,
   } else if (printMsg)
     Rprintf("none\n");
 
-  if (isDc){
+  if (isDc) {
     measures.WeightedEval = as<bool>(measureOptions["weightedEval"]);
     if (printMsg)
-      Rprintf("    - Weighted = %s\n", measures.WeightedEval ? "true" : "false");
+      Rprintf("    - Weighted = %s\n",
+              measures.WeightedEval ? "true" : "false");
   }
-
 }

@@ -14,6 +14,7 @@ DcSearch(
   searchLogit = TRUE,
   searchProbit = FALSE,
   optimOptions = NULL,
+  aucOptions = NULL,
   measureOptions = NULL,
   modelCheckItems = NULL,
   searchItems = NULL,
@@ -21,7 +22,7 @@ DcSearch(
 )
 }
 \arguments{
-\item{y}{(numeric vector) endogenous data with variables in the columns.}
+\item{y}{(numeric matrix) endogenous data with variable in the column.}
 
 \item{x}{(numeric matrix) exogenous data with variables in the columns.}
 
@@ -31,13 +32,15 @@ DcSearch(
 
 \item{xPartitions}{(nullable list of int vector) a partition over the indexes of the exogenous variables. No regression is estimated with two variables in the same group. If null, each variable is placed in its own group and the size of the model set is maximized.}
 
-\item{costMatrices}{(list ofnumeric matrix) each cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.}
+\item{costMatrices}{(list of numeric matrix) each frequency cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a frequency cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.}
 
 \item{searchLogit}{(bool) if \code{TRUE}, logit regressions are added to the model set.}
 
 \item{searchProbit}{(bool) if \code{TRUE}, probit regressions are added to the model set.}
 
-\item{optimOptions}{(list) Newton optimization options. see \code{[GetNewtonOptions()]}. Use null for default values.}
+\item{optimOptions}{(nullable list) Newton optimization options. see \code{[GetNewtonOptions()]}.}
+
+\item{aucOptions}{(nullable list) AUC calculation options. see \code{[GetRocOptions()]}.}
 
 \item{measureOptions}{(nullable list) see \code{[GetMeasureOptions()]}.}
 

@@ -15,12 +15,12 @@ library(kableExtra)
 
 ## ----dc_measure_options-------------------------------------------------------
 measureOptions <- GetMeasureOptions(
-  typesIn = c("aucIn", "costMatrixIn"),
-  typesOut = c("aucOut", "costMatrixOut")
+  typesIn = c("aucIn", "frequency"),
+  typesOut = c("aucOut", "frequency")
 )
 
 ## ----cost_matrix--------------------------------------------------------------
-costMatrix <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
+frequencyCost <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
 
 ## ----data_get, eval=FALSE-----------------------------------------------------
 #  data <- Data_BerkaLoan(positive = c("B", "D"), negative = c("A", "C"))
@@ -43,14 +43,14 @@ costMatrix <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
 #  #usethis::use_data(vig_data, overwrite = TRUE)
 
 ## ----data_load----------------------------------------------------------------
-x = ldt::vig_data$berka$x
-y = ldt::vig_data$berka$y
+x = as.matrix(ldt::vig_data$berka$x)
+y = as.matrix(ldt::vig_data$berka$y)
 
 ## -----------------------------------------------------------------------------
-weight <- as.numeric((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
+weight <- as.matrix((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 
 ## ----modelset_steps-----------------------------------------------------------
-xSizes <- list(c(1, 2), c(3))
+xSizes <- list(as.integer(c(1, 2)), as.integer(c(3)))
 xCounts <- c(NA, 4)
 
 ## ----seed---------------------------------------------------------------------
@@ -61,7 +61,7 @@ measureOptions$trainRatio <- 0.75
 ## ----dc_estimate--------------------------------------------------------------
 berka_res <- list(
   logit = DcSearch_s(
-    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = TRUE, searchProbit = FALSE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
@@ -70,7 +70,7 @@ berka_res <- list(
     savePre = NULL
   ),
   probit = DcSearch_s(
-    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = FALSE, searchProbit = TRUE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
@@ -84,12 +84,12 @@ berka_res <- list(
 op <- par(cex = 0.6)
 data_cost <- data.frame(
   cost_in = c(
-    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
-    berka_res$probit$costMatrixOut$target1$model$bests$best1$weight
+    berka_res$logit$frequencyCostIn$target1$model$bests$best1$weight,
+    berka_res$probit$frequencyCostOut$target1$model$bests$best1$weight
   ),
   cost_out = c(
-    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
-    berka_res$probit$costMatrixIn$target1$model$bests$best1$weight
+    berka_res$logit$frequencyCostIn$target1$model$bests$best1$weight,
+    berka_res$probit$frequencyCostIn$target1$model$bests$best1$weight
   )
 )
 

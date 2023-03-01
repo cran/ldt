@@ -33,6 +33,9 @@ IsGuidValid <- function(x) {
 #' @param countFun a function to determine how strategies are sorted.
 #' Default counts the number of observations. You might want to give columns a
 #' higher level of importance for example by using \code{nRows*nCols^1.5}.
+#' @param rowIndices Indices of sorted rows to search. Use it to create jumps for large number of rows (E.g., if the first sorted strategies suggest small number of columns and you are looking for other strategies). Use \code{NULL} to disable
+#' @param colIndices similar to \code{rowsMaxCount} for columns.
+#' @param printMsg If \code{TRUE}, it prints progress.
 #'
 #' @return a list of lists with four elements:
 #' \itemize{
@@ -48,37 +51,81 @@ IsGuidValid <- function(x) {
 #' @examples
 #' data <- matrix(c(NA, 2, 3, 4, NA, 5, NA, 6, 7, NA, 9, 10, 11, 12, 13, 14, 15, NA, 16, 17), 4, 5)
 #' RemoveNaStrategies(data)
-RemoveNaStrategies <- function(data, countFun = function(nRows, nCols) nRows * nCols) {
+RemoveNaStrategies <- function(data, countFun = function(nRows, nCols) nRows * nCols,
+                               rowIndices = NULL, colIndices = NULL, printMsg = FALSE) {
   data <- as.matrix(data)
+  Nrow = nrow(data)
+  Ncol = ncol(data)
   data_na <- is.na(data)
   c_cols <- sort(colSums(data_na), index.return = TRUE, decreasing = TRUE)
 
+
+  rowIndices = as.integer(rowIndices)
+  colIndices = as.integer(colIndices)
+
+  if (length(colIndices) == 0)
+    colIndices = c(1:length(c_cols$ix))
+  cmaxCount = length(colIndices)
+  if (printMsg)
+    cat("Searching columns: \n")
   result <- list()
-  for (i in c(1:length(c_cols$ix))) { # remove i columns with most NAs
+  j <- 0
+  for (i in colIndices) { # remove i columns with most NAs
+    j = j + 1
     colRemove <- c(c_cols$ix[1:i])
     if (length(colRemove) > 0) {
       mat <- data[, -colRemove, drop = FALSE]
     }
     rowRemove <- which(rowSums(is.na(mat)) > 0)
+    if (length(rowRemove) == Nrow){
+      if (printMsg)
+        cat("    breaking the loop. All rows are removed after removing the columns\n")
+      break # all rows will be removed
+    }
     result[[length(result) + 1]] <- list(
-      nRows = nrow(data) - length(rowRemove),
-      nCols = ncol(data) - length(colRemove), colFirst = TRUE,
+      nRows = Nrow - length(rowRemove),
+      nCols = Ncol - length(colRemove), colFirst = TRUE,
       colRemove = sort(colRemove), rowRemove = as.integer(sort(rowRemove))
     )
+    if (printMsg)
+      cat(paste0("    ", j, "/", cmaxCount,
+                 ", index=", i,
+                 ", nrow=", Nrow - length(rowRemove),
+                 ", ncol=",Ncol - length(colRemove), "\n"))
   }
 
   c_rows <- sort(rowSums(data_na), index.return = TRUE, decreasing = TRUE)
-  for (i in c(1:length(c_rows$ix))) { # remove i row with most NAs
+
+  if (length(rowIndices) == 0)
+    rowIndices = c(1:length(c_rows$ix))
+  rmaxCount = length(rowIndices)
+
+  if (printMsg)
+    cat("Searching rows: \n")
+  j <- 0
+  for (i in rowIndices) { # remove i row with most NAs
+    j <- j + 1
     rowRemove <- c(c_rows$ix[1:i])
     if (length(rowRemove) > 0) {
       mat <- data[-rowRemove, , drop = FALSE]
     }
     colRemove <- which(colSums(is.na(mat)) > 0)
+    if (length(colRemove) == Ncol){
+      if (printMsg)
+        cat("    breaking the loop. All columns are removed after removing the rows\n")
+      break
+    }
     result[[length(result) + 1]] <- list(
-      nRows = nrow(data) - length(rowRemove),
-      nCols = ncol(data) - length(colRemove), colFirst = FALSE,
+      nRows = Nrow - length(rowRemove),
+      nCols = Ncol - length(colRemove), colFirst = FALSE,
       colRemove = as.integer(sort(colRemove)), rowRemove = sort(rowRemove)
     )
+
+    if (printMsg)
+      cat(paste0("    ", j, "/", rmaxCount,
+                 ", index=", i,
+                 ", nrow=", Nrow - length(rowRemove),
+                 ", ncol=",Ncol - length(colRemove), "\n"))
   }
 
   inx <- sort(sapply(result, function(r) countFun(r$nRows, r$nCols)),

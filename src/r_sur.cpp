@@ -37,6 +37,10 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
+  y = as<NumericMatrix>(y);
+
   if (numTargets < 1)
     throw std::logic_error("Number of targets must be positive.");
   if (numFixXPartitions < 0)
@@ -46,19 +50,26 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  List searchOptions_ =
-      searchOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
-          : GetSearchOptions();
-  CheckSearchOptions(searchOptions_);
+  List searchOptions_;
+  if (searchOptions != R_NilValue) {
+    if (is<List>(searchOptions) == false)
+      throw std::logic_error("'searchOptions' must be a 'List'.");
+    searchOptions_ = as<List>(searchOptions);
+    CheckSearchOptions(searchOptions_);
+  } else
+    searchOptions_ = GetSearchOptions();
+
+
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  if (x != R_NilValue)
-    x = internal::convert_using_rfunction(x, "as.matrix");
+  if (x != R_NilValue){
+    if (is<NumericMatrix>(x) == false)
+      throw std::logic_error("'x' must be a 'numeric matrix'.");
+    x = as<NumericMatrix>(x);
+  }
 
   ldt::Matrix<double> my;
   ldt::Matrix<double> mx;
@@ -107,18 +118,35 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
       Rprintf("    - disabled\n");
   }
 
-  List measureOptions_ =
-      measureOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(measureOptions, "as.list")
-          : GetMeasureOptions();
-  List modelCheckItems_ =
-      modelCheckItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(modelCheckItems, "as.list")
-          : GetModelCheckItems();
-  List searchItems_ =
-      searchItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchItems, "as.list")
-          : GetSearchItems();
+  List measureOptions_;
+  if (measureOptions == R_NilValue)
+    measureOptions_ = GetMeasureOptions();
+  else {
+    if (is<List>(measureOptions) == false)
+      throw std::logic_error("'measureOptions' must be a 'List'.");
+    measureOptions_ = as<List>(measureOptions);
+    CheckMeasureOptions(measureOptions_);
+  }
+
+  List modelCheckItems_;
+  if (modelCheckItems == R_NilValue)
+    modelCheckItems_ = GetModelCheckItems();
+  else {
+    if (is<List>(modelCheckItems) == false)
+      throw std::logic_error("'modelCheckItems' must be a 'List'.");
+    modelCheckItems_ = as<List>(modelCheckItems);
+    CheckModelCheckItems(modelCheckItems_);
+  }
+
+  List searchItems_;
+  if (searchItems == R_NilValue)
+    searchItems_ = GetSearchItems();
+  else {
+    if (is<List>(searchItems) == false)
+      throw std::logic_error("'searchItems' must be a 'List'.");
+    searchItems_ = as<List>(searchItems);
+    CheckSearchItems(searchItems_);
+  }
 
   auto measures = SearchMeasureOptions();
   auto measuresNames = std::vector<std::string>();
@@ -217,12 +245,21 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  x = internal::convert_using_rfunction(x, "as.matrix");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
+  if (is<NumericMatrix>(x) == false)
+    throw std::logic_error("'x' must be a 'numeric matrix'.");
 
-  if (newX != R_NilValue && addIntercept)
+  y = as<NumericMatrix>(y);
+  x = as<NumericMatrix>(x);
+
+  if (newX != R_NilValue && addIntercept){
+    if (is<NumericMatrix>(y) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+    NumericMatrix newX0 = as<NumericMatrix>(newX);
     newX = insert_intercept(
-        newX); // Combine function does not handle adding intercept to newX
+        newX0); // Combine function does not handle adding intercept to newX
+  }
 
   ldt::Matrix<double> my;
   ldt::Matrix<double> mx;
@@ -242,8 +279,9 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
   bool hasR = restriction != R_NilValue;
   ldt::Matrix<double> restriction_;
   if (hasR) {
-    NumericMatrix rest0 =
-        internal::convert_using_rfunction(restriction, "as.matrix");
+    if (is<NumericMatrix>(restriction) == false)
+      throw std::logic_error("'restriction' must be a 'numeric matrix'.");
+    NumericMatrix rest0 = as<NumericMatrix>(restriction);
     restriction_.SetData(&rest0[0], rest0.nrow(), rest0.ncol());
     if (printMsg)
       Rprintf("Restriction Matrix Dimension=(%i, %i)\n", restriction_.RowsCount,
@@ -309,8 +347,10 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
   auto pcaOptionsX0 = PcaAnalysisOptions();
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
-    List pcaOptionsX_ =
-        (List)internal::convert_using_rfunction(pcaOptionsX, "as.list");
+    if (is<List>(pcaOptionsX) == false)
+      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
+    List pcaOptionsX_ = as<List>(pcaOptionsX);
+
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptionsX0,
                      "Exogenous PCA options");
     if (addIntercept)
@@ -320,8 +360,9 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
   auto pcaOptionsY0 = PcaAnalysisOptions();
   bool hasPcaY = pcaOptionsY != R_NilValue;
   if (hasPcaY) {
-    List pcaOptionsY_ =
-        (List)internal::convert_using_rfunction(pcaOptionsY, "as.list");
+    if (is<List>(pcaOptionsY) == false)
+      throw std::logic_error("'pcaOptionsY' must be a 'List'.");
+    List pcaOptionsY_ = as<List>(pcaOptionsY);
     UpdatePcaOptions(printMsg, pcaOptionsY_, hasPcaY, pcaOptionsY0,
                      "Endogenous PCA options");
   }

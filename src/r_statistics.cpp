@@ -93,82 +93,122 @@ SEXP GetMeasureFromWeight(SEXP value, SEXP measureName)
 
 // clang-format off
 
-//' Gets the Area Under the receiver Operating Characteristic (ROC) Curve
+//' ROC curve for a binary case
 //'
-//' @param y (numeric vector) actual values.
-//' @param scores (numeric matrix) a matrix with scores in the columns.
-//' @param weights (numeric vector) weights of the observations
+//' It does not draw the ROC, but calculatates the required points. It also
+//' Calculates the AUC with different options
 //'
-//' @return value of the AUC
+//' @param y (numeric vector, \code{Nx1}) Actual values
+//' @param scores (numeric vector, \code{Nx1}) Calculated probabilities for the negative observations
+//' @param weights (numeric vector, \code{Nx1}) Weights of the observations. Use \code{NULL} for equal weights.
+//' @param options (list) More options. See [GetRocOptions()] function for details.
+//' @param printMsg (bool) Set true to report some details.
+//'
+//' @return A list with the following items:
+//' \item{N}{(integer) Number of observations}
+//' \item{AUC}{(numeric) Value of AUC}
+//' \item{Points}{(numeric matrix) Points for ploting ROC}
+//'
 //' @export
 //'
 //' @examples
-//' y = c(0,1,0,1,0,1,0,1)
-//' scores = matrix(c( 0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1,
-//'                    0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9), 8, 2)
-//' res = GetAuc(y,scores,NULL)
+//' y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
+//' scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
+//' res1 = GetRoc(y,scores, printMsg = FALSE)
+//' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
+//' costMatrix = matrix(c(0.02,-1,-3,3),2,2)
+//' opt <- GetRocOptions(costs = costs, costMatrix = costMatrix)
+//' res2 = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+//' #plot(res1$Points)
+//' #lines(res2$Points)
+//'
 // [[Rcpp::export]]
-double GetAuc(SEXP y, SEXP scores, SEXP weights = R_NilValue)
+List GetRoc(SEXP y, SEXP scores, SEXP weights = R_NilValue, SEXP options = R_NilValue,
+               bool printMsg = false)
 // clang-format on
 {
+  if (y == R_NilValue || is<NumericVector>(y) == FALSE)
+    throw std::logic_error("'y' should be a numeric vector.");
+  if (scores == R_NilValue || is<NumericVector>(scores) == FALSE)
+    throw std::logic_error("'scores' should be a numeric vector.");
+  NumericVector y0 = as<NumericVector>(y);
+  auto N = y0.length();
+  if (printMsg)
+    Rprintf("Number of observations = %i\n", N);
 
-  NumericVector y0 = internal::convert_using_rfunction(y, "as.numeric");
-  NumericMatrix scores0 =
-      internal::convert_using_rfunction(scores, "as.matrix");
-
-  if (y0.length() != scores0.nrow())
+  NumericVector scores0 = as<NumericVector>(scores);
+  if (N != scores0.length())
     throw std::logic_error(
         "Unequal number of observations in 'y' and 'scores'.");
 
-  auto my = ldt::Matrix<double>(&y0[0], y0.length(), 1);
-  auto mscores =
-      ldt::Matrix<double>(&scores0[0], scores0.nrow(), scores0.ncol());
+  auto my = ldt::Matrix<double>(&y0[0], N, 1);
+  auto mscores = ldt::Matrix<double>(&scores0[0], N, 1);
 
-  bool hasWeight = weights != R_NilValue;
-  auto mweights = ldt::Matrix<double>(y0.length(), 1);
+  NumericVector weights0;
+  auto mweights = ldt::Matrix<double>(N, 1);
+  auto hasWeight = weights != R_NilValue;
   if (hasWeight) {
-    NumericVector weights_ =
-        internal::convert_using_rfunction(weights, "as.numeric");
-    if (y0.length() != weights_.length())
+    if (is<NumericVector>(weights) == FALSE)
+      throw std::logic_error("'weights' should be a numeric vector.");
+    weights0 = as<NumericVector>(weights);
+    if (hasWeight && N != weights0.length())
       throw std::logic_error(
           "Unequal number of observations in 'y' and 'weights'.");
-    mweights.SetData(&weights_[0]);
+    mweights.SetData(&weights0[0]);
   }
+  if (printMsg)
+    Rprintf("Is Weighted = %s\n", hasWeight ? "TRUE" : "FALSE");
 
   auto min_y = min(y0);
   if (min_y != 0)
-    throw std::logic_error("Invalid 'y' vector. Minimum must be 'zero'.");
-  auto n_choices = max(y0) + 1;
-  if (mscores.ColsCount != n_choices)
-    throw std::logic_error(
-        std::string("Invalid 'scores' matrix; expected number of columns = ") +
-        std::to_string(n_choices));
+    throw std::logic_error("Invalid 'y' vector. Minimum must be 0.");
+  auto max_y = max(y0);
+  if (max_y != 1)
+    throw std::logic_error("Invalid 'y' vector. Maximum must be 1.");
 
-  bool isBinary = n_choices == 2;
+  List optionsL;
+  if (options == R_NilValue)
+    optionsL = GetRocOptions();
+  else {
+    if (is<List>(options) == FALSE)
+      throw std::logic_error("Invalid 'options'. It should be list.");
+    optionsL = as<List>(options);
+    CheckRocOptions(options);
+  }
+  ldt::RocOptions options_;
+  UpdateRocOptions(printMsg, optionsL, options_, "Options: ");
 
-  double auc = NAN;
+  std::unique_ptr<RocBase> auc0;
   if (hasWeight) {
-    if (isBinary) {
-      auto auc0 = AUC<true, true>(y0.length());
-      auc0.Calculate(my, mscores, &mweights, nullptr);
-      auc = auc0.Result;
+    if (options_.Costs.Data) {
+      auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(N));
     } else {
-      auto auc0 = AUC<true, false>(y0.length());
-      auc0.Calculate(my, mscores, &mweights, nullptr);
-      auc = auc0.Result;
+      auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(N));
     }
   } else {
-    if (isBinary) {
-      auto auc0 = AUC<false, true>(y0.length());
-      auc0.Calculate(my, mscores, &mweights, nullptr);
-      auc = auc0.Result;
+    if (options_.Costs.Data) {
+      auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(N));
     } else {
-      auto auc0 = AUC<false, false>(y0.length());
-      auc0.Calculate(my, mscores, &mweights, nullptr);
-      auc = auc0.Result;
+      auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(N));
     }
   }
-  return auc;
+  auto auc = auc0.get();
+  auc->Calculate(my, mscores, hasWeight ? &mweights : nullptr, options_);
+
+  auto points_d = std::unique_ptr<double[]>(new double[auc->Points.size() * 2]);
+  auto points = ldt::Matrix<double>(points_d.get(), auc->Points.size(), 2);
+  auto colnames = std::vector<std::string>({"FP Rate", "TP Rate"});
+  for (auto i = 0; i < (int)auc->Points.size(); i++) {
+    points.Set(i, 0, std::get<0>(auc0->Points.at(i)));
+    points.Set(i, 1, std::get<1>(auc0->Points.at(i)));
+  }
+
+  List L = List::create(_["N"] = wrap(N), _["AUC"] = wrap(auc->Result),
+                        _["Points"] = as_matrix(points, nullptr, &colnames));
+
+  L.attr("class") = std::vector<std::string>({"ldtroc", "list"});
+
+  return L;
 }
 
 // clang-format off
@@ -208,23 +248,27 @@ double GetAuc(SEXP y, SEXP scores, SEXP weights = R_NilValue)
 //' res = GetGldFromMoments(0,1,0,0,0,c(0,0))
 // [[Rcpp::export]]
 NumericVector GetGldFromMoments(double mean = 0, double variance = 1,
-                                double skewness = 0, double excessKurtosis = 0,
-                                int type = 0, SEXP start = R_NilValue,
-                                SEXP nelderMeadOptions = R_NilValue,
-                                bool printMsg = false)
+                                 double skewness = 0, double excessKurtosis = 0,
+                                 int type = 0, SEXP start = R_NilValue,
+                                 SEXP nelderMeadOptions = R_NilValue,
+                                 bool printMsg = false)
 // clang-format on
 {
   NumericVector start_ = {0, 0};
   if (start != R_NilValue) {
-    start_ = internal::convert_using_rfunction(start, "as.numeric");
+    if (is<NumericVector>(start) == false)
+      throw std::logic_error("'start' must be a 'numeric vector'.");
+    auto start_ = as<NumericVector>(start);
     if (start_.length() != 2)
       throw std::logic_error("Invalid length: 'start'.");
   }
 
   List nelderMeadOptions_;
   if (nelderMeadOptions != R_NilValue) {
-    nelderMeadOptions_ =
-        internal::convert_using_rfunction(nelderMeadOptions, "as.list");
+
+    if (is<List>(nelderMeadOptions) == false)
+      throw std::logic_error("'nelderMeadOptions' must be a 'List'.");
+    auto nelderMeadOptions_ = as<List>(nelderMeadOptions);
     CheckNelderMeadOptions(nelderMeadOptions_);
   } else
     nelderMeadOptions_ = GetNelderMeadOptions();
@@ -269,10 +313,12 @@ NumericVector GetGldFromMoments(double mean = 0, double variance = 1,
 //' @export
 // [[Rcpp::export]]
 NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
-                          double L4)
+                           double L4)
 // clang-format on
 {
-  NumericVector data0 = internal::convert_using_rfunction(data, "as.numeric");
+  if (is<NumericVector>(data) == false)
+    throw std::logic_error("'data' must be a 'numeric vector'.");
+  NumericVector data0 = as<NumericVector>(data);
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
     result[i] = DistributionGld::GetQuantile(data0[i], L1, L2, L3, L4);
@@ -293,10 +339,13 @@ NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
 //' @export
 // [[Rcpp::export]]
 NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
-                                 double L4)
+                                  double L4)
 // clang-format on
 {
-  NumericVector data0 = internal::convert_using_rfunction(data, "as.numeric");
+  if (is<NumericVector>(data) == false)
+    throw std::logic_error("'data' must be a 'numeric vector'.");
+  NumericVector data0 = as<NumericVector>(data);
+
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
     result[i] = DistributionGld::GetDensityQuantile(data0[i], L1, L2, L3, L4);
@@ -320,8 +369,13 @@ List GetCombination4Moments(SEXP mix1, SEXP mix2)
 // clang-format on
 {
 
-  List mix1_ = internal::convert_using_rfunction(mix1, "as.list");
-  List mix2_ = internal::convert_using_rfunction(mix2, "as.list");
+  if (is<List>(mix1) == false)
+    throw std::logic_error("'mix1' must be a 'List'.");
+  List mix1_ = as<List>(mix1);
+
+  if (is<List>(mix2) == false)
+    throw std::logic_error("'mix2' must be a 'List'.");
+  List mix2_ = as<List>(mix2);
 
   auto r = RunningWeighted4();
   r.PushNewDistribution(mix1_["mean"], mix1_["variance"], mix1_["skewness"],
@@ -356,17 +410,21 @@ List GetCombination4Moments(SEXP mix1, SEXP mix2)
 //'
 // [[Rcpp::export]]
 List GetPca(SEXP x, bool center = true, bool scale = true,
-            SEXP newX = R_NilValue)
+             SEXP newX = R_NilValue)
 // clang-format on
 {
-
-  NumericMatrix x0 = internal::convert_using_rfunction(x, "as.matrix");
+  if (is<NumericMatrix>(x) == false)
+    throw std::logic_error("'x' must be a 'numeric matrix'.");
+  NumericMatrix x0 = as<NumericMatrix>(x);
 
   auto mx = ldt::Matrix<double>(&x0[0], x0.nrow(), x0.ncol());
   auto mnewX = ldt::Matrix<double>();
   bool hasNewX = newX != R_NilValue;
   if (hasNewX) {
-    NumericMatrix newX_ = internal::convert_using_rfunction(newX, "as.matrix");
+    if (is<NumericMatrix>(newX) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+    NumericMatrix newX_ = as<NumericMatrix>(newX);
+
     if (newX_.ncol() != x0.ncol())
       throw std::logic_error(
           "number of columns in 'newX' and 'x' are different.");

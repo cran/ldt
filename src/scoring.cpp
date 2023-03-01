@@ -141,7 +141,7 @@ Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &measure) {
     return std::exp(-0.5 * measure);
   case GoodnessOfFitType::kAuc:
     return measure;
-  case GoodnessOfFitType::kCostMatrix:
+  case GoodnessOfFitType::kFrequencyCost:
     return 1 - measure;
   default:
     throw std::logic_error("not implemented goodness-of-fit type to weight");
@@ -155,7 +155,7 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
     return -2 * std::log(weight);
   case GoodnessOfFitType::kAuc:
     return weight;
-  case GoodnessOfFitType::kCostMatrix:
+  case GoodnessOfFitType::kFrequencyCost:
     return 1 - weight;
   default:
     throw std::logic_error("not implemented goodness-of-fit type to weight");

@@ -17,7 +17,7 @@ library(kableExtra)
 measureOptions <- GetMeasureOptions(
   simFixSize = 24,
   typesIn = NULL, typesOut = c("direction", "scaledRmse", "crps"),
-  horizons = c(1)
+  horizons = as.integer(c(1))
 )
 
 ## ----data, eval=FALSE---------------------------------------------------------
@@ -58,10 +58,10 @@ newX = ldt::vig_data$pcp$newX
 numTargets <- 3
 
 ## -----------------------------------------------------------------------------
-ySizes <- c(1:2)
+ySizes <- as.integer(c(1:2))
 
 ## -----------------------------------------------------------------------------
-xGroups <- list(c(1), c(1, 2))
+xGroups <- list(as.integer(c(1)), as.integer(c(1, 2)))
 
 ## -----------------------------------------------------------------------------
 maxParams <- c(2, 1, 0, 2, 1, 0)

@@ -62,8 +62,8 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
   this->WorkSize = 0;
 
   // we might use a non-weighted (choose maximum size)
-  auto costMatrix = CostMatrix<true>(costMatrixCount);
-  auto costMatrix0 = CostMatrix<false>(costMatrixCount);
+  auto frequencyCost = FrequencyCost<true>(costMatrixCount);
+  auto freqCost0 = FrequencyCost<false>(costMatrixCount);
 
   auto split = DataSplitDiscrete(rows, cols, mNumChoices);
   auto model =
@@ -71,7 +71,7 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
                              numChoices, false, this->N1, pcaOptions, nullptr);
 
   this->WorkSize += costMatrixCount +
-                    std::max(costMatrix.StorageSize, costMatrix0.StorageSize) +
+                    std::max(frequencyCost.StorageSize, freqCost0.StorageSize) +
                     split.StorageSize + model.StorageSize + model.WorkSize;
   this->WorkSizeI = split.WorkSizeI;
 }
@@ -80,8 +80,8 @@ template <bool hasWeight, DiscreteChoiceModelType modelType,
           DiscreteChoiceDistType distType>
 void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     const Matrix<Tv> &data, const std::vector<Matrix<Tv>> *costMatrixes,
-    Tv *storage, Tv *work, Ti *workI, bool &cancel, bool checkSizes,
-    std::set<const char *> *errors, Ti maxInvalidSim) {
+    Tv *storage, Tv *work, Ti *workI, bool &cancel, RocOptions &aucOptions,
+    bool checkSizes, std::set<const char *> *errors, Ti maxInvalidSim) {
 
   if (cancel)
     return;
@@ -122,26 +122,37 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     pos += costCount;
   }
 
+  if (modelType != DiscreteChoiceModelType::kBinary) {
+    throw std::logic_error("not implemented discrete choice model type.");
+    // TODO: implement it
+  }
+
   // works
-  std::unique_ptr<AucBase> auc0;
-  std::unique_ptr<CostMatrixBase> costMatrix0;
+  std::unique_ptr<RocBase> auc0;
+  std::unique_ptr<FrequencyCostBase> freqCost0;
   if (hasWeight && mWeightedEval) {
-    auc0 = std::unique_ptr<AucBase>(
-        new AUC<true,
-                (modelType == DiscreteChoiceModelType::kBinary ? true : false)>(
-            this->N1));
-    costMatrix0 =
-        std::unique_ptr<CostMatrixBase>(new CostMatrix<true>(costCount));
+
+    if (modelType != DiscreteChoiceModelType::kBinary) {
+      throw std::logic_error("not implemented discrete choice model type.");
+    }
+    if (aucOptions.Costs.Data) {
+      auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(this->N1));
+    } else {
+      auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(this->N1));
+    }
+    freqCost0 =
+        std::unique_ptr<FrequencyCostBase>(new FrequencyCost<true>(costCount));
   } else {
-    auc0 = std::unique_ptr<AucBase>(
-        new AUC<false,
-                (modelType == DiscreteChoiceModelType::kBinary ? true : false)>(
-            this->N1));
-    costMatrix0 =
-        std::unique_ptr<CostMatrixBase>(new CostMatrix<false>(costCount));
+    if (aucOptions.Costs.Data) {
+      auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(this->N1));
+    } else {
+      auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(this->N1));
+    }
+    freqCost0 =
+        std::unique_ptr<FrequencyCostBase>(new FrequencyCost<false>(costCount));
   }
   auto auc = auc0.get();
-  auto costMatrix = costMatrix0.get();
+  auto frequencyCost = freqCost0.get();
 
   this->Auc = 0;
   auto split = DataSplitDiscrete(rows, cols, mNumChoices);
@@ -154,11 +165,9 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   model.Model->Optim.TolGradient = this->Optim.TolGradient;
   model.Model->Optim.UseLineSearch = this->Optim.UseLineSearch;
 
-  auto multi_calss_weights = Matrix<Tv>();
-
   pos = 0;
   auto cost_storage = &work[pos];
-  pos += costMatrix->StorageSize;
+  pos += frequencyCost->StorageSize;
   auto split_storage = &work[pos];
   pos += split.StorageSize;
   auto model_storage = &work[pos];
@@ -205,7 +214,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
 
     if (errors) {
       try {
-        model.Calculate(split.Sample0, model_storage, work0, true, &test);
+        model.Calculate(split.Sample0, model_storage, work0, true, &test,
+                        aucOptions);
       } catch (std::exception &ex) {
         errors->insert(ex.what());
         continue;
@@ -221,7 +231,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
       }
     } else {
       try {
-        model.Calculate(split.Sample0, model_storage, work0, true, &test);
+        model.Calculate(split.Sample0, model_storage, work0, true, &test,
+                        aucOptions);
       } catch (...) {
         continue;
       }
@@ -236,12 +247,12 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     }
 
     if (costCount > 0) {
-      costMatrix->Calculate(
+      frequencyCost->Calculate(
           *costMatrixes, y1, model.PredProbs,
           hasWeight ? (mWeightedEval ? &w1 : nullptr) : nullptr, cost_storage);
       for (i = 0; i < costCount; i++) {
-        this->CostRatios.Data[i] += costMatrix->CostSums.Data[i]; // sums
-        overall_count.Data[i] += costMatrix->CostCounts.Data[i];
+        this->CostRatios.Data[i] += frequencyCost->CostSums.Data[i]; // sums
+        overall_count.Data[i] += frequencyCost->CostCounts.Data[i];
       }
     }
 
@@ -251,7 +262,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     if (mDoAuc) {
       auc->Calculate(y1, model.PredProbs,
                      hasWeight ? (mWeightedEval ? &w1 : nullptr) : nullptr,
-                     &multi_calss_weights);
+                     aucOptions);
       this->Auc += auc->Result; // sum
     }
 

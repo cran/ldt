@@ -99,7 +99,7 @@ struct LDT_EXPORT SearchMeasureOptions {
   std::vector<Ti> Horizons;
 
   /// @brief Determines the type of evaluation for discrete models. If true,
-  /// weights are used in AUC or CostMatrix calculations
+  /// weights are used in AUC or FrequencyCost calculations
   bool WeightedEval = false;
 
   /// @brief Updates the indices, etc.

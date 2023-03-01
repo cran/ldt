@@ -721,7 +721,7 @@ words, larger models are not built with variables with relatively low
 explanatory power in the smaller models.</p>
 <p>The steps of <code>SurSearch\_s()</code> function is defined by a
 list of indices and a vector of sizes:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">4</span>))</span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>xSizes <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>)), <span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">4</span>)))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>xCounts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">5</span>)</span></code></pre></div>
 <p>This means that at the first step, we use all data and estimate
 models with 2 potential regressors; Next, we select 5 <em>best</em>
@@ -794,8 +794,8 @@ be 2.</p>
 an external data set and this is not available in this package. But, a
 part of the data set is saved in the <strong>ldt</strong> package, and
 we load:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>x</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>y</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">as.matrix</span>(ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>x)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> <span class="fu">as.matrix</span>(ldt<span class="sc">::</span>vig_data<span class="sc">$</span>wdi<span class="sc">$</span>y)</span></code></pre></div>
 <p>If you have downloaded the data set files, do not run this code.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">SurSearch_s</span>(</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">numFixXPartitions =</span> <span class="dv">2</span>,</span>
@@ -1123,11 +1123,11 @@ and the lag of the dependent variable from PCA. The <code>NA</code>
 strategies are sorted by the overall number of observations. We can
 print the number of variables and select some of them:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">unlist</span>(<span class="fu">sapply</span>(strategies, <span class="cf">function</span>(s) s<span class="sc">$</span>nCols))[<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>], <span class="st">&quot; ...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="dv">7</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">6</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">8</span> <span class="dv">5</span> <span class="dv">7</span> <span class="dv">8</span> <span class="dv">8</span>  ...</span></code></pre></div>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="dv">7</span> <span class="dv">6</span> <span class="dv">5</span> <span class="dv">4</span> <span class="dv">3</span> <span class="dv">2</span> <span class="dv">1</span> <span class="dv">0</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span> <span class="cn">NA</span>  ...</span></code></pre></div>
 <p>These numbers are the number of variables in each strategy. While the
 choice is not straightforward, we choose the first strategy (with 7
-variables and 1001 observation) and the 2nd strategy (with 8 variables
-and 848 observation) to fulfill our goal. Of course, since we want a
+variables and 1001 observation) and the 2nd strategy (with 6 variables
+and 942 observation) to fulfill our goal. Of course, since we want a
 sensitivity analysis on the number of principal components too, we
 select two values as the thresholds of the cumulative variance ratio. In
 other words, we use the following combination:</p>
@@ -1226,7 +1226,7 @@ AG.AGR.TRAC.NO
 0.142<sup>***</sup>
 </td>
 <td style="text-align:center;">
-0.149<sup>***</sup>
+0.159<sup>***</sup>
 </td>
 <td style="text-align:center;">
 0.182<sup>***</sup>
@@ -1302,13 +1302,13 @@ No. Exo. (orig.)
 9
 </td>
 <td style="text-align:center;">
-10
+8
 </td>
 <td style="text-align:center;">
 9
 </td>
 <td style="text-align:center;">
-10
+8
 </td>
 </tr>
 <tr>
@@ -1336,7 +1336,7 @@ No. Exo.
 6
 </td>
 <td style="text-align:center;">
-7
+6
 </td>
 <td style="text-align:center;">
 4
@@ -1353,7 +1353,7 @@ No. Rest.
 5
 </td>
 <td style="text-align:center;">
-3
+4
 </td>
 <td style="text-align:center;">
 2
@@ -1370,7 +1370,7 @@ S.E. of Reg.
 4.129
 </td>
 <td style="text-align:center;">
-3.414
+3.708
 </td>
 <td style="text-align:center;">
 3.883
@@ -1387,7 +1387,7 @@ R Sq.
 -0.11
 </td>
 <td style="text-align:center;">
-0.083
+0.004
 </td>
 <td style="text-align:center;">
 -0.043
@@ -1404,7 +1404,7 @@ AIC
 4.307
 </td>
 <td style="text-align:center;">
-4.117
+4.2
 </td>
 <td style="text-align:center;">
 4.246
@@ -1421,7 +1421,7 @@ SIC
 4.35
 </td>
 <td style="text-align:center;">
-4.16
+4.242
 </td>
 <td style="text-align:center;">
 4.288

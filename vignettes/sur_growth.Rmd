@@ -133,7 +133,7 @@ Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt:
 The steps of `SurSearch\_s()` function is defined by a list of indices and a vector of sizes: 
 
 ```{r modelset_steps}
-xSizes <- list(c(2,3), c(4))
+xSizes <- list(as.integer(c(2,3)), as.integer(c(4)))
 xCounts <- c(NA, 5)
 ```
 
@@ -179,8 +179,8 @@ We would like to include the intercept and the lag of the dependent variable in 
 
 We are not able to load the data in this vignette, because it needs an external data set and this is not available in this package. But, a part of the data set is saved in the **ldt** package, and we load:
 ```{r data_load}
-x = ldt::vig_data$wdi$x
-y = ldt::vig_data$wdi$y
+x = as.matrix(ldt::vig_data$wdi$x)
+y = as.matrix(ldt::vig_data$wdi$y)
 ```
 If you have downloaded the data set files, do not run this code.
 
@@ -289,7 +289,7 @@ Each strategy specifies the number of rows or columns that should be removed and
 cat(unlist(sapply(strategies, function(s) s$nCols))[1:20], " ...\n")
 ```
 
-These numbers are the number of variables in each strategy. While the choice is not straightforward, we choose the first strategy (with `r strategies[[1]]$nCols` variables and `r strategies[[1]]$nCols*strategies[[1]]$nRows` observation) and the 2nd strategy (with `r strategies[[2]]$nCols` variables and `r strategies[[2]]$nCols * strategies[[16]]$nRows` observation) to fulfill our goal. Of course, since we want a sensitivity analysis on the number of principal components too, we select two values as the thresholds of the cumulative variance ratio. In other words, we use the following combination:
+These numbers are the number of variables in each strategy. While the choice is not straightforward, we choose the first strategy (with `r strategies[[1]]$nCols` variables and `r strategies[[1]]$nCols*strategies[[1]]$nRows` observation) and the 2nd strategy (with `r strategies[[2]]$nCols` variables and `r strategies[[2]]$nCols * strategies[[2]]$nRows` observation) to fulfill our goal. Of course, since we want a sensitivity analysis on the number of principal components too, we select two values as the thresholds of the cumulative variance ratio. In other words, we use the following combination:
 
 ```{r pca_na_strategies_select}
 inds <- c(1, 2, 1, 2)

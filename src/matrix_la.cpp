@@ -386,31 +386,31 @@ template <typename Tw> void Matrix<Tw>::Transpose0(Matrix<Tw> &storage) const {
 
 template <typename Tw> void Matrix<Tw>::Transpose() {
   Tw temp;
+  Ti c, a;
   if (RowsCount == ColsCount) {
     for (Ti i = 0; i < RowsCount; i++) {
       for (Ti j = i + 1; j < ColsCount; j++) {
-        temp = Get0(i, j);
-        Set0(i, j, Get0(j, i));
-        Set0(j, i, temp);
+        c = i + RowsCount * j;
+        a = j + RowsCount * i;
+        std::swap(Data[a], Data[c]);
       }
     }
   } else {
-    // for more description see:
-    // https://en.wikipedia.org/wiki/In-place_matrix_transposition#Non-square_matrices%3a_Following_the_cycles
-    // source: https://stackoverflow.com/a/9320349
+    // see: https://en.wikipedia.org/wiki/In-place_matrix_transposition
 
-    const Ti l = length() - 1;
-    std::vector<bool> visited(l);
-    Ti cycle = 0, a;
-    while (++cycle != l) {
-      if (visited[cycle])
+    const Ti N = length() - 1;
+    std::vector<bool> visited(N);
+    for (c = 0; c < N; c++) {
+      if (visited.at(c))
         continue;
-      a = cycle;
-      do {
-        a = a == l ? l : (ColsCount * a) % l;
-        std::swap(Data[a], Data[cycle]);
-        visited[a] = true;
-      } while (a != cycle);
+      a = c;
+      while (true) {
+        a = (ColsCount * a) % N;
+        visited.at(a) = true;
+        std::swap(Data[a], Data[c]);
+        if (a == c)
+          break;
+      }
     }
     std::swap(RowsCount, ColsCount);
   }

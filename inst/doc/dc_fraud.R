@@ -26,13 +26,13 @@ knitr::opts_chunk$set(
 ## -----------------------------------------------------------------------------
 #  y <- as.matrix(vestadata$data[, c("isFraud")])
 #  x <- as.matrix(vestadata$data[, 3:length(vestadata$data)])
-#  weight <- as.numeric((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
+#  weight <- as.matrix((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 
 ## -----------------------------------------------------------------------------
 #  optimOptions <- GetNewtonOptions(maxIterations = 10, functionTol = 1e-2)
 
 ## -----------------------------------------------------------------------------
-#  xSizes <- list(c(1), c(2), c(3), c(4:10))
+#  xSizes <- list(as.integer(c(1)), as.integer(c(2)), as.integer(c(3)), as.integer(c(4:10)))
 #  xCounts <- c(NA, 20, 15, 10)
 
 ## -----------------------------------------------------------------------------

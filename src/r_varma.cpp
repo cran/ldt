@@ -94,27 +94,41 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
+  y = as<NumericMatrix>(y);
+
   if (numTargets < 1)
     throw std::logic_error("Number of targets must be positive.");
 
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  List searchOptions_ =
-      searchOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
-          : GetSearchOptions();
-  CheckSearchOptions(searchOptions_);
+  List searchOptions_;
+  if (searchOptions != R_NilValue) {
+    if (is<List>(searchOptions) == false)
+      throw std::logic_error("'searchOptions' must be a 'List'.");
+    searchOptions_ = as<List>(searchOptions);
+    CheckSearchOptions(searchOptions_);
+  } else
+    searchOptions_ = GetSearchOptions();
+
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  if (x != R_NilValue)
-    x = internal::convert_using_rfunction(x, "as.matrix");
-  if (newX != R_NilValue)
-    newX = internal::convert_using_rfunction(newX, "as.matrix");
+
+  if (x != R_NilValue){
+    if (is<NumericMatrix>(x) == false)
+      throw std::logic_error("'x' must be a 'numeric matrix'.");
+    x = as<NumericMatrix>(x);
+  }
+  if (newX != R_NilValue){
+    if (is<NumericMatrix>(newX) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+    newX = as<NumericMatrix>(newX);
+  }
 
   ldt::Matrix<double> my;
   ldt::Matrix<double> mx;
@@ -163,8 +177,9 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
     List optimOptions_ = GetLmbfgsOptions();
     UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
   } else {
-    List optimOptions_ =
-        (List)internal::convert_using_rfunction(lmbfgsOptions, "as.list");
+    if (is<List>(lmbfgsOptions) == false)
+      throw std::logic_error("'lmbfgsOptions' must be a 'List'.");
+    List optimOptions_ = as<List>(lmbfgsOptions);
     CheckLmbfgsOptions(optimOptions_);
     UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
   }
@@ -174,18 +189,35 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   //   checks.Estimation = true;
   // }
 
-  List measureOptions_ =
-      measureOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(measureOptions, "as.list")
-          : GetMeasureOptions();
-  List modelCheckItems_ =
-      modelCheckItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(modelCheckItems, "as.list")
-          : GetModelCheckItems();
-  List searchItems_ =
-      searchItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchItems, "as.list")
-          : GetSearchItems();
+  List measureOptions_;
+  if (measureOptions == R_NilValue)
+    measureOptions_ = GetMeasureOptions();
+  else {
+    if (is<List>(measureOptions) == false)
+      throw std::logic_error("'measureOptions' must be a 'List'.");
+    measureOptions_ = as<List>(measureOptions);
+    CheckMeasureOptions(measureOptions_);
+  }
+
+  List modelCheckItems_;
+  if (modelCheckItems == R_NilValue)
+    modelCheckItems_ = GetModelCheckItems();
+  else {
+    if (is<List>(modelCheckItems) == false)
+      throw std::logic_error("'modelCheckItems' must be a 'List'.");
+    modelCheckItems_ = as<List>(modelCheckItems);
+    CheckModelCheckItems(modelCheckItems_);
+  }
+
+  List searchItems_;
+  if (searchItems == R_NilValue)
+    searchItems_ = GetSearchItems();
+  else {
+    if (is<List>(searchItems) == false)
+      throw std::logic_error("'searchItems' must be a 'List'.");
+    searchItems_ = as<List>(searchItems);
+    CheckSearchItems(searchItems_);
+  }
 
   auto measures = SearchMeasureOptions();
   auto measuresNames = std::vector<std::string>();
@@ -301,20 +333,32 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
+  y = as<NumericMatrix>(y);
 
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  if (x != R_NilValue)
-    x = internal::convert_using_rfunction(x, "as.matrix");
+  if (x != R_NilValue){
+    if (is<NumericMatrix>(x) == false)
+      throw std::logic_error("'x' must be a 'numeric matrix'.");
+    x = as<NumericMatrix>(x);
+  }
 
-  if (newX != R_NilValue)
-    newX = internal::convert_using_rfunction(newX, "as.matrix");
+  if (newX != R_NilValue){
+    if (is<NumericMatrix>(newX) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+  }
   if (addIntercept && maxHorizon > 0) {
-    if (newX == R_NilValue)
-      newX = NumericMatrix(maxHorizon, 0);
-    newX = insert_intercept(newX);
+    if (newX == R_NilValue){
+      auto newX0 = NumericMatrix(maxHorizon, 0);
+      newX = insert_intercept(newX0);
+    }
+    else{
+      auto newX0 = as<NumericMatrix>(newX);
+      newX = insert_intercept(newX0);
+    }
   }
 
   ldt::Matrix<double> my;
@@ -351,18 +395,21 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
   auto pcaOptionsX0 = PcaAnalysisOptions();
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
-    List pcaOptionsX_ =
-        (List)internal::convert_using_rfunction(pcaOptionsX, "as.list");
+    if (is<List>(pcaOptionsX) == false)
+      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
+    List pcaOptionsX_ = as<List>(pcaOptionsX);
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptionsX0,
                      "Exogenous PCA options");
-    pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
+    if (addIntercept)
+      pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
   }
 
   auto pcaOptionsY0 = PcaAnalysisOptions();
   bool hasPcaY = pcaOptionsY != R_NilValue;
   if (hasPcaY) {
-    List pcaOptionsY_ =
-        (List)internal::convert_using_rfunction(pcaOptionsY, "as.list");
+    if (is<List>(pcaOptionsY) == false)
+      throw std::logic_error("'pcaOptionsY' must be a 'List'.");
+    List pcaOptionsY_ = as<List>(pcaOptionsY);
     UpdatePcaOptions(printMsg, pcaOptionsY_, hasPcaY, pcaOptionsY0,
                      "Endogenous PCA options");
   }
@@ -379,8 +426,9 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
       List optimOptions_ = GetLmbfgsOptions();
       UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
     } else {
-      List optimOptions_ =
-          (List)internal::convert_using_rfunction(lmbfgsOptions, "as.list");
+      if (is<List>(lmbfgsOptions) == false)
+        throw std::logic_error("'lmbfgsOptions' must be a 'List'.");
+      List optimOptions_ = as<List>(lmbfgsOptions);
       CheckLmbfgsOptions(optimOptions_);
       UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
     }
@@ -426,8 +474,9 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
       for (int i = 0; i < maxHorizon; i++)
         simHorizons_.push_back(i + 1);
     } else if (simHorizons != R_NilValue) {
-      IntegerVector hors =
-          internal::convert_using_rfunction(simHorizons, "as.integer");
+      if (is<IntegerVector>(simHorizons) == false)
+        throw std::logic_error("'simHorizons' must be an 'integer vector'.");
+      auto hors = as<IntegerVector>(simHorizons);
       for (int i = 0; i < hors.length(); i++) {
         if (hors[i] <= 0)
           throw std::logic_error("Zero or negative value in 'simHorizons'.");

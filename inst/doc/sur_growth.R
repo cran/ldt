@@ -68,7 +68,7 @@ n0Choose6 <- sum(sapply(seq(1:6), function(i) choose(n0, i)))
 print(prettyNum(n0Choose6, big.mark = ","))
 
 ## ----modelset_steps-----------------------------------------------------------
-xSizes <- list(c(2,3), c(4))
+xSizes <- list(as.integer(c(2,3)), as.integer(c(4)))
 xCounts <- c(NA, 5)
 
 ## ----modelset_measure_options-------------------------------------------------
@@ -84,8 +84,8 @@ searchItems <- GetSearchItems(model = TRUE, bestK = 50, inclusion = TRUE)
 checkItems <- GetModelCheckItems(maxConditionNumber = 1e15, minDof = 35, minOutSim = 50)
 
 ## ----data_load----------------------------------------------------------------
-x = ldt::vig_data$wdi$x
-y = ldt::vig_data$wdi$y
+x = as.matrix(ldt::vig_data$wdi$x)
+y = as.matrix(ldt::vig_data$wdi$y)
 
 ## ----estimation---------------------------------------------------------------
 search_res <- SurSearch_s(

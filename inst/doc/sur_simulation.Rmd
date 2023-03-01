@@ -66,9 +66,9 @@ Note that a larger value for $s$ (element of `sMultipliers`) means more disperse
 We assume that the number of endogenous variables is known. Furthermore, to decrease the size of the model set, we assume that we know that the number of regressors is not larger than 3. In other words, we will use the following data (If you are not familiar with the arguments of the `SurSearch_s()` function, please read [this vignette](sur_growth.html) first):
 
 ```{r def_search_assumptions}
-xSizes <- list(c(1, 2), c(3))
+xSizes <- list(as.integer(c(1, 2)), as.integer(c(3)))
 xCounts <- c(NA, 5)
-yGroups <- list(c(1, 2))
+yGroups <- list(as.integer(c(1, 2)))
 ```
 
 
@@ -308,11 +308,11 @@ Note that we adjusted the value of `maxAic` by running the code multiple times. 
 
 sur_sim_one <- list(
   unr = SampleAndEstimate(
-    -1, NULL, n, s, c(3), c(NA), list(c(1, 2)), measureOptions,
+    -1, NULL, n, s, as.integer(c(3)), c(NA), list(as.integer(c(1, 2))), measureOptions,
     searchItems, checkItems
   ),
   res = SampleAndEstimate(
-    -1, NULL, n, s, c(3), c(NA), list(c(1, 2)), measureOptions,
+    -1, NULL, n, s, as.integer(c(3)), c(NA), list(as.integer(c(1, 2))), measureOptions,
     searchItems, checkItems
   )
 ) 

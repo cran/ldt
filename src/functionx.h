@@ -75,4 +75,22 @@ public:
                        const Matrix<Tv> &x, Tv *storage, Tv *work);
 };
 
+/// @brief Area under a curve, given a list of points in 2D space
+/// @tparam vert If true, it calculates the area based on the vertical axis
+template <bool vert = false> class LDT_EXPORT AucPoints {
+public:
+  /// @brief Calculated result
+  Tv Result = NAN;
+
+  /// @brief Initializes a new instance, given a list of 2D points
+  /// @param points list of points (x,y)
+  /// @param baseLine It calculates the area between the curve and this lower
+  /// bound. All points must be equal or larger than this. Zero means x-axis (or
+  /// y-axis if \par vert is true)
+  AucPoints(const std::vector<std::tuple<Tv, Tv>> &points, Tv baseLine = 0);
+};
+
+extern template class ldt::AucPoints<true>;
+extern template class ldt::AucPoints<false>;
+
 } // namespace ldt

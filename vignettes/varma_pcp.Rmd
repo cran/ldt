@@ -39,7 +39,7 @@ in this vignette, we will predict the commodity prices and discuss the predictio
 measureOptions <- GetMeasureOptions(
   simFixSize = 24,
   typesIn = NULL, typesOut = c("direction", "scaledRmse", "crps"),
-  horizons = c(1)
+  horizons = as.integer(c(1))
 )
 ```
 
@@ -110,13 +110,13 @@ If you have downloaded the data set files, do not run this code. Note that we al
 We search VARMA models with at most 2 number of variables:
 
 ```{r}
-ySizes <- c(1:2)
+ySizes <- as.integer(c(1:2))
 ```
 
 and we create two groups of exogenous variables:
 
 ```{r}
-xGroups <- list(c(1), c(1, 2))
+xGroups <- list(as.integer(c(1)), as.integer(c(1, 2)))
 ```
 
 We also define the following maximum values for the parameters of the VARMA:

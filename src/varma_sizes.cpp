@@ -64,7 +64,7 @@ void ExpandPolyDiff(Ti d, Ti D, Ti s, std::vector<Ti> &poly, Ti *work) {
   if (D != 0) {
     auto J = &work[p];
     p += s + 1;
-    auto mat = Matrix<Ti>(J, s + 1, 1);
+    auto mat = Matrix<Ti>(0, J, s + 1, 1);
     mat.Data[0] = 1;
     mat.Data[s] = -1;
     auto p2 = Polynomial<Ti>();

@@ -16,9 +16,9 @@ GetMeasureOptions(
 )
 }
 \arguments{
-\item{typesIn}{(nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{costMatrixIn}, \code{aucIn}. Null means no measure.}
+\item{typesIn}{(nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{aucIn}. Null means no measure.}
 
-\item{typesOut}{(nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{costMatrixOut}, \code{aucOut}. Null means no measure.}
+\item{typesOut}{(nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, \code{aucOut}. Null means no measure.}
 
 \item{simFixSize}{(int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation.}
 
