@@ -9,7 +9,7 @@
 
 namespace ldt {
 
-/// @brief Types of in-sample measures
+/// @brief Types of in-sample metrics
 enum class GoodnessOfFitType {
 
   /// @brief Akaike information criterion
@@ -23,6 +23,9 @@ enum class GoodnessOfFitType {
 
   /// @brief Area under ROC
   kAuc = 110,
+
+  /// @brief Brier score
+  kBrier = 115
 };
 
 /// @brief Converts a \ref GoodnessOfFitType to string
@@ -40,6 +43,8 @@ inline const char *ToString(GoodnessOfFitType v, bool abr = true) {
     return abr ? "frequencyCostIn" : "Custom Frequency Cost";
   case GoodnessOfFitType::kAuc:
     return abr ? "aucIn" : "Area Under ROC (In-Sample)";
+  case GoodnessOfFitType::kBrier:
+    return abr ? "brierIn" : "Brier Score (In-Sample)";
   default:
     return "[Unknown 'GoodnessOfFitType']";
   }
@@ -57,6 +62,8 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
     return GoodnessOfFitType::kFrequencyCost;
   else if (StartsWith("auc", v))
     return GoodnessOfFitType::kAuc;
+  else if (StartsWith("bri", v))
+    return GoodnessOfFitType::kBrier;
 
   throw std::logic_error(
       std::string("Invalid enum name: 'GoodnessOfFit Type'. value=") +
@@ -66,20 +73,20 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
 /// @brief A helper class for \ref GoodnessOfFitType related methods
 class LDT_EXPORT GoodnessOfFit {
 public:
-  /// @brief Converts a \ref GoodnessOfFitType measure to weight
+  /// @brief Converts a \ref GoodnessOfFitType metricsIn to weight
   /// @param type The type
-  /// @param measure The measure
+  /// @param metricsIn The metric
   /// @return The weight
-  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &measure);
+  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &metric);
 
-  /// @brief Converts a a \ref GoodnessOfFitType weight to measure
+  /// @brief Converts a a \ref GoodnessOfFitType weight to metric
   /// @param type The type
   /// @param weight The weight
-  /// @return The measure
+  /// @return The metric
   static Tv FromWeight(const GoodnessOfFitType &type, const Tv &weight);
 };
 
-/// @brief Types of out-of-sample measures
+/// @brief Types of out-of-sample metrics
 enum class ScoringType {
 
   /// @brief Direction of change (in ordered data such as time-series data)
@@ -91,14 +98,14 @@ enum class ScoringType {
   /// @brief Mean Absolute Error
   kMae = 5,
 
-  /// @brief Similar to 'MAE' but error is divided by the actual value
-  kScaledMae = 6,
+  /// @brief Mean Absolute Percentage Error
+  kMape = 6,
 
   /// @brief Root Mean Squared Error
   kRmse = 10,
 
-  /// @brief Similar to 'RMAE', but error is divided by the actual value
-  kScaledRmse = 11,
+  /// @brief Root Mean Squared Percentage Error
+  kRmspe = 11,
 
   /// @brief Continuous Ranked Probability Score
   kCrps = 20,
@@ -107,7 +114,10 @@ enum class ScoringType {
   kFrequencyCost = 100,
 
   /// @brief Area under ROC
-  kAuc
+  kAuc = 110,
+
+  /// @brief Brier score
+  kBrier = 115
 };
 
 /// @brief Converts a \ref ScoringRule to string
@@ -124,12 +134,12 @@ inline const char *ToString(ScoringType v, bool abr = true) {
 
   case ScoringType::kMae:
     return abr ? "mae" : "Mean Absolute Error";
-  case ScoringType::kScaledMae:
-    return abr ? "scaledMae" : "Scaled Mean Absolute Error";
+  case ScoringType::kMape:
+    return abr ? "mape" : "Mean Absolute Percentage Error";
   case ScoringType::kRmse:
     return abr ? "rmse" : "Root Mean Squared Error";
-  case ScoringType::kScaledRmse:
-    return abr ? "scaledRmse" : "Scaled Root Mean Squared Error";
+  case ScoringType::kRmspe:
+    return abr ? "rmspe" : "Root Mean Squared Percentage Error";
 
   case ScoringType::kCrps:
     return abr ? "crps" : "Continuous Ranked Probability Score";
@@ -139,7 +149,10 @@ inline const char *ToString(ScoringType v, bool abr = true) {
                : "Custom Frequency Cost<Tv> (Out-of-Sample)";
 
   case ScoringType::kAuc:
-    return abr ? "aucOut" : "Area Under ROC";
+    return abr ? "aucOut" : "Area Under ROC (Out-of-Sample)";
+
+  case ScoringType::kBrier:
+    return abr ? "brierOut" : "Brier Score (Out-of-Sample)";
 
   default:
     return "[Unknown 'ScoringType']";
@@ -157,12 +170,12 @@ inline ScoringType FromString_ScoringType(const char *v) {
 
   else if (StartsWith("mae", v))
     return ScoringType::kMae;
-  else if (StartsWith("scaledmae", v) || StartsWith("maescaled", v))
-    return ScoringType::kScaledMae;
+  else if (StartsWith("map", v))
+    return ScoringType::kMape;
   else if (StartsWith("rms", v))
     return ScoringType::kRmse;
-  else if (StartsWith("scaledrmse", v) || StartsWith("rmsescaled", v))
-    return ScoringType::kScaledRmse;
+  else if (StartsWith("rmsp", v))
+    return ScoringType::kRmspe;
 
   else if (StartsWith("crp", v))
     return ScoringType::kCrps;
@@ -172,6 +185,9 @@ inline ScoringType FromString_ScoringType(const char *v) {
 
   else if (StartsWith("auc", v))
     return ScoringType::kAuc;
+
+  else if (StartsWith("bri", v))
+    return ScoringType::kBrier;
 
   throw std::logic_error(
       std::string("Invalid enum name: 'Scoring Type'. value=") +
@@ -217,16 +233,16 @@ public:
   /// @return
   static bool RequiresVariance(const ScoringType &type);
 
-  /// @brief Converts a \ref ScoringRule measure to weight
+  /// @brief Converts a \ref ScoringRule metric to weight
   /// @param type The type
-  /// @param measure The measure
+  /// @param metric The metric
   /// @return The weight
-  static Tv ToWeight(const ScoringType &type, const Tv &measure);
+  static Tv ToWeight(const ScoringType &type, const Tv &metric);
 
-  /// @brief Converts a a \ref ScoringRule weight to measure
+  /// @brief Converts a a \ref ScoringRule weight to metric
   /// @param type The type
   /// @param weight The weight
-  /// @return The measure
+  /// @return The metric
   static Tv FromWeight(const ScoringType &type, const Tv &weight);
 };
 
@@ -314,7 +330,7 @@ struct LDT_EXPORT RocOptions {
   Tv Epsilon = 0;
 
   /// @brief If true, sequences of equally scored instances are
-  /// treated differently and a pessimistic measure is calculated (see Fawcett
+  /// treated differently and a pessimistic metric is calculated (see Fawcett
   /// (2006) An introduction to roc analysis, fig. 6).
   bool Pessimistic = false;
 

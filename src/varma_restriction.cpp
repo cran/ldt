@@ -63,7 +63,7 @@ void VarmaRestriction::Calculate(Tv *storage,
       if (isRestricted)
         j--;
       else
-        R.Set(i, j, 1);
+        R.Set0(i, j, 1);
       // leave an empty row if it is a restricted parameter
     }
   } else if (mType == VarmaRestrictionType::kMaFinal) {

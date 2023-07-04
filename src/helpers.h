@@ -287,8 +287,45 @@ bool Contains(const std::vector<T> &vec, const T &element) {
 /// @return true if \p str starts with \p code, false otherwise
 LDT_EXPORT bool StartsWith(const char *code, const char *str);
 
+LDT_EXPORT bool EndsWith(const char *code, const char *str);
+
 LDT_EXPORT bool AreEqual_i(const char *first, const char *second);
 
 LDT_EXPORT bool AreEqual(const char *first, const char *second);
+
+template <typename T>
+void formatHelper(std::ostringstream &oss, const std::string &fmt,
+                  std::size_t &pos, T arg) {
+  std::size_t next = fmt.find("{}", pos);
+  if (next == std::string::npos) {
+    throw std::runtime_error("Too many arguments provided to format");
+  }
+  oss << fmt.substr(pos, next - pos) << arg;
+  pos = next + 2;
+}
+
+template <typename T, typename... Args>
+void formatHelper(std::ostringstream &oss, const std::string &fmt,
+                  std::size_t &pos, T arg, Args... args) {
+  std::size_t next = fmt.find("{}", pos);
+  if (next == std::string::npos) {
+    throw std::runtime_error("Too many arguments provided to format");
+  }
+  oss << fmt.substr(pos, next - pos) << arg;
+  pos = next + 2;
+  formatHelper(oss, fmt, pos, args...);
+}
+
+template <typename... Args>
+std::string format(const std::string &fmt, Args... args) {
+  std::ostringstream oss;
+  std::size_t pos = 0;
+  formatHelper(oss, fmt, pos, args...);
+  if (fmt.find("{}", pos) != std::string::npos) {
+    throw std::runtime_error("Too few arguments provided to format");
+  }
+  oss << fmt.substr(pos);
+  return oss.str();
+}
 
 // #pragma endregion

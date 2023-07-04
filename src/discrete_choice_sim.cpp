@@ -14,7 +14,7 @@ template <bool hasWeight, DiscreteChoiceModelType modelType,
           DiscreteChoiceDistType distType>
 DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
     Ti rows, Ti cols, Ti numChoices, Tv trainPercentage, Ti trainFixSize,
-    Ti costMatrixCount, bool doAuc, bool doFrequencyTable,
+    Ti costMatrixCount, bool doBrier, bool doAuc, bool doFrequencyTable,
     PcaAnalysisOptions *pcaOptions, bool weightedEval) {
   if (numChoices < 1)
     throw std::logic_error("number of choices must be larger than 1");
@@ -40,6 +40,7 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
 
   mDoFrequecyTable = doFrequencyTable;
   mCostMatrixCount = costMatrixCount;
+  mDoBrier = doBrier;
   mDoAuc = doAuc;
   mWeightedEval = hasWeight && weightedEval;
   this->pPcaOptions = pcaOptions;
@@ -94,7 +95,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   if (checkSizes) {
     auto temp = DiscreteChoiceSim<hasWeight, modelType, distType>(
         rows, data.ColsCount, mNumChoices, mTrainRatio, mTrainFixSize,
-        costCount, mDoAuc, mDoFrequecyTable, this->pPcaOptions, mWeightedEval);
+        costCount, mDoBrier, mDoAuc, mDoFrequecyTable, this->pPcaOptions,
+        mWeightedEval);
     if (temp.WorkSize > this->WorkSize || temp.WorkSizeI > this->WorkSizeI ||
         temp.StorageSize > this->StorageSize)
       throw std::logic_error(
@@ -219,12 +221,6 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
       } catch (std::exception &ex) {
         errors->insert(ex.what());
         continue;
-      } catch (std::string &ex) {
-        errors->insert(ex.c_str());
-        continue;
-      } catch (const char *ex) {
-        errors->insert(ex);
-        continue;
       } catch (...) {
         errors->insert("unknown error!");
         continue;
@@ -244,6 +240,23 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     y1.SetData(split.Sample1.Data);
     if constexpr (hasWeight) {
       w1.SetData(&split.Sample1.Data[this->N1]);
+    }
+
+    if (mDoBrier) {
+      BrierScore = 0;
+      Tv yi, wi = 1, sum = 0;
+      Ti i = -1;
+      for (auto ap = model.PredProbs.ColBegin(1);
+           ap != model.PredProbs.ColEnd(1); ++ap) {
+        i++;
+        yi = y1.Data[i];
+        if constexpr (hasWeight) {
+          wi = w1.Data[i];
+        }
+        BrierScore += wi * std::pow(yi - *ap, 2);
+        sum += wi;
+      }
+      BrierScore /= sum;
     }
 
     if (costCount > 0) {
@@ -278,7 +291,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
           wi = w1.Data[i];
         }
         yc = static_cast<Ti>(yi);
-        actProb = model.PredProbs.Get(i, yc);
+        actProb = model.PredProbs.Get0(i, yc);
         if (std::isnan(actProb)) {
           throw std::logic_error("probability is nan!");
         }
@@ -312,8 +325,9 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
 DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
     bool hasWeight, DiscreteChoiceModelType modelType,
     DiscreteChoiceDistType distType, Ti numObs, Ti numExo, Ti numChoices,
-    Tv trainPercentage, Ti trainFixSize, Ti costMatrixCount, bool doAuc,
-    bool doFrequecyTable, PcaAnalysisOptions *pcaOptions, bool weightedEval) {
+    Tv trainPercentage, Ti trainFixSize, Ti costMatrixCount, bool doBrier,
+    bool doAuc, bool doFrequecyTable, PcaAnalysisOptions *pcaOptions,
+    bool weightedEval) {
 
   DiscreteChoiceSimBase *d = nullptr;
 
@@ -326,13 +340,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
         d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
                                   DiscreteChoiceDistType::kLogit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
         d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
                                   DiscreteChoiceDistType::kProbit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       default:
         throw std::logic_error(
@@ -346,13 +362,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
         d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
                                   DiscreteChoiceDistType::kLogit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
         d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
                                   DiscreteChoiceDistType::kProbit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       default:
         throw std::logic_error(
@@ -374,13 +392,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
         d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
                                   DiscreteChoiceDistType::kLogit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
         d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
                                   DiscreteChoiceDistType::kProbit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       default:
         throw std::logic_error(
@@ -394,13 +414,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
         d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
                                   DiscreteChoiceDistType::kLogit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
         d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
                                   DiscreteChoiceDistType::kProbit>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
-            costMatrixCount, doAuc, doFrequecyTable, pcaOptions, weightedEval);
+            costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
+            weightedEval);
         break;
       default:
         throw std::logic_error(

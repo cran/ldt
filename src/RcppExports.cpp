@@ -25,15 +25,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // ClusterH
-List ClusterH(NumericVector distances, int numVariables, std::string linkage);
-RcppExport SEXP _ldt_ClusterH(SEXP distancesSEXP, SEXP numVariablesSEXP, SEXP linkageSEXP) {
+List ClusterH(NumericVector distances, std::string linkage);
+RcppExport SEXP _ldt_ClusterH(SEXP distancesSEXP, SEXP linkageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type distances(distancesSEXP);
-    Rcpp::traits::input_parameter< int >::type numVariables(numVariablesSEXP);
     Rcpp::traits::input_parameter< std::string >::type linkage(linkageSEXP);
-    rcpp_result_gen = Rcpp::wrap(ClusterH(distances, numVariables, linkage));
+    rcpp_result_gen = Rcpp::wrap(ClusterH(distances, linkage));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -53,9 +52,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// DcSearch
-SEXP DcSearch(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions, SEXP costMatrices, bool searchLogit, bool searchProbit, SEXP optimOptions, SEXP aucOptions, SEXP measureOptions, SEXP modelCheckItems, SEXP searchItems, SEXP searchOptions);
-RcppExport SEXP _ldt_DcSearch(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP optimOptionsSEXP, SEXP aucOptionsSEXP, SEXP measureOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+// SearchDc
+SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions, SEXP costMatrices, bool searchLogit, bool searchProbit, List optimOptions, List aucOptions, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
+RcppExport SEXP _ldt_SearchDc(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP optimOptionsSEXP, SEXP aucOptionsSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -67,495 +66,76 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type costMatrices(costMatricesSEXP);
     Rcpp::traits::input_parameter< bool >::type searchLogit(searchLogitSEXP);
     Rcpp::traits::input_parameter< bool >::type searchProbit(searchProbitSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type optimOptions(optimOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type aucOptions(aucOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type measureOptions(measureOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(DcSearch(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, measureOptions, modelCheckItems, searchItems, searchOptions));
+    Rcpp::traits::input_parameter< List >::type optimOptions(optimOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type aucOptions(aucOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(SearchDc(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, metricOptions, modelCheckItems, searchItems, searchOptions));
     return rcpp_result_gen;
 END_RCPP
 }
-// DcEstim
-SEXP DcEstim(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX, SEXP pcaOptionsX, SEXP costMatrices, SEXP aucOptions, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, bool weightedEval, bool printMsg);
-RcppExport SEXP _ldt_DcEstim(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP distTypeSEXP, SEXP newXSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP aucOptionsSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP weightedEvalSEXP, SEXP printMsgSEXP) {
+// EstimDc
+SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX, SEXP pcaOptionsX, SEXP costMatrices, List aucOptions, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, bool weightedEval, bool printMsg);
+RcppExport SEXP _ldt_EstimDc(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP linkFuncSEXP, SEXP newXSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP aucOptionsSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP weightedEvalSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     Rcpp::traits::input_parameter< SEXP >::type w(wSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distType(distTypeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type linkFunc(linkFuncSEXP);
     Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type costMatrices(costMatricesSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type aucOptions(aucOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type aucOptions(aucOptionsSEXP);
     Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
     Rcpp::traits::input_parameter< double >::type simTrainRatio(simTrainRatioSEXP);
     Rcpp::traits::input_parameter< int >::type simTrainFixSize(simTrainFixSizeSEXP);
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
     Rcpp::traits::input_parameter< bool >::type weightedEval(weightedEvalSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(DcEstim(y, x, w, distType, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimDc(y, x, w, linkFunc, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
-// F_CrossSection
-SEXP F_CrossSection(int position);
-RcppExport SEXP _ldt_F_CrossSection(SEXP positionSEXP) {
+// SupportsParallel
+bool SupportsParallel();
+RcppExport SEXP _ldt_SupportsParallel() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type position(positionSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_CrossSection(position));
+    rcpp_result_gen = Rcpp::wrap(SupportsParallel());
     return rcpp_result_gen;
 END_RCPP
 }
-// F_Yearly
-SEXP F_Yearly(int year);
-RcppExport SEXP _ldt_F_Yearly(SEXP yearSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Yearly(year));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Quarterly
-SEXP F_Quarterly(int year, int quarter);
-RcppExport SEXP _ldt_F_Quarterly(SEXP yearSEXP, SEXP quarterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type quarter(quarterSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Quarterly(year, quarter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Monthly
-SEXP F_Monthly(int year, int month);
-RcppExport SEXP _ldt_F_Monthly(SEXP yearSEXP, SEXP monthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Monthly(year, month));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_MultiYearly
-SEXP F_MultiYearly(int year, int z);
-RcppExport SEXP _ldt_F_MultiYearly(SEXP yearSEXP, SEXP zSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type z(zSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_MultiYearly(year, z));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_XTimesAYear
-SEXP F_XTimesAYear(int year, int x, int position);
-RcppExport SEXP _ldt_F_XTimesAYear(SEXP yearSEXP, SEXP xSEXP, SEXP positionSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type position(positionSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_XTimesAYear(year, x, position));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_XTimesZYear
-SEXP F_XTimesZYear(int year, int x, int z, int position);
-RcppExport SEXP _ldt_F_XTimesZYear(SEXP yearSEXP, SEXP xSEXP, SEXP zSEXP, SEXP positionSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type z(zSEXP);
-    Rcpp::traits::input_parameter< int >::type position(positionSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_XTimesZYear(year, x, z, position));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Weekly
-SEXP F_Weekly(int year, int month, int day);
-RcppExport SEXP _ldt_F_Weekly(SEXP yearSEXP, SEXP monthSEXP, SEXP daySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Weekly(year, month, day));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_MultiWeekly
-SEXP F_MultiWeekly(int year, int month, int day, int k);
-RcppExport SEXP _ldt_F_MultiWeekly(SEXP yearSEXP, SEXP monthSEXP, SEXP daySEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_MultiWeekly(year, month, day, k));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Daily
-SEXP F_Daily(int year, int month, int day);
-RcppExport SEXP _ldt_F_Daily(SEXP yearSEXP, SEXP monthSEXP, SEXP daySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Daily(year, month, day));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_MultiDaily
-SEXP F_MultiDaily(int year, int month, int day, int k);
-RcppExport SEXP _ldt_F_MultiDaily(SEXP yearSEXP, SEXP monthSEXP, SEXP daySEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_MultiDaily(year, month, day, k));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_DailyInWeek
-SEXP F_DailyInWeek(int year, int month, int day, std::string weekStart, std::string weekEnd, bool forward);
-RcppExport SEXP _ldt_F_DailyInWeek(SEXP yearSEXP, SEXP monthSEXP, SEXP daySEXP, SEXP weekStartSEXP, SEXP weekEndSEXP, SEXP forwardSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< int >::type month(monthSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    Rcpp::traits::input_parameter< std::string >::type weekStart(weekStartSEXP);
-    Rcpp::traits::input_parameter< std::string >::type weekEnd(weekEndSEXP);
-    Rcpp::traits::input_parameter< bool >::type forward(forwardSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_DailyInWeek(year, month, day, weekStart, weekEnd, forward));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_ListString
-SEXP F_ListString(std::vector<std::string> items, std::string value);
-RcppExport SEXP _ldt_F_ListString(SEXP itemsSEXP, SEXP valueSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type items(itemsSEXP);
-    Rcpp::traits::input_parameter< std::string >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_ListString(items, value));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_ListDate
-SEXP F_ListDate(std::vector<std::string> items, std::string value);
-RcppExport SEXP _ldt_F_ListDate(SEXP itemsSEXP, SEXP valueSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type items(itemsSEXP);
-    Rcpp::traits::input_parameter< std::string >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_ListDate(items, value));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Hourly
-SEXP F_Hourly(SEXP day, int hour);
-RcppExport SEXP _ldt_F_Hourly(SEXP daySEXP, SEXP hourSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type hour(hourSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Hourly(day, hour));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Minute_ly
-SEXP F_Minute_ly(SEXP day, int minute);
-RcppExport SEXP _ldt_F_Minute_ly(SEXP daySEXP, SEXP minuteSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type minute(minuteSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Minute_ly(day, minute));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_Second_ly
-SEXP F_Second_ly(SEXP day, int second);
-RcppExport SEXP _ldt_F_Second_ly(SEXP daySEXP, SEXP secondSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type second(secondSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_Second_ly(day, second));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F_XTimesADay
-SEXP F_XTimesADay(SEXP day, int x, int position);
-RcppExport SEXP _ldt_F_XTimesADay(SEXP daySEXP, SEXP xSEXP, SEXP positionSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type position(positionSEXP);
-    rcpp_result_gen = Rcpp::wrap(F_XTimesADay(day, x, position));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ToString_F
-std::string ToString_F(SEXP value);
-RcppExport SEXP _ldt_ToString_F(SEXP valueSEXP) {
+// GetWeightFromMetric
+SEXP GetWeightFromMetric(SEXP value, SEXP metricName);
+RcppExport SEXP _ldt_GetWeightFromMetric(SEXP valueSEXP, SEXP metricNameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(ToString_F(value));
+    Rcpp::traits::input_parameter< SEXP >::type metricName(metricNameSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetWeightFromMetric(value, metricName));
     return rcpp_result_gen;
 END_RCPP
 }
-// ToClassString_F
-std::string ToClassString_F(SEXP value);
-RcppExport SEXP _ldt_ToClassString_F(SEXP valueSEXP) {
+// GetMetricFromWeight
+SEXP GetMetricFromWeight(SEXP value, SEXP metricName);
+RcppExport SEXP _ldt_GetMetricFromWeight(SEXP valueSEXP, SEXP metricNameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(ToClassString_F(value));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ToString_F0
-List ToString_F0(SEXP value);
-RcppExport SEXP _ldt_ToString_F0(SEXP valueSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(ToString_F0(value));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Parse_F
-SEXP Parse_F(std::string str, std::string classStr);
-RcppExport SEXP _ldt_Parse_F(SEXP strSEXP, SEXP classStrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type str(strSEXP);
-    Rcpp::traits::input_parameter< std::string >::type classStr(classStrSEXP);
-    rcpp_result_gen = Rcpp::wrap(Parse_F(str, classStr));
-    return rcpp_result_gen;
-END_RCPP
-}
-// Sequence_F
-std::vector<std::string> Sequence_F(SEXP start, int length);
-RcppExport SEXP _ldt_Sequence_F(SEXP startSEXP, SEXP lengthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type start(startSEXP);
-    Rcpp::traits::input_parameter< int >::type length(lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(Sequence_F(start, length));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetRocOptions
-List GetRocOptions(double lowerThreshold, double upperThreshold, double epsilon, bool pessimistic, SEXP costs, SEXP costMatrix);
-RcppExport SEXP _ldt_GetRocOptions(SEXP lowerThresholdSEXP, SEXP upperThresholdSEXP, SEXP epsilonSEXP, SEXP pessimisticSEXP, SEXP costsSEXP, SEXP costMatrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type lowerThreshold(lowerThresholdSEXP);
-    Rcpp::traits::input_parameter< double >::type upperThreshold(upperThresholdSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< bool >::type pessimistic(pessimisticSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type costs(costsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type costMatrix(costMatrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetRocOptions(lowerThreshold, upperThreshold, epsilon, pessimistic, costs, costMatrix));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetNelderMeadOptions
-List GetNelderMeadOptions(int maxIterations, double epsilon, double alpha, double beta, double gamma, double scale);
-RcppExport SEXP _ldt_GetNelderMeadOptions(SEXP maxIterationsSEXP, SEXP epsilonSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP scaleSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type maxIterations(maxIterationsSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetNelderMeadOptions(maxIterations, epsilon, alpha, beta, gamma, scale));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetPcaOptions
-List GetPcaOptions(int ignoreFirst, int exactCount, double cutoffRate, int max);
-RcppExport SEXP _ldt_GetPcaOptions(SEXP ignoreFirstSEXP, SEXP exactCountSEXP, SEXP cutoffRateSEXP, SEXP maxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type ignoreFirst(ignoreFirstSEXP);
-    Rcpp::traits::input_parameter< int >::type exactCount(exactCountSEXP);
-    Rcpp::traits::input_parameter< double >::type cutoffRate(cutoffRateSEXP);
-    Rcpp::traits::input_parameter< int >::type max(maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetPcaOptions(ignoreFirst, exactCount, cutoffRate, max));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetLmbfgsOptions
-List GetLmbfgsOptions(int maxIterations, double factor, double projectedGradientTol, int maxCorrections);
-RcppExport SEXP _ldt_GetLmbfgsOptions(SEXP maxIterationsSEXP, SEXP factorSEXP, SEXP projectedGradientTolSEXP, SEXP maxCorrectionsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type maxIterations(maxIterationsSEXP);
-    Rcpp::traits::input_parameter< double >::type factor(factorSEXP);
-    Rcpp::traits::input_parameter< double >::type projectedGradientTol(projectedGradientTolSEXP);
-    Rcpp::traits::input_parameter< int >::type maxCorrections(maxCorrectionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetLmbfgsOptions(maxIterations, factor, projectedGradientTol, maxCorrections));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetNewtonOptions
-List GetNewtonOptions(int maxIterations, double functionTol, double gradientTol, bool useLineSearch);
-RcppExport SEXP _ldt_GetNewtonOptions(SEXP maxIterationsSEXP, SEXP functionTolSEXP, SEXP gradientTolSEXP, SEXP useLineSearchSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type maxIterations(maxIterationsSEXP);
-    Rcpp::traits::input_parameter< double >::type functionTol(functionTolSEXP);
-    Rcpp::traits::input_parameter< double >::type gradientTol(gradientTolSEXP);
-    Rcpp::traits::input_parameter< bool >::type useLineSearch(useLineSearchSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetNewtonOptions(maxIterations, functionTol, gradientTol, useLineSearch));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetSearchItems
-List GetSearchItems(bool model, bool type1, bool type2, int bestK, bool all, bool inclusion, SEXP cdfs, double extremeMultiplier, bool mixture4);
-RcppExport SEXP _ldt_GetSearchItems(SEXP modelSEXP, SEXP type1SEXP, SEXP type2SEXP, SEXP bestKSEXP, SEXP allSEXP, SEXP inclusionSEXP, SEXP cdfsSEXP, SEXP extremeMultiplierSEXP, SEXP mixture4SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< bool >::type model(modelSEXP);
-    Rcpp::traits::input_parameter< bool >::type type1(type1SEXP);
-    Rcpp::traits::input_parameter< bool >::type type2(type2SEXP);
-    Rcpp::traits::input_parameter< int >::type bestK(bestKSEXP);
-    Rcpp::traits::input_parameter< bool >::type all(allSEXP);
-    Rcpp::traits::input_parameter< bool >::type inclusion(inclusionSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type cdfs(cdfsSEXP);
-    Rcpp::traits::input_parameter< double >::type extremeMultiplier(extremeMultiplierSEXP);
-    Rcpp::traits::input_parameter< bool >::type mixture4(mixture4SEXP);
-    rcpp_result_gen = Rcpp::wrap(GetSearchItems(model, type1, type2, bestK, all, inclusion, cdfs, extremeMultiplier, mixture4));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetSearchOptions
-List GetSearchOptions(bool parallel, int reportInterval, bool printMsg);
-RcppExport SEXP _ldt_GetSearchOptions(SEXP parallelSEXP, SEXP reportIntervalSEXP, SEXP printMsgSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< bool >::type parallel(parallelSEXP);
-    Rcpp::traits::input_parameter< int >::type reportInterval(reportIntervalSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetSearchOptions(parallel, reportInterval, printMsg));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetModelCheckItems
-List GetModelCheckItems(bool estimation, double maxConditionNumber, int minObsCount, int minDof, int minOutSim, double minR2, double maxAic, double maxSic, bool prediction, double predictionBoundMultiplier);
-RcppExport SEXP _ldt_GetModelCheckItems(SEXP estimationSEXP, SEXP maxConditionNumberSEXP, SEXP minObsCountSEXP, SEXP minDofSEXP, SEXP minOutSimSEXP, SEXP minR2SEXP, SEXP maxAicSEXP, SEXP maxSicSEXP, SEXP predictionSEXP, SEXP predictionBoundMultiplierSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< bool >::type estimation(estimationSEXP);
-    Rcpp::traits::input_parameter< double >::type maxConditionNumber(maxConditionNumberSEXP);
-    Rcpp::traits::input_parameter< int >::type minObsCount(minObsCountSEXP);
-    Rcpp::traits::input_parameter< int >::type minDof(minDofSEXP);
-    Rcpp::traits::input_parameter< int >::type minOutSim(minOutSimSEXP);
-    Rcpp::traits::input_parameter< double >::type minR2(minR2SEXP);
-    Rcpp::traits::input_parameter< double >::type maxAic(maxAicSEXP);
-    Rcpp::traits::input_parameter< double >::type maxSic(maxSicSEXP);
-    Rcpp::traits::input_parameter< bool >::type prediction(predictionSEXP);
-    Rcpp::traits::input_parameter< double >::type predictionBoundMultiplier(predictionBoundMultiplierSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetModelCheckItems(estimation, maxConditionNumber, minObsCount, minDof, minOutSim, minR2, maxAic, maxSic, prediction, predictionBoundMultiplier));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetMeasureOptions
-List GetMeasureOptions(SEXP typesIn, SEXP typesOut, int simFixSize, double trainRatio, int trainFixSize, int seed, SEXP horizons, bool weightedEval);
-RcppExport SEXP _ldt_GetMeasureOptions(SEXP typesInSEXP, SEXP typesOutSEXP, SEXP simFixSizeSEXP, SEXP trainRatioSEXP, SEXP trainFixSizeSEXP, SEXP seedSEXP, SEXP horizonsSEXP, SEXP weightedEvalSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type typesIn(typesInSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type typesOut(typesOutSEXP);
-    Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
-    Rcpp::traits::input_parameter< double >::type trainRatio(trainRatioSEXP);
-    Rcpp::traits::input_parameter< int >::type trainFixSize(trainFixSizeSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type horizons(horizonsSEXP);
-    Rcpp::traits::input_parameter< bool >::type weightedEval(weightedEvalSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetMeasureOptions(typesIn, typesOut, simFixSize, trainRatio, trainFixSize, seed, horizons, weightedEval));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetWeightFromMeasure
-SEXP GetWeightFromMeasure(SEXP value, SEXP measureName);
-RcppExport SEXP _ldt_GetWeightFromMeasure(SEXP valueSEXP, SEXP measureNameSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type measureName(measureNameSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetWeightFromMeasure(value, measureName));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetMeasureFromWeight
-SEXP GetMeasureFromWeight(SEXP value, SEXP measureName);
-RcppExport SEXP _ldt_GetMeasureFromWeight(SEXP valueSEXP, SEXP measureNameSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type measureName(measureNameSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetMeasureFromWeight(value, measureName));
+    Rcpp::traits::input_parameter< SEXP >::type metricName(metricNameSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetMetricFromWeight(value, metricName));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetRoc
-List GetRoc(SEXP y, SEXP scores, SEXP weights, SEXP options, bool printMsg);
+List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg);
 RcppExport SEXP _ldt_GetRoc(SEXP ySEXP, SEXP scoresSEXP, SEXP weightsSEXP, SEXP optionsSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -563,15 +143,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
     Rcpp::traits::input_parameter< SEXP >::type scores(scoresSEXP);
     Rcpp::traits::input_parameter< SEXP >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type options(optionsSEXP);
+    Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
     rcpp_result_gen = Rcpp::wrap(GetRoc(y, scores, weights, options, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetGldFromMoments
-NumericVector GetGldFromMoments(double mean, double variance, double skewness, double excessKurtosis, int type, SEXP start, SEXP nelderMeadOptions, bool printMsg);
-RcppExport SEXP _ldt_GetGldFromMoments(SEXP meanSEXP, SEXP varianceSEXP, SEXP skewnessSEXP, SEXP excessKurtosisSEXP, SEXP typeSEXP, SEXP startSEXP, SEXP nelderMeadOptionsSEXP, SEXP printMsgSEXP) {
+NumericVector GetGldFromMoments(double mean, double variance, double skewness, double excessKurtosis, int type, double s1, double s2, List nelderMeadOptions, bool printMsg);
+RcppExport SEXP _ldt_GetGldFromMoments(SEXP meanSEXP, SEXP varianceSEXP, SEXP skewnessSEXP, SEXP excessKurtosisSEXP, SEXP typeSEXP, SEXP s1SEXP, SEXP s2SEXP, SEXP nelderMeadOptionsSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -580,10 +160,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type skewness(skewnessSEXP);
     Rcpp::traits::input_parameter< double >::type excessKurtosis(excessKurtosisSEXP);
     Rcpp::traits::input_parameter< int >::type type(typeSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type start(startSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nelderMeadOptions(nelderMeadOptionsSEXP);
+    Rcpp::traits::input_parameter< double >::type s1(s1SEXP);
+    Rcpp::traits::input_parameter< double >::type s2(s2SEXP);
+    Rcpp::traits::input_parameter< List >::type nelderMeadOptions(nelderMeadOptionsSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetGldFromMoments(mean, variance, skewness, excessKurtosis, type, start, nelderMeadOptions, printMsg));
+    rcpp_result_gen = Rcpp::wrap(GetGldFromMoments(mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -617,25 +198,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetCombination4Moments
-List GetCombination4Moments(SEXP mix1, SEXP mix2);
-RcppExport SEXP _ldt_GetCombination4Moments(SEXP mix1SEXP, SEXP mix2SEXP) {
+// CombineByMoments4
+List CombineByMoments4(SEXP mix1, SEXP mix2);
+RcppExport SEXP _ldt_CombineByMoments4(SEXP mix1SEXP, SEXP mix2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mix1(mix1SEXP);
     Rcpp::traits::input_parameter< SEXP >::type mix2(mix2SEXP);
-    rcpp_result_gen = Rcpp::wrap(GetCombination4Moments(mix1, mix2));
+    rcpp_result_gen = Rcpp::wrap(CombineByMoments4(mix1, mix2));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetPca
-List GetPca(SEXP x, bool center, bool scale, SEXP newX);
+List GetPca(NumericMatrix x, bool center, bool scale, SEXP newX);
 RcppExport SEXP _ldt_GetPca(SEXP xSEXP, SEXP centerSEXP, SEXP scaleSEXP, SEXP newXSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
     Rcpp::traits::input_parameter< bool >::type center(centerSEXP);
     Rcpp::traits::input_parameter< bool >::type scale(scaleSEXP);
     Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
@@ -643,9 +224,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// SurSearch
-SEXP SurSearch(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions, int numFixXPartitions, SEXP yGroups, int searchSigMaxIter, double searchSigMaxProb, SEXP measureOptions, SEXP modelCheckItems, SEXP searchItems, SEXP searchOptions);
-RcppExport SEXP _ldt_SurSearch(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP numFixXPartitionsSEXP, SEXP yGroupsSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP measureOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+// SearchSur
+SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions, int numFixXPartitions, SEXP yGroups, int searchSigMaxIter, double searchSigMaxProb, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
+RcppExport SEXP _ldt_SearchSur(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP numFixXPartitionsSEXP, SEXP yGroupsSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -658,17 +239,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type yGroups(yGroupsSEXP);
     Rcpp::traits::input_parameter< int >::type searchSigMaxIter(searchSigMaxIterSEXP);
     Rcpp::traits::input_parameter< double >::type searchSigMaxProb(searchSigMaxProbSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type measureOptions(measureOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(SurSearch(y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, measureOptions, modelCheckItems, searchItems, searchOptions));
+    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions, modelCheckItems, searchItems, searchOptions));
     return rcpp_result_gen;
 END_RCPP
 }
-// SurEstim
-SEXP SurEstim(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP newX, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, bool printMsg);
-RcppExport SEXP _ldt_SurEstim(SEXP ySEXP, SEXP xSEXP, SEXP addInterceptSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP newXSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
+// EstimSur
+SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP newX, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, bool printMsg);
+RcppExport SEXP _ldt_EstimSur(SEXP ySEXP, SEXP xSEXP, SEXP addInterceptSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP newXSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -687,49 +268,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(SurEstim(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimSur(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
-// Variable
-List Variable(std::vector<double> data, std::string name, SEXP startFrequency, List fields);
-RcppExport SEXP _ldt_Variable(SEXP dataSEXP, SEXP nameSEXP, SEXP startFrequencySEXP, SEXP fieldsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type startFrequency(startFrequencySEXP);
-    Rcpp::traits::input_parameter< List >::type fields(fieldsSEXP);
-    rcpp_result_gen = Rcpp::wrap(Variable(data, name, startFrequency, fields));
-    return rcpp_result_gen;
-END_RCPP
-}
-// VariableToString
-std::string VariableToString(List w);
-RcppExport SEXP _ldt_VariableToString(SEXP wSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type w(wSEXP);
-    rcpp_result_gen = Rcpp::wrap(VariableToString(w));
-    return rcpp_result_gen;
-END_RCPP
-}
-// BindVariables
-NumericMatrix BindVariables(SEXP varList);
-RcppExport SEXP _ldt_BindVariables(SEXP varListSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type varList(varListSEXP);
-    rcpp_result_gen = Rcpp::wrap(BindVariables(varList));
-    return rcpp_result_gen;
-END_RCPP
-}
-// VarmaSearch
-SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions, SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon, SEXP newX, bool interpolate, int adjustLeadsLags, bool simUsePreviousEstim, double olsStdMultiplier, SEXP lmbfgsOptions, SEXP measureOptions, SEXP modelCheckItems, SEXP searchItems, SEXP searchOptions);
-RcppExport SEXP _ldt_VarmaSearch(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP ySizesSEXP, SEXP yPartitionsSEXP, SEXP xGroupsSEXP, SEXP maxParamsSEXP, SEXP seasonsCountSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP interpolateSEXP, SEXP adjustLeadsLagsSEXP, SEXP simUsePreviousEstimSEXP, SEXP olsStdMultiplierSEXP, SEXP lmbfgsOptionsSEXP, SEXP measureOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+// SearchVarma
+SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions, SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon, SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier, List lbfgsOptions, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
+RcppExport SEXP _ldt_SearchVarma(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP ySizesSEXP, SEXP yPartitionsSEXP, SEXP xGroupsSEXP, SEXP maxParamsSEXP, SEXP seasonsCountSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simUsePreviousEstimSEXP, SEXP olsStdMultiplierSEXP, SEXP lbfgsOptionsSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -743,22 +288,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seasonsCount(seasonsCountSEXP);
     Rcpp::traits::input_parameter< int >::type maxHorizon(maxHorizonSEXP);
     Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
-    Rcpp::traits::input_parameter< bool >::type interpolate(interpolateSEXP);
-    Rcpp::traits::input_parameter< int >::type adjustLeadsLags(adjustLeadsLagsSEXP);
     Rcpp::traits::input_parameter< bool >::type simUsePreviousEstim(simUsePreviousEstimSEXP);
     Rcpp::traits::input_parameter< double >::type olsStdMultiplier(olsStdMultiplierSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type lmbfgsOptions(lmbfgsOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type measureOptions(measureOptionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(VarmaSearch(y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, interpolate, adjustLeadsLags, simUsePreviousEstim, olsStdMultiplier, lmbfgsOptions, measureOptions, modelCheckItems, searchItems, searchOptions));
+    Rcpp::traits::input_parameter< List >::type lbfgsOptions(lbfgsOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
+    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(SearchVarma(y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions));
     return rcpp_result_gen;
 END_RCPP
 }
-// VarmaEstim
-SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount, bool addIntercept, SEXP lmbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber, bool printMsg);
-RcppExport SEXP _ldt_VarmaEstim(SEXP ySEXP, SEXP xSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP addInterceptSEXP, SEXP lmbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
+// EstimVarma
+SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount, bool addIntercept, List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber, bool printMsg);
+RcppExport SEXP _ldt_EstimVarma(SEXP ySEXP, SEXP xSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP addInterceptSEXP, SEXP lbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -767,7 +310,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< int >::type seasonsCount(seasonsCountSEXP);
     Rcpp::traits::input_parameter< bool >::type addIntercept(addInterceptSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type lmbfgsOptions(lmbfgsOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type lbfgsOptions(lbfgsOptionsSEXP);
     Rcpp::traits::input_parameter< double >::type olsStdMultiplier(olsStdMultiplierSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsY(pcaOptionsYSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
@@ -778,64 +321,30 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type simUsePreviousEstim(simUsePreviousEstimSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(VarmaEstim(y, x, params, seasonsCount, addIntercept, lmbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimVarma(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ldt_GetDistance", (DL_FUNC) &_ldt_GetDistance, 4},
-    {"_ldt_ClusterH", (DL_FUNC) &_ldt_ClusterH, 3},
+    {"_ldt_ClusterH", (DL_FUNC) &_ldt_ClusterH, 2},
     {"_ldt_ClusterHGroup", (DL_FUNC) &_ldt_ClusterHGroup, 6},
-    {"_ldt_DcSearch", (DL_FUNC) &_ldt_DcSearch, 14},
-    {"_ldt_DcEstim", (DL_FUNC) &_ldt_DcEstim, 14},
-    {"_ldt_F_CrossSection", (DL_FUNC) &_ldt_F_CrossSection, 1},
-    {"_ldt_F_Yearly", (DL_FUNC) &_ldt_F_Yearly, 1},
-    {"_ldt_F_Quarterly", (DL_FUNC) &_ldt_F_Quarterly, 2},
-    {"_ldt_F_Monthly", (DL_FUNC) &_ldt_F_Monthly, 2},
-    {"_ldt_F_MultiYearly", (DL_FUNC) &_ldt_F_MultiYearly, 2},
-    {"_ldt_F_XTimesAYear", (DL_FUNC) &_ldt_F_XTimesAYear, 3},
-    {"_ldt_F_XTimesZYear", (DL_FUNC) &_ldt_F_XTimesZYear, 4},
-    {"_ldt_F_Weekly", (DL_FUNC) &_ldt_F_Weekly, 3},
-    {"_ldt_F_MultiWeekly", (DL_FUNC) &_ldt_F_MultiWeekly, 4},
-    {"_ldt_F_Daily", (DL_FUNC) &_ldt_F_Daily, 3},
-    {"_ldt_F_MultiDaily", (DL_FUNC) &_ldt_F_MultiDaily, 4},
-    {"_ldt_F_DailyInWeek", (DL_FUNC) &_ldt_F_DailyInWeek, 6},
-    {"_ldt_F_ListString", (DL_FUNC) &_ldt_F_ListString, 2},
-    {"_ldt_F_ListDate", (DL_FUNC) &_ldt_F_ListDate, 2},
-    {"_ldt_F_Hourly", (DL_FUNC) &_ldt_F_Hourly, 2},
-    {"_ldt_F_Minute_ly", (DL_FUNC) &_ldt_F_Minute_ly, 2},
-    {"_ldt_F_Second_ly", (DL_FUNC) &_ldt_F_Second_ly, 2},
-    {"_ldt_F_XTimesADay", (DL_FUNC) &_ldt_F_XTimesADay, 3},
-    {"_ldt_ToString_F", (DL_FUNC) &_ldt_ToString_F, 1},
-    {"_ldt_ToClassString_F", (DL_FUNC) &_ldt_ToClassString_F, 1},
-    {"_ldt_ToString_F0", (DL_FUNC) &_ldt_ToString_F0, 1},
-    {"_ldt_Parse_F", (DL_FUNC) &_ldt_Parse_F, 2},
-    {"_ldt_Sequence_F", (DL_FUNC) &_ldt_Sequence_F, 2},
-    {"_ldt_GetRocOptions", (DL_FUNC) &_ldt_GetRocOptions, 6},
-    {"_ldt_GetNelderMeadOptions", (DL_FUNC) &_ldt_GetNelderMeadOptions, 6},
-    {"_ldt_GetPcaOptions", (DL_FUNC) &_ldt_GetPcaOptions, 4},
-    {"_ldt_GetLmbfgsOptions", (DL_FUNC) &_ldt_GetLmbfgsOptions, 4},
-    {"_ldt_GetNewtonOptions", (DL_FUNC) &_ldt_GetNewtonOptions, 4},
-    {"_ldt_GetSearchItems", (DL_FUNC) &_ldt_GetSearchItems, 9},
-    {"_ldt_GetSearchOptions", (DL_FUNC) &_ldt_GetSearchOptions, 3},
-    {"_ldt_GetModelCheckItems", (DL_FUNC) &_ldt_GetModelCheckItems, 10},
-    {"_ldt_GetMeasureOptions", (DL_FUNC) &_ldt_GetMeasureOptions, 8},
-    {"_ldt_GetWeightFromMeasure", (DL_FUNC) &_ldt_GetWeightFromMeasure, 2},
-    {"_ldt_GetMeasureFromWeight", (DL_FUNC) &_ldt_GetMeasureFromWeight, 2},
+    {"_ldt_SearchDc", (DL_FUNC) &_ldt_SearchDc, 14},
+    {"_ldt_EstimDc", (DL_FUNC) &_ldt_EstimDc, 14},
+    {"_ldt_SupportsParallel", (DL_FUNC) &_ldt_SupportsParallel, 0},
+    {"_ldt_GetWeightFromMetric", (DL_FUNC) &_ldt_GetWeightFromMetric, 2},
+    {"_ldt_GetMetricFromWeight", (DL_FUNC) &_ldt_GetMetricFromWeight, 2},
     {"_ldt_GetRoc", (DL_FUNC) &_ldt_GetRoc, 5},
-    {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 8},
+    {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 9},
     {"_ldt_GldQuantile", (DL_FUNC) &_ldt_GldQuantile, 5},
     {"_ldt_GldDensityQuantile", (DL_FUNC) &_ldt_GldDensityQuantile, 5},
-    {"_ldt_GetCombination4Moments", (DL_FUNC) &_ldt_GetCombination4Moments, 2},
+    {"_ldt_CombineByMoments4", (DL_FUNC) &_ldt_CombineByMoments4, 2},
     {"_ldt_GetPca", (DL_FUNC) &_ldt_GetPca, 4},
-    {"_ldt_SurSearch", (DL_FUNC) &_ldt_SurSearch, 13},
-    {"_ldt_SurEstim", (DL_FUNC) &_ldt_SurEstim, 15},
-    {"_ldt_Variable", (DL_FUNC) &_ldt_Variable, 4},
-    {"_ldt_VariableToString", (DL_FUNC) &_ldt_VariableToString, 1},
-    {"_ldt_BindVariables", (DL_FUNC) &_ldt_BindVariables, 1},
-    {"_ldt_VarmaSearch", (DL_FUNC) &_ldt_VarmaSearch, 19},
-    {"_ldt_VarmaEstim", (DL_FUNC) &_ldt_VarmaEstim, 16},
+    {"_ldt_SearchSur", (DL_FUNC) &_ldt_SearchSur, 13},
+    {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 15},
+    {"_ldt_SearchVarma", (DL_FUNC) &_ldt_SearchVarma, 17},
+    {"_ldt_EstimVarma", (DL_FUNC) &_ldt_EstimVarma, 16},
     {NULL, NULL, 0}
 };
 

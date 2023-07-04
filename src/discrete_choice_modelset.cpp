@@ -15,13 +15,13 @@ template <bool hasWeight, DiscreteChoiceModelType modelType,
           DiscreteChoiceDistType distType>
 DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     SearchOptions &searchOptions, const SearchItems &searchItems,
-    const SearchMeasureOptions &measures, const SearchModelChecks &checks,
-    Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
-    const std::vector<Ti> &groupSizes, Ti fixFirstG, const Matrix<Tv> &source,
-    Ti numChoices, const std::vector<Matrix<Tv>> &costMatrixes,
-    unsigned int seed, Newton &newtonOptions, RocOptions &aucOptions)
-    : Searcher::Searcher(searchOptions, searchItems, measures, checks, SizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+    const SearchMetricOptions &metrics, const SearchModelChecks &checks,
+    Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
+    const Matrix<Tv> &source, Ti numChoices,
+    const std::vector<Matrix<Tv>> &costMatrixes, unsigned int seed,
+    Newton &newtonOptions, RocOptions &aucOptions)
+    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, SizeG,
+                         groupIndexMap, fixFirstG, 0) {
 
   pCostMatrixes = &costMatrixes;
   pSource =
@@ -44,14 +44,15 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     DModel.Optim.UseLineSearch = newtonOptions.UseLineSearch;
   }
 
-  if (measures.SimFixSize > 0) { // we estimate a simulation model
+  if (metrics.SimFixSize > 0) { // we estimate a simulation model
     Model = DiscreteChoiceSim<hasWeight, modelType, distType>(
-        numObs, cols, this->mNumChoices, measures.TrainRatio,
-        (Ti)measures.TrainFixSize, (Ti)costMatrixes.size(),
-        measures.mIndexOfAucOut != -1, false, nullptr,
-        measures.WeightedEval); // no PCA in search
+        numObs, cols, this->mNumChoices, metrics.TrainRatio,
+        (Ti)metrics.TrainFixSize, (Ti)costMatrixes.size(),
+        metrics.mIndexOfBrierOut != -1, metrics.mIndexOfAucOut != -1, false,
+        nullptr,
+        metrics.WeightedEval); // no PCA in search
     Model.Seed = seed;
-    Model.SimulationMax = measures.SimFixSize;
+    Model.SimulationMax = metrics.SimFixSize;
 
     Model.Optim.IterationMax = newtonOptions.IterationMax;
     Model.Optim.TolFunction = newtonOptions.TolFunction;
@@ -76,13 +77,14 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
   for (Ti i = 0; i < this->SizeG; i++)
     Indexes.push_back(0);
 
-  auto numMeas = (Ti)this->pMeasures->MeasuresOut.size() +
-                 (Ti)this->pMeasures->MeasuresIn.size();
+  auto numMeas = (Ti)this->pMetrics->MetricsOut.size() +
+                 (Ti)this->pMetrics->MetricsIn.size();
   Weights = Matrix<Tv>(numMeas, 1);
   this->WorkSize += numMeas; // weights matrix
 
-  if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1) {
-    if (hasWeight && measures.WeightedEval)
+  if (metrics.mIndexOfCostMatrixIn != -1 || metrics.mIndexOfAucIn != -1 ||
+      metrics.mIndexOfBrierIn != -1) {
+    if (hasWeight && metrics.WeightedEval)
       CostIn = std::unique_ptr<FrequencyCostBase>(
           new FrequencyCost<true>((Ti)costMatrixes.size()));
     else
@@ -93,13 +95,13 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
         std::max(numObs + numChoices - 2, CostIn.get()->StorageSize) +
         numObs * numChoices;
   }
-  if (measures.mIndexOfAucIn != -1) {
+  if (metrics.mIndexOfAucIn != -1) {
 
     if (modelType == DiscreteChoiceModelType::kBinary) {
       std::logic_error("not implemented discrete choice model type");
     }
 
-    if (hasWeight && measures.WeightedEval)
+    if (hasWeight && metrics.WeightedEval)
       AucIn = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
     else
       AucIn = std::unique_ptr<RocBase>(new ROC<false, false>(numObs));
@@ -111,7 +113,7 @@ template <bool hasWeight, DiscreteChoiceModelType modelType,
 std::string
 DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
                                                                     Ti *workI) {
-  auto measures = *this->pMeasures;
+  auto metrics = *this->pMetrics;
 
   ExoIndexes.SetData(workI);
   ExoIndexes.Data[0] = 1;
@@ -172,9 +174,9 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     // 'R2' and 'ConditionNumber' is not implemented
 
     if (this->pChecks) {
-      // if (pChecks->mCheckCN_all && Model.condition_number >
-      // pChecks->MaxConditionNumber)
-      //	throw std::logic_error("Model check failed: Maximum CN");
+      if (pChecks->mCheckCN_all &&
+          this->DModel.condition_number > pChecks->MaxConditionNumber)
+        throw std::logic_error("Model check failed: Maximum CN");
 
       if (this->pChecks->MaxAic < this->DModel.Aic)
         throw std::logic_error("Model check failed: Maximum Aic");
@@ -185,7 +187,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     }
   }
 
-  if (measures.SimFixSize > 0) {
+  if (metrics.SimFixSize > 0) {
 
     if (this->pOptions->RequestCancel)
       return "";
@@ -193,62 +195,89 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     Model.Calculate(Data.Result, pCostMatrixes, &work[s],
                     &work[s + Model.StorageSize], &workI[this->SizeG + 1],
                     this->pOptions->RequestCancel, *pAucOptions,
-                    this->pMeasures->SimFixSize - this->pChecks->MinOutSim,
+                    this->pMetrics->SimFixSize - this->pChecks->MinOutSim,
                     nullptr, INT32_MAX);
     s += Model.StorageSize;
   }
 
-  // collect measures:
+  // collect metrics:
 
   if (this->pChecks->Estimation) {
-    if (measures.mIndexOfAic != -1)
+    if (metrics.mIndexOfAic != -1)
       Weights.Set0(
-          measures.mIndexOfAic, 0,
+          metrics.mIndexOfAic, 0,
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Aic));
-    if (measures.mIndexOfSic != -1)
+    if (metrics.mIndexOfSic != -1)
       Weights.Set0(
-          measures.mIndexOfSic, 0,
+          metrics.mIndexOfSic, 0,
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Sic));
 
-    if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1) {
+    if (metrics.mIndexOfCostMatrixIn != -1 || metrics.mIndexOfAucIn != -1 ||
+        metrics.mIndexOfBrierIn != -1) {
       Probs.SetData(&work[s]);
       s += Probs.length();
       DModel.GetProbabilities(X, Probs, &work[s]);
 
-      if (measures.mIndexOfCostMatrixIn != -1) {
+      if (metrics.mIndexOfBrierIn != -1) {
+
+        Tv brier = 0;
+        Tv yi, wi = 1, sum = 0;
+        Ti i = -1;
+        for (auto ap = Probs.ColBegin(1); ap != Probs.ColEnd(1); ++ap) {
+          i++;
+          yi = Y.Data[i];
+          if constexpr (hasWeight) {
+            wi = metrics.WeightedEval ? W.Data[i] : 1;
+          }
+          brier += wi * std::pow(yi - (*ap), 2);
+          sum += wi;
+        }
+        brier /= sum;
+        Weights.Set0(metrics.mIndexOfBrierIn, 0,
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kBrier, brier));
+      }
+
+      if (metrics.mIndexOfCostMatrixIn != -1) {
         if (this->pOptions->RequestCancel)
           return "";
 
         CostIn.get()->Calculate(
             *pCostMatrixes, Y, Probs,
-            hasWeight ? (measures.WeightedEval ? &W : nullptr) : nullptr,
+            hasWeight ? (metrics.WeightedEval ? &W : nullptr) : nullptr,
             &work[s]);
-        Weights.Set0(measures.mIndexOfCostMatrixIn, 0,
-                     1 - CostIn.get()->AverageRatio);
+        Weights.Set0(metrics.mIndexOfCostMatrixIn, 0,
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kFrequencyCost,
+                                             CostIn.get()->AverageRatio));
       }
-      if (measures.mIndexOfAucIn != -1) {
+      if (metrics.mIndexOfAucIn != -1) {
 
         if (this->pOptions->RequestCancel)
           return "";
 
-        AucIn.get()->Calculate(
-            Y, Probs,
-            hasWeight ? (measures.WeightedEval ? &W : nullptr) : nullptr,
-            *pAucOptions);
-        Weights.Set0(measures.mIndexOfAucIn, 0, AucIn.get()->Result);
+        AucIn.get()->Calculate(Y, Probs,
+                               hasWeight ? (metrics.WeightedEval ? &W : nullptr)
+                                         : nullptr,
+                               *pAucOptions);
+        Weights.Set0(metrics.mIndexOfAucIn, 0,
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kAuc,
+                                             AucIn.get()->Result));
       }
     }
   }
 
-  if (measures.SimFixSize > 0) {
-    Ti cc = (Ti)measures.MeasuresIn.size();
-    if (measures.mIndexOfCostMatrixOut != -1)
-      Weights.Set0(cc + measures.mIndexOfCostMatrixOut, 0,
-                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kFrequencyCost,
-                                           Model.CostRatios.Mean()));
-    if (measures.mIndexOfAucOut != -1)
-      Weights.Set0(cc + measures.mIndexOfAucOut, 0,
-                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kAuc, Model.Auc));
+  if (metrics.SimFixSize > 0) {
+    Ti cc = (Ti)metrics.MetricsIn.size();
+    if (metrics.mIndexOfCostMatrixOut != -1)
+      Weights.Set0(cc + metrics.mIndexOfCostMatrixOut, 0,
+                   Scoring::ToWeight(ScoringType::kFrequencyCost,
+                                     Model.CostRatios.Mean()));
+    if (metrics.mIndexOfAucOut != -1)
+      Weights.Set0(cc + metrics.mIndexOfAucOut, 0,
+                   Scoring::ToWeight(ScoringType::kAuc, Model.Auc));
+
+    if (metrics.mIndexOfBrierOut != -1)
+      Weights.Set0(cc + metrics.mIndexOfBrierOut, 0,
+                   Scoring::ToWeight(ScoringType::kBrier, Model.BrierScore));
   }
 
   if (this->pOptions->RequestCancel)
@@ -259,7 +288,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   bool allNan = true;
   Tv weight;
   for (Ti i = 0; i < Weights.RowsCount; i++) { // evaluation index
-    weight = Weights.Get(i, 0);
+    weight = Weights.Data[i];
     if (std::isnan(weight))
       continue;
     allNan = false;
@@ -279,7 +308,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
       for (Ti t = 0; t < this->SizeG + 1 + this->mNumChoices - 2; t++) {
         auto ek =
             new EstimationKeep(weight, &this->CurrentIndices, &extra, nullptr,
-                               DModel.Beta.Data[t], DModel.BetaVar.Get(t, t));
+                               DModel.Beta.Data[t], DModel.BetaVar.Get0(t, t));
         if (t == 0) // intercept
           this->Push1(*ek, i, 0, 0);
         else if (t <= this->SizeG) // beta parameter
@@ -309,7 +338,7 @@ void DiscreteChoiceModelsetBase::Start(Tv *work, Ti *worki) {
 
 DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     bool isBinary, bool hasWeight, SearchOptions &searchOptions,
-    SearchItems &searchItems, SearchMeasureOptions &measures,
+    SearchItems &searchItems, SearchMetricOptions &metrics,
     SearchModelChecks &checks, const std::vector<Ti> &sizes,
     const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit, bool addProbit,
@@ -319,13 +348,13 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kBinary>(
-              searchOptions, searchItems, measures, checks, sizes, source,
+              searchOptions, searchItems, metrics, checks, sizes, source,
               costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
               addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kBinary>(
-              searchOptions, searchItems, measures, checks, sizes, source,
+              searchOptions, searchItems, metrics, checks, sizes, source,
               costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
               addProbit);
     }
@@ -333,13 +362,13 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kOrdered>(
-              searchOptions, searchItems, measures, checks, sizes, source,
+              searchOptions, searchItems, metrics, checks, sizes, source,
               costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
               addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
-              searchOptions, searchItems, measures, checks, sizes, source,
+              searchOptions, searchItems, metrics, checks, sizes, source,
               costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
               addProbit);
     }
@@ -356,7 +385,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::~DiscreteChoiceModelset() {
 template <bool hasWeight, DiscreteChoiceModelType modelType>
 DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     SearchOptions &searchOptions, SearchItems &searchItems,
-    SearchMeasureOptions &measures, SearchModelChecks &checks,
+    SearchMetricOptions &metrics, SearchModelChecks &checks,
     const std::vector<Ti> &sizes, const Matrix<Tv> &source,
     std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
@@ -376,9 +405,9 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
          // throw error (if any)
     throw std::logic_error("Invalid number of exogenous variables.");
 
-  measures.Update(true, false);
-  checks.Update(measures);
-  searchItems.Update(measures, searchItems.LengthTargets,
+  metrics.Update(true, false);
+  checks.Update(metrics);
+  searchItems.Update(metrics, searchItems.LengthTargets,
                      searchItems.LengthDependents,
                      searchItems.LengthExogenouses);
 
@@ -422,20 +451,19 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    this->GroupSizes.push_back((Ti)b.size());
   }
 
   // check cost tables
-  if (measures.mIndexOfCostMatrixIn == -1 &&
-      measures.mIndexOfCostMatrixOut == -1) {
+  if (metrics.mIndexOfCostMatrixIn == -1 &&
+      metrics.mIndexOfCostMatrixOut == -1) {
     if (costMatrixes.size() > 0)
-      throw std::logic_error("There is no frequency cost measure and yet "
+      throw std::logic_error("There is no frequency cost metric and yet "
                              "frequency cost matrix list is not "
                              "empty!");
-  } else if (measures.mIndexOfCostMatrixIn != -1 ||
-             measures.mIndexOfCostMatrixOut != -1) {
+  } else if (metrics.mIndexOfCostMatrixIn != -1 ||
+             metrics.mIndexOfCostMatrixOut != -1) {
     if (costMatrixes.size() == 0)
-      throw std::logic_error("Frequency cost measures are given, "
+      throw std::logic_error("Frequency cost metrics are given, "
                              "however frequency cost matrix list is "
                              "empty!");
     for (auto const &table : costMatrixes) {
@@ -450,31 +478,31 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
           "Invalid model size (zero or negative). Make sure array is "
           "initialized properly.");
     co++;
-    auto seed = measures.Seed == (unsigned int)0
+    auto seed = metrics.Seed == (unsigned int)0
                     ? 0
-                    : (measures.Seed < 0 ? (unsigned int)(-measures.Seed)
-                                         : (unsigned int)(measures.Seed + co));
+                    : (metrics.Seed < 0 ? (unsigned int)(-metrics.Seed)
+                                        : (unsigned int)(metrics.Seed + co));
 
     if (addLogit) {
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kLogit>(
-              searchOptions, searchItems, measures, checks, s, groupIndexMaps,
-              this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions, aucOptions));
+              searchOptions, searchItems, metrics, checks, s, groupIndexMaps, 0,
+              source, this->mNumChoices, costMatrixes, seed, newtonOptions,
+              aucOptions));
     }
     if (addProbit) {
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kProbit>(
-              searchOptions, searchItems, measures, checks, s, groupIndexMaps,
-              this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions, aucOptions));
+              searchOptions, searchItems, metrics, checks, s, groupIndexMaps, 0,
+              source, this->mNumChoices, costMatrixes, seed, newtonOptions,
+              aucOptions));
     }
   }
 
-  this->Modelset = ModelSet(this->Searchers, groupIndexMaps, this->GroupSizes,
-                            searchOptions, searchItems, measures, checks);
+  this->Modelset = ModelSet(this->Searchers, groupIndexMaps, searchOptions,
+                            searchItems, metrics, checks);
 }
 
 // #pragma endregion

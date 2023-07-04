@@ -67,6 +67,58 @@ Matrix<Tw>::Matrix(Tw defvalue, std::vector<Tw> &values, Ti m, Ti n)
 
 // #pragma endregion
 
+// #pragma region Iterators
+
+template <typename Tw> Tw *Matrix<Tw>::begin() { return Data; }
+
+template <typename Tw> Tw *Matrix<Tw>::end() {
+  return Data + RowsCount * ColsCount;
+}
+
+template <typename Tw> Tw *Matrix<Tw>::ColBegin(Ti col) {
+  return Data + col * RowsCount;
+}
+
+template <typename Tw> Tw *Matrix<Tw>::ColEnd(Ti col) {
+  return Data + (col + 1) * RowsCount;
+}
+
+template <typename Tw>
+MatIterator<Tw>::MatIterator(Tw *p, int s) : ptr(p), stride(s) {}
+
+template <typename Tw> MatIterator<Tw> &MatIterator<Tw>::operator++() {
+  ptr += stride;
+  return *this;
+}
+
+template <typename Tw> MatIterator<Tw> MatIterator<Tw>::operator++(Ti) {
+  MatIterator tmp(*this);
+  operator++();
+  return tmp;
+}
+
+template <typename Tw>
+bool MatIterator<Tw>::operator==(const MatIterator &rhs) const {
+  return ptr == rhs.ptr;
+}
+
+template <typename Tw>
+bool MatIterator<Tw>::operator!=(const MatIterator &rhs) const {
+  return ptr != rhs.ptr;
+}
+
+template <typename Tw> Tw &MatIterator<Tw>::operator*() { return *ptr; }
+
+template <typename Tw> MatIterator<Tw> Matrix<Tw>::RowBegin(Ti row) {
+  return MatIterator(Data + row, RowsCount);
+}
+
+template <typename Tw> MatIterator<Tw> Matrix<Tw>::RowEnd(Ti row) {
+  return MatIterator(Data + row + ColsCount * RowsCount, RowsCount);
+}
+
+// #pragma endregion
+
 // #pragma region Data
 
 template <typename Tw> void Matrix<Tw>::Restructure(Ti newrows, Ti newcols) {
@@ -125,7 +177,7 @@ template <typename Tw> bool Matrix<Tw>::IsSymmetric(Tw epsilon) const {
     for (Ti j = 0; j < N; j++) {
       if (i >= j)
         continue;
-      d = std::abs(Get(i, j) - Get(j, i));
+      d = std::abs(Get0(i, j) - Get0(j, i));
       if (d > epsilon)
         return false;
     }
@@ -351,32 +403,14 @@ bool Matrix<Tw>::Equals(const Matrix<Tw> &m, Tw &abs_diff, Tw epsilon,
 template <typename Tw>
 IndexRange Matrix<Tw>::GetRangeColumn(bool &hasMissing, Ti j) const {
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-    hasMissing = false;
-    Ti start;
-    Ti end;
-    for (start = 0; start < RowsCount; start++)
-      if (std::isnan(Get0(start, j)) == false)
-        break;
 
-    for (end = RowsCount; end > 0; end--)
-      if (std::isnan(Get0(end - 1, j)) == false) {
-        end--;
-        break;
-      }
-
-    auto range = IndexRange(start, end);
-
-    if (range.IsNotValid())
-      return range;
-
-    for (Ti i = range.StartIndex; i <= range.EndIndex; i++)
-      if (std::isnan(Get0(i, j))) {
-        hasMissing = true;
-        break;
-      }
+    Tw *col = &Data[RowsCount * j];
+    auto range = Array<Tw>::GetRange(col, RowsCount, hasMissing);
     return range;
-  } else
+
+  } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
+  }
 }
 
 template <typename Tw>
@@ -406,7 +440,65 @@ IndexRange Matrix<Tw>::GetRangeRow(bool &hasMissing, Ti i) const {
         break;
       }
     return range;
-  } else
+  } else if constexpr (true) {
+    throw std::logic_error("invalid operation"); // there is no NAN
+  }
+}
+
+template <typename Tw>
+IndexRange Matrix<Tw>::InterpolateColumn(Ti &count, Ti colIndex) {
+
+  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
+
+    Tw *col = &Data[RowsCount * colIndex];
+    auto range = Array<Tw>::Interpolate(col, RowsCount, count);
+    return range;
+
+  } else if constexpr (true) {
+    throw std::logic_error("invalid operation"); // there is no NAN
+  }
+}
+
+template <typename Tw>
+IndexRange Matrix<Tw>::InterpolateRow(Ti &count, Ti rowIndex) {
+  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
+    bool hasMissing = false;
+    auto range = GetRangeRow(hasMissing, rowIndex);
+    count = 0;
+    if (hasMissing) {
+      bool inMissing = false;
+      Tw first = NAN, d, last = NAN;
+      Ti length = 1;
+
+      for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
+        d = Get0(rowIndex, i);
+        auto isNaN = std::isnan(d);
+
+        if (isNaN)
+          length++;
+
+        if (isNaN == false && inMissing) {
+          last = d;
+
+          // calculate and set
+          Tw step = (last - first) / length;
+          for (int j = 1; j < length; j++) {
+            Set0(rowIndex, i - j, d - j * step);
+            count++;
+          }
+
+          length = 1;
+          inMissing = false;
+        }
+
+        if (isNaN && inMissing == false) {
+          first = Get0(rowIndex, i - 1);
+          inMissing = true;
+        }
+      }
+    }
+    return range;
+  } else if constexpr (true)
     throw std::logic_error("invalid operation"); // there is no NAN
 }
 
@@ -1722,24 +1814,6 @@ std::string Matrix<Tw>::ToString_R_Matrix(std::streamsize precesion,
   str << ")";
   return str.str();
 }
-
-// #pragma endregion
-
-// #pragma region Index Range
-
-IndexRange::IndexRange(Ti start, Ti end) {
-  if (start > end || start < 0 || end < 0) {
-    StartIndex = 1;
-    EndIndex = 0;
-  } else {
-    StartIndex = start;
-    EndIndex = end;
-  }
-}
-
-bool IndexRange::IsNotValid() const { return StartIndex > EndIndex; }
-
-Ti IndexRange::Count() const { return EndIndex - StartIndex + 1; }
 
 // #pragma endregion
 
@@ -3109,6 +3183,9 @@ template <typename Tj> std::string join(const std::vector<Tj> *numbers) {
 }
 
 // #pragma endregion
+
+template class ldt::MatIterator<Ti>;
+template class ldt::MatIterator<Tv>;
 
 template class ldt::Matrix<Ti>;
 template class ldt::Matrix<Tv>;

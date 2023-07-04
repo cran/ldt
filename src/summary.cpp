@@ -11,15 +11,15 @@ using namespace ldt;
 
 // #pragma region Options
 
-void SearchItems::Update(const SearchMeasureOptions measures, Ti targetCount,
+void SearchItems::Update(const SearchMetricOptions metrics, Ti targetCount,
                          Ti DepenCount, Ti exoCount) {
-  LengthEvals = (Ti)(measures.MeasuresIn.size() + measures.MeasuresOut.size());
+  LengthEvals = (Ti)(metrics.MetricsIn.size() + metrics.MetricsOut.size());
   if (targetCount <= 0)
     throw std::logic_error("Number of targets must be positive.");
   LengthTargets = targetCount;
 }
 
-void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
+void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   mIsTimeSeries = isTimeSeries;
   if (isOutOfSampleRandom == false) {
     Seed = 0;
@@ -28,12 +28,12 @@ void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
     Horizons.clear();
 
   bool hasOut = SimFixSize > 0; // || (supportsSimRatio && SimRatio > 0);
-  if (hasOut == false && MeasuresOut.size() > 0)
-    throw std::logic_error("Out-of-Sample measures is given, but the number of "
+  if (hasOut == false && MetricsOut.size() > 0)
+    throw std::logic_error("Out-of-Sample metrics is given, but the number of "
                            "simulations is zero.");
-  if (hasOut && MeasuresOut.size() == 0)
+  if (hasOut && MetricsOut.size() == 0)
     throw std::logic_error(
-        "The number of simulations is positive but out-of-sample measures "
+        "The number of simulations is positive but out-of-sample metrics "
         "are missing.");
 
   if (TrainFixSize > 0)
@@ -44,34 +44,36 @@ void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
     throw std::logic_error("Training sample is empty.");
 
   if (isTimeSeries) {
-    if ((Horizons.size() == 0 && MeasuresOut.size() > 0) ||
-        (Horizons.size() > 0 && MeasuresOut.size() == 0))
+    if ((Horizons.size() == 0 && MetricsOut.size() > 0) ||
+        (Horizons.size() > 0 && MetricsOut.size() == 0))
       throw std::logic_error(
-          "Invalid number of horizons (or out-of-sample measures) is found.");
+          "Invalid number of horizons (or out-of-sample metrics) is found.");
   }
 
   // indexes
-  mIndexOfAic = IndexOf(MeasuresIn, GoodnessOfFitType::kAic);
-  mIndexOfSic = IndexOf(MeasuresIn, GoodnessOfFitType::kSic);
+  mIndexOfAic = IndexOf(MetricsIn, GoodnessOfFitType::kAic);
+  mIndexOfSic = IndexOf(MetricsIn, GoodnessOfFitType::kSic);
 
-  mIndexOfDirection = IndexOf(MeasuresOut, ScoringType::kDirection);
-  mIndexOfSign = IndexOf(MeasuresOut, ScoringType::kSign);
-  mIndexOfMae = IndexOf(MeasuresOut, ScoringType::kMae);
-  mIndexOfMaeSc = IndexOf(MeasuresOut, ScoringType::kScaledMae);
-  mIndexOfRmse = IndexOf(MeasuresOut, ScoringType::kRmse);
-  mIndexOfRmseSc = IndexOf(MeasuresOut, ScoringType::kScaledRmse);
-  mIndexOfCrps = IndexOf(MeasuresOut, ScoringType::kCrps);
+  mIndexOfDirection = IndexOf(MetricsOut, ScoringType::kDirection);
+  mIndexOfSign = IndexOf(MetricsOut, ScoringType::kSign);
+  mIndexOfMae = IndexOf(MetricsOut, ScoringType::kMae);
+  mIndexOfMaeSc = IndexOf(MetricsOut, ScoringType::kMape);
+  mIndexOfRmse = IndexOf(MetricsOut, ScoringType::kRmse);
+  mIndexOfRmseSc = IndexOf(MetricsOut, ScoringType::kRmspe);
+  mIndexOfCrps = IndexOf(MetricsOut, ScoringType::kCrps);
 
   // discrete choice
-  mIndexOfCostMatrixIn = IndexOf(MeasuresIn, GoodnessOfFitType::kFrequencyCost);
-  mIndexOfAucIn = IndexOf(MeasuresIn, GoodnessOfFitType::kAuc);
+  mIndexOfCostMatrixIn = IndexOf(MetricsIn, GoodnessOfFitType::kFrequencyCost);
+  mIndexOfAucIn = IndexOf(MetricsIn, GoodnessOfFitType::kAuc);
+  mIndexOfBrierIn = IndexOf(MetricsIn, GoodnessOfFitType::kBrier);
 
-  mIndexOfCostMatrixOut = IndexOf(MeasuresOut, ScoringType::kFrequencyCost);
-  mIndexOfAucOut = IndexOf(MeasuresOut, ScoringType::kAuc);
+  mIndexOfCostMatrixOut = IndexOf(MetricsOut, ScoringType::kFrequencyCost);
+  mIndexOfAucOut = IndexOf(MetricsOut, ScoringType::kAuc);
+  mIndexOfBrierOut = IndexOf(MetricsOut, ScoringType::kBrier);
 }
 
-void SearchModelChecks::Update(const SearchMeasureOptions &measures) {
-  if (measures.mIsTimeSeries == false)
+void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
+  if (metrics.mIsTimeSeries == false)
     Prediction = false;
 
   if (Prediction == false) {
@@ -80,7 +82,7 @@ void SearchModelChecks::Update(const SearchMeasureOptions &measures) {
   } else
     Estimation = true;
 
-  if (measures.SimFixSize > 0 && MinOutSim > measures.SimFixSize)
+  if (metrics.SimFixSize > 0 && MinOutSim > metrics.SimFixSize)
     throw std::logic_error(
         "Minimum number of simulations cannot be larger than the number of "
         "simulations.");
@@ -91,14 +93,14 @@ void SearchModelChecks::Update(const SearchMeasureOptions &measures) {
   auto checkSic = std::isinf(MaxSic) == false;
   auto checkR2 = std::isinf(-MinR2) == false;
 
-  mCheckCN = measures.MeasuresOut.size() > 0 &&
-             std::isinf(MaxConditionNumber) == false;
+  mCheckCN =
+      metrics.MetricsOut.size() > 0 && std::isinf(MaxConditionNumber) == false;
   mCheckCN_all = Estimation && std::isinf(MaxConditionNumber) ==
                                    false; // note that maximum condition number
                                           // does not affect estimation here
-  mCheckPredBound = measures.mIsTimeSeries && PredictionBoundMultiplier > 0;
+  mCheckPredBound = metrics.mIsTimeSeries && PredictionBoundMultiplier > 0;
 
-  if (Estimation == false && (measures.MeasuresIn.size() > 0 || checkN ||
+  if (Estimation == false && (metrics.MetricsIn.size() > 0 || checkN ||
                               checkDof || checkAic || checkSic || checkR2))
     Estimation = true;
 }

@@ -2,81 +2,62 @@
 % Please edit documentation in R/generic.R
 \name{to.data.frame}
 \alias{to.data.frame}
-\title{Converts an \code{ldtv} object to a \code{data.frame}}
+\title{Get Data from Model Search Output}
 \usage{
 to.data.frame(
   x,
   types = c("bestweights", "allweights", "inclusion", "type1bests", "cdf",
     "extremebounds", "mixture"),
-  measures = NULL,
+  metrics = NULL,
   targets = NULL,
   rows = NULL,
   columns = NULL,
   itemIndices = NULL,
-  colNamFun = function(ns) {
-     paste(ns[lengths(ns) > 0], collapse = ".")
- },
-  rowContent = c("measure", "target", "item", "row", "column"),
-  cdfIndex = 0,
-  ...
-)
-
-to.data.frame(
-  x,
-  types = c("bestweights", "allweights", "inclusion", "type1bests", "cdf",
-    "extremebounds", "mixture"),
-  measures = NULL,
-  targets = NULL,
-  rows = NULL,
-  columns = NULL,
-  itemIndices = NULL,
-  colNamFun = function(ns) {
-     paste(ns[lengths(ns) > 0], collapse = ".")
- },
-  rowContent = c("measure", "target", "item", "row", "column"),
+  colNameFun = NULL,
+  rowContent = c("metric", "target", "item", "row", "column"),
   cdfIndex = 0,
   ...
 )
 }
 \arguments{
-\item{x}{an \code{ldtsearch} object}
+\item{x}{Output from one of the \code{search.?} functions (see \link{search.sur}, \link{search.varma}, or \link{search.bin}).}
 
-\item{types}{(string vector) one or more that one type of information
-to be included in the the data.frame}
+\item{types}{One or more types of information to include in the data frame.
+Can be \code{bestweights}, \code{allweights}, \code{inclusion}, \code{type1bests}, \code{cdf}, \code{extremebounds}, and/or \code{mixture}.}
 
-\item{measures}{(integer or character array) measures to be used.}
+\item{metrics}{Indices or names of metrics to use.}
 
-\item{targets}{(integer or character array) targets to be used.}
+\item{targets}{Indices or names of targets to use.}
 
-\item{rows}{(integer or character array) If the requested object is a matrix
-(or an array), it determines the rows and cannot be \code{NULL}. For
-\code{type1bests} this is the name of the variables.}
+\item{rows}{Indices or names of rows to use. If the requested object is a matrix
+(or an array), determines the rows and cannot be \code{NULL}. For \code{type1bests}, this is the name of the variables.}
 
-\item{columns}{(integer or character array) If the requested object is
-a matrix, it determines the columns and cannot be \code{NULL}. For
-\code{type1bests} this is the name of the fields: \code{weight}, \code{mean}, \code{var}}
+\item{columns}{Indices or names of columns to use. If the requested object is a matrix, determines the columns and cannot be \code{NULL}. For
+\code{type1bests}, this is the name of the fields: \code{weight}, \code{mean}, and/or \code{var}.}
 
-\item{itemIndices}{(integer array) items such as \code{bests} to be used.}
+\item{itemIndices}{Indices of items such as \code{bests} to use.}
 
-\item{colNamFun}{(function) a function to determine the column names. The
-argument is a list of names, i.e., one of the following items: \code{target},
-\code{measure}, \code{row}, \code{column}, \code{item}.}
+\item{colNameFun}{Function to determine column names. Argument is a list of names, i.e., one of the following items: \code{target},
+\code{metric}, \code{row}, \code{column}, \code{item}. If \code{NULL}, uses \code{paste} function.}
 
-\item{rowContent}{(string) determines the type of information in the rows of
-returned \code{data.frame}. Some items are not available for some \code{types}.
-\code{row} is generally for variables in the rows of matrices such as \code{inclusion} or
-\code{mixture}. \code{column} is generally for the columns of such matrices.
-\code{item} is for the \code{best} models or models in the \code{all} field.}
+\item{rowContent}{Character string determining type of information in rows of returned
+data frame. Some items are not available for some \code{types}.
+Use \code{row} for variables in rows of matrices such as \code{inclusion} or
+\code{mixture}. Use \code{column} for columns of such matrices.
+Use \code{item} for best models or models in the all field.}
 
-\item{cdfIndex}{(integer) The index of CDF if \code{type} is \code{cdf}}
+\item{cdfIndex}{Integer for index of CDF if type is cdf}
 
-\item{...}{additional arguments}
+\item{...}{Additional arguments}
 }
 \value{
-a data.frame that contains data.
+A data frame containing requested data.
 }
 \description{
-There are five types of indices in this function: measures,
+This function converts a specific part of the output from one of the \code{search.?} functions into a \code{data.frame}.
+}
+\details{
+There are five types of indices in this function: metrics,
 targets, bests, type1's items, equations.
 Use \code{NULL} to use all available information or specify them.
 }

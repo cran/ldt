@@ -1,368 +1,281 @@
-/*
- Copyright (C) 2022-2023 Ramin Mojab
- Licensed under the GPL 3.0.
- See accompanying file LICENSE
-*/
-
 #include "optimization.h"
 
 using namespace ldt;
 
-/*
-The original code:
-       Copyright (c) 1997 Michael F. Hutt
-       Released under the MIT License
-*/
-
-NelderMead::NelderMead(Ti n) { WorkSize = (n + 1) * (n + 1) * 4 * n; }
-
-// #pragma region functions
-
-/* create the initial simplex */
-
-void initialize_simplex(std::vector<Matrix<Tv>> &v, Matrix<Tv> &start, Tv scale,
-                        Ti n) {
-  Tv pn, qn; /* values used to create initial simplex */
-  Ti i, j;
-
-  pn = scale * (std::sqrt(n + 1) - 1 + n) / (n * std::sqrt(2));
-  qn = scale * (std::sqrt(n + 1) - 1) / (n * std::sqrt(2));
-
-  for (i = 0; i < n; i++) {
-    v.at(0).Data[i] = start.Data[i];
-  }
-
-  for (i = 1; i <= n; i++) {
-    for (j = 0; j < n; j++) {
-      if (i - 1 == j) {
-        v.at(i).Data[j] = pn + start.Data[j];
-      } else {
-        v.at(i).Data[j] = qn + start.Data[j];
-      }
-    }
-  }
+NelderMead::NelderMead(Ti n) {
+  WorkSize = (n + 1) * (n + 1) * 4 * n;
+  StorageSize = n;
 }
 
-/* print out the initial values */
-
-void print_initial_simplex(Tv **v, Tv *f, Ti n) {
-  Ti i, j;
-
-  // printf("Initial Values\n");
-  for (j = 0; j <= n; j++) {
-    for (i = 0; i < n; i++) {
-      // printf("%f, ", v[j][i]);
+Tv PenaltyFunction(const Matrix<Tv> &x, const Matrix<Tv> *lower,
+                   const Matrix<Tv> *upper) {
+  Tv penalty = 0.0;
+  if (lower && upper) {
+    for (int i = 0; i < x.length(); i++) {
+      if (x.Data[i] < lower->Data[i])
+        penalty += std::pow(lower->Data[i] - x.Data[i], 2);
+      else if (x.Data[i] > upper->Data[i])
+        penalty += std::pow(x.Data[i] - upper->Data[i], 2);
     }
-    // printf("value %f\n", f[j]);
-  }
-}
-
-/* print out the value at each iteration */
-
-void print_iteration(Tv **v, Tv *f, Ti n, Ti itr) {
-  Ti i, j;
-
-  // printf("Iteration %zd\n", itr);
-  for (j = 0; j <= n; j++) {
-    for (i = 0; i < n; i++) {
-      // printf("%f %f\n", v[j][i], f[j]);
+  } else if (lower) {
+    for (int i = 0; i < x.length(); i++) {
+      if (x.Data[i] < lower->Data[i])
+        penalty += std::pow(lower->Data[i] - x.Data[i], 2);
+    }
+  } else if (upper) {
+    for (int i = 0; i < x.length(); i++) {
+      if (x.Data[i] > upper->Data[i])
+        penalty += std::pow(x.Data[i] - upper->Data[i], 2);
     }
   }
+  return penalty;
 }
 
-/* find the index of the largest value */
-
-Ti vg_index(Matrix<Tv> &f, Ti vg, Ti n) {
-  Ti j;
-  for (j = 0; j <= n; j++) {
-    if (f.Data[j] > f.Data[vg]) {
-      vg = j;
-    }
-  }
-  return vg;
-}
-
-/* find the index of the smallest value */
-
-Ti vs_index(Matrix<Tv> &f, Ti vs, Ti n) {
-  Ti j;
-  for (j = 0; j <= n; j++) {
-    if (f.Data[j] < f.Data[vs]) {
-      vs = j;
-    }
-  }
-  return vs;
-}
-
-/* find the index of the second largest value */
-
-Ti vh_index(Matrix<Tv> &f, Ti vh, Ti vg, Ti n) {
-  Ti j;
-  for (j = 0; j <= n; j++) {
-    if (f.Data[j] > f.Data[vh] && f.Data[j] < f.Data[vg]) {
-      vh = j;
-    }
-  }
-  return vh;
-}
-
-/* calculate the centroid */
-
-void centroid(Matrix<Tv> &vm, std::vector<Matrix<Tv>> &v, Ti n, Ti vg) {
-  Ti j, m;
-  Tv cent;
-  for (j = 0; j <= n - 1; j++) {
-    cent = 0;
-    for (m = 0; m <= n; m++) {
-      if (m != vg) {
-        cent += v.at(m).Data[j];
-      }
-    }
-    vm.Data[j] = cent / n;
-  }
-}
-
-// #pragma endregion
-
-Tv NelderMead::Minimize(const std::function<Tv(const Matrix<Tv> &)> &objective,
-                        Matrix<Tv> &start, Tv *work,
-                        const std::function<void(Matrix<Tv> &)> *constrain) {
-
+void NelderMead::Minimize(
+    const std::function<Tv(const Matrix<Tv> &)> &objective,
+    const Matrix<Tv> &start, Tv *work, Tv *storage, const Matrix<Tv> *lower,
+    const Matrix<Tv> *upper, Tv penaltyMultiplier) {
   Ti n = start.length();
-  Ti vs; /* vertex with smallest value */
-  Ti vh; /* vertex with next smallest value */
-  Ti vg; /* vertex with largest value */
-  Ti i, j, row;
-  Ti k; /* track the number of function evaluations */
-  Tv min;
-  Tv fsum, favg;
 
-  std::function<void(Matrix<Tv> &)> constrain0 = 0;
-  if (constrain)
-    constrain0 = *constrain;
-
-  std::vector<Matrix<Tv>> v; /* holds vertices of simplex */
-  Matrix<Tv> f;              /* value of function at each vertex */
-  Tv fr;                     /* value of function at reflection point */
-  Tv fe;                     /* value of function at expansion point */
-  Tv fc;                     /* value of function at contraction point */
-  Matrix<Tv> vr;             /* reflection - coordinates */
-  Matrix<Tv> ve;             /* expansion - coordinates */
-  Matrix<Tv> vc;             /* contraction - coordinates */
-  Matrix<Tv> vm;             /* centroid - coordinates */
-
-  /* allocate the rows of the arrays */
-  Ti w = 0;
-  v = std::vector<Matrix<Tv>>(n + 1);
-  f = Matrix<Tv>(&work[w], n + 1);
-  w += n + 1;
-  vr = Matrix<Tv>(&work[w], n);
-  w += n;
-  ve = Matrix<Tv>(&work[w], n);
-  w += n;
-  vc = Matrix<Tv>(&work[w], n);
-  w += n;
-  vm = Matrix<Tv>(&work[w], n);
-  w += n;
-
-  /* allocate the columns of the arrays */
-  for (i = 0; i <= n; i++) {
-    v[i] = Matrix<Tv>(&work[w], n);
-    w += n;
-  }
-
-  /* create the initial simplex */
-  initialize_simplex(v, start, Scale, n);
-
-  /* impose constraints */
-  if (constrain) {
-    for (j = 0; j <= n; j++) {
-      constrain0(v[j]);
+  // Check if starting point is within bounds and adjust if necessary
+  for (int i = 0; i < n; i++) {
+    if (lower && upper && lower->Data[i] > upper->Data[i])
+      throw std::logic_error(
+          "Lower bound must be equal or smaller than the upper bound.");
+    if (lower && start.Data[i] < lower->Data[i]) {
+      start.Data[i] = lower->Data[i];
+    }
+    if (upper && start.Data[i] > upper->Data[i]) {
+      start.Data[i] = upper->Data[i];
     }
   }
 
-  /* find the initial function values */
-  for (j = 0; j <= n; j++) {
-    f.Data[j] = objective(v[j]);
+  std::function<Tv(const Matrix<Tv> &)> f = [&](const Matrix<Tv> &x) -> Tv {
+    try {
+      return objective(x) +
+             penaltyMultiplier * PenaltyFunction(x, lower, upper);
+    } catch (...) {
+      return INFINITY;
+    }
+  };
+
+  std::vector<Matrix<Tv>> simplex(n + 1);
+  Ti q = 0;
+  for (Ti i = 0; i <= n; ++i) {
+    simplex[i] = Matrix<Tv>(&work[q], n, 1);
+    q += n;
   }
-  k = n + 1;
+  auto values = Matrix<Tv>(&work[q], n + 1, 1);
+  q += n + 1;
 
-  /* print out the initial values */
-  // print_initial_simplex(v, f, n);
+  for (Ti i = 0; i <= n; i++) {
+    start.CopyTo00(simplex[i]);
+    if (i > 0)
+      simplex[i].Data[i - 1] += 1.0;
+    values.Data[i] = f(simplex[i]);
+  }
 
-  /* begin the main loop of the minimization */
-  for (Iter = 1; Iter <= MaxIterations; Iter++) {
-    /* find the index of the largest value */
-    vg = vg_index(f, (Ti)0, n);
+  // Initialize centroid, reflected, expanded, and contracted arrays
+  auto centroid = Matrix<Tv>(&work[q], n, 1);
+  q += n;
+  auto reflected = Matrix<Tv>(&work[q], n, 1);
+  q += n;
+  auto expanded = Matrix<Tv>(&work[q], n, 1);
+  q += n;
+  auto contracted = Matrix<Tv>(&work[q], n, 1);
+  q += n;
 
-    /* find the index of the smallest value */
-    vs = vs_index(f, (Ti)0, n);
+  Ti worst_index = -1, best_index = -1;
+  Tv temp = 0.0;
+  Iter = 0;
+  while (Iter < MaxIteration) {
+    Array<Tv>::MaxIndex<false>(values.Data, n + 1, temp, worst_index);
+    Array<Tv>::MinIndex<false>(values.Data, n + 1, temp, best_index);
 
-    /* find the index of the second largest value */
-    vh = vh_index(f, vs, vg, n);
+    Diff = std::abs(values.Data[worst_index] - values.Data[best_index]);
+    if (Diff < Tolerance)
+      break;
 
-    /* calculate the centroid */
-    centroid(vm, v, n, vg);
-
-    /* reflect vg to new vertex vr */
-    for (j = 0; j <= n - 1; j++) {
-      /*vr[j] = (1+ALPHA)*vm[j] - ALPHA*v[vg][j];*/
-      vr.Data[j] = vm.Data[j] + Alpha * (vm.Data[j] - v[vg].Data[j]);
+    // centroid = average of all points except worst point
+    centroid.SetValue(0.0);
+    for (Ti i = 0; i <= n; i++) {
+      if (i == worst_index)
+        continue;
+      for (Ti j = 0; j < n; j++)
+        centroid.Data[j] += simplex[i].Data[j];
     }
-    if (constrain) {
-      constrain0(vr);
-    }
-    fr = objective(vr);
-    k++;
+    for (Ti i = 0; i < n; i++)
+      centroid.Data[i] /= n;
 
-    if (fr < f.Data[vh] && fr >= f.Data[vs]) {
-      for (j = 0; j <= n - 1; j++) {
-        v[vg].Data[j] = vr.Data[j];
-      }
-      f.Data[vg] = fr;
-    }
+    // reflected = centroid + reflection * (centroid - simplex[worst_index])
+    for (Ti i = 0; i < n; i++)
+      reflected.Data[i] =
+          centroid.Data[i] +
+          ParamReflection * (centroid.Data[i] - simplex[worst_index].Data[i]);
 
-    /* investigate a step further in this direction */
-    if (fr < f.Data[vs]) {
-      for (j = 0; j <= n - 1; j++) {
-        /*ve[j] = GAMMA*vr[j] + (1-GAMMA)*vm[j];*/
-        ve.Data[j] = vm.Data[j] + Gamma * (vr.Data[j] - vm.Data[j]);
-      }
-      if (constrain) {
-        constrain0(ve);
-      }
-      fe = objective(ve);
-      k++;
+    auto reflected_value = f(reflected);
+    if (reflected_value < values.Data[best_index]) {
 
-      /*
-     by making fe < fr as opposed to fe < f[vs],
-     Rosenbrocks function takes 63 iterations as opposed
-     to 64 when using Tv variables.
-      */
+      // reflected point is better that best point
+      // expand and move in that direction
 
-      if (fe < fr) {
-        for (j = 0; j <= n - 1; j++) {
-          v[vg].Data[j] = ve.Data[j];
-        }
-        f.Data[vg] = fe;
+      // expanded = centroid + expansion * (reflected - centroid
+      for (Ti i = 0; i < n; i++)
+        expanded.Data[i] =
+            centroid.Data[i] +
+            ParamExpansion * (reflected.Data[i] - centroid.Data[i]);
+
+      auto expanded_value = f(expanded);
+      if (expanded_value < reflected_value) {
+
+        // Expanded point is better than reflected point
+
+        expanded.CopyTo00(simplex[worst_index]);
+        values.Data[worst_index] = expanded_value;
       } else {
-        for (j = 0; j <= n - 1; j++) {
-          v[vg].Data[j] = vr.Data[j];
-        }
-        f.Data[vg] = fr;
-      }
-    }
 
-    /* check to see if a contraction is necessary */
-    if (fr >= f.Data[vh]) {
-      if (fr < f.Data[vg] && fr >= f.Data[vh]) {
-        /* perform outside contraction */
-        for (j = 0; j <= n - 1; j++) {
-          /*vc[j] = BETA*v[vg][j] + (1-BETA)*vm[j];*/
-          vc.Data[j] = vm.Data[j] + Beta * (vr.Data[j] - vm.Data[j]);
+        // reflected point is better
+
+        reflected.CopyTo00(simplex[worst_index]);
+        values.Data[worst_index] = reflected_value;
+      }
+    } else {
+
+      // Reflected point is not better than best point
+      // check and see if it is better that some other point
+
+      bool is_accepted = false;
+      for (Ti i = 0; i <= n; i++) {
+        if (i == worst_index)
+          continue;
+        if (reflected_value < values.Data[i]) {
+
+          // accept the reflected point
+
+          reflected.CopyTo00(simplex[worst_index]);
+          values.Data[worst_index] = reflected_value;
+          is_accepted = true;
+          break;
         }
-        if (constrain != NULL) {
-          constrain0(vc);
-        }
-        fc = objective(vc);
-        k++;
-      } else {
-        /* perform inside contraction */
-        for (j = 0; j <= n - 1; j++) {
-          /*vc[j] = BETA*v[vg][j] + (1-BETA)*vm[j];*/
-          vc.Data[j] = vm.Data[j] - Beta * (vm.Data[j] - v[vg].Data[j]);
-        }
-        if (constrain) {
-          constrain0(vc);
-        }
-        fc = objective(vc);
-        k++;
       }
 
-      if (fc < f.Data[vg]) {
-        for (j = 0; j <= n - 1; j++) {
-          v[vg].Data[j] = vc.Data[j];
-        }
-        f.Data[vg] = fc;
-      }
+      if (!is_accepted) {
 
-      else {
-        /*
-           at this point the contraction is not successful,
-           we must halve the Distance from vs to all the
-           vertices of the simplex and then continue.
-           1997-10-31 - modified to account for ALL vertices.
-        */
+        // Reflected point is not accepted, try contraction
+        // Move the worst point towards the centroid
 
-        for (row = 0; row <= n; row++) {
-          if (row != vs) {
-            for (j = 0; j <= n - 1; j++) {
-              v[row].Data[j] =
-                  v[vs].Data[j] + (v[row].Data[j] - v[vs].Data[j]) / (Tv)2;
-            }
+        // contracted = centroid + contraction * (simplex[worst_index] -
+        // centroid)
+        for (Ti i = 0; i < n; i++)
+          contracted.Data[i] =
+              centroid.Data[i] +
+              ParamContraction *
+                  (simplex[worst_index].Data[i] - centroid.Data[i]);
+
+        auto contracted_value = f(contracted);
+
+        if (contracted_value < values.Data[worst_index]) {
+
+          // Contracted point is better than worst point
+
+          contracted.CopyTo00(simplex[worst_index]);
+          values.Data[worst_index] = contracted_value;
+
+        } else {
+
+          // Contracted point is not better than worst point, perform shrink
+          // moves all points towards the best point
+
+          for (Ti i = 0; i <= n; i++) {
+            if (i == best_index)
+              continue;
+            for (Ti j = 0; j < n; j++)
+              simplex[i].Data[j] = simplex[best_index].Data[j] +
+                                   ParamShrink * (simplex[i].Data[j] -
+                                                  simplex[best_index].Data[j]);
+            values.Data[i] = f(simplex[i]);
           }
         }
-
-        /* re-evaluate all the vertices */
-        for (j = 0; j <= n; j++) {
-          f.Data[j] = objective(v[j]);
-        }
-
-        /* find the index of the largest value */
-        vg = vg_index(f, (Ti)0, n);
-
-        /* find the index of the smallest value */
-        vs = vs_index(f, (Ti)0, n);
-
-        /* find the index of the second largest value */
-        vh = vh_index(f, vs, vg, n);
-
-        if (constrain) {
-          constrain0(v[vg]);
-        }
-        f.Data[vg] = objective(v[vg]);
-        k++;
-        if (constrain != NULL) {
-          constrain0(v[vh]);
-        }
-        f.Data[vh] = objective(v[vh]);
-        k++;
       }
     }
-
-    /* print out the value at each iteration */
-    /*print_iteration(v,f,n,itr);*/
-
-    /* test for convergence */
-    fsum = 0;
-    for (j = 0; j <= n; j++) {
-      fsum += f.Data[j];
-    }
-    favg = fsum / (n + 1);
-    Std = 0;
-    for (j = 0; j <= n; j++) {
-      Std += pow((f.Data[j] - favg), (Tv)2) / (n);
-    }
-    Std = std::sqrt(Std);
-    if (Std < Epsilon)
-      break;
+    ++Iter;
   }
-  /* end main loop of the minimization */
 
-  /* find the index of the smallest value */
-  vs = vs_index(f, (Ti)0, n);
+  Result.SetData(storage, n, 1);
+  Array<Tv>::MinIndex<false>(values.Data, n + 1, temp, best_index);
+  simplex[best_index].CopyTo00(Result);
+  Min = f(Result);
+}
 
-  /*printf("The minimum was found at\n"); */
-  for (j = 0; j < n; j++) {
-    /*printf("%e\n",v[vs][j]);*/
-    start.Data[j] = v[vs].Data[j];
+std::tuple<Tv, Ti>
+NelderMead::Minimize1(const std::function<Tv(const Tv &)> &objective, Tv x0,
+                      Tv step, int max_iter, Tv tol, Tv x_min, Tv x_max) {
+
+  // set constraints:
+
+  std::function<Tv(const Tv &)> f;
+  if (std::isnan(x_min) && std::isnan(x_max))
+    f = objective;
+  else if (std::isnan(x_min)) {
+    if (x0 > x_max)
+      x0 = x_max;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x > x_max) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
+  } else if (std::isnan(x_max)) {
+    if (x0 < x_min)
+      x0 = x_min;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x < x_min) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
+  } else {
+    if (x0 < x_min)
+      x0 = x_min;
+    if (x0 > x_max)
+      x0 = x_max;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x > x_max || x < x_min) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
   }
-  min = objective(v[vs]);
-  k++;
-  // printf("%d Function Evaluations\n", k);
-  // printf("%d Iterations through program\n", itr);
 
-  Min = min;
-  Iter--;
-  return min;
+  // optimization:
+
+  Tv x1 = x0 + step;
+  Tv x2 = x0 - step;
+  int iter = 0;
+  while (iter < max_iter) {
+    iter++;
+    Tv f1 = f(x1);
+    Tv f2 = f(x2);
+    Tv f0 = f(x0);
+    if (f1 <= f2 && f1 <= f0) {
+      x0 = x1;
+      x2 = x1 - step;
+      x1 = x0 + step;
+    } else if (f2 <= f1 && f2 <= f0) {
+      x0 = x2;
+      x1 = x0 + step;
+      x2 = x0 - step;
+    } else {
+      if (abs(x0 - x1) < tol && abs(x0 - x2) < tol) {
+        break;
+      }
+      step /= 2.0;
+      x1 = x0 + step;
+      x2 = x0 - step;
+    }
+  }
+  return std::tuple<Tv, Ti>(x0, iter);
 }

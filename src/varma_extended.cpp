@@ -21,6 +21,7 @@ VarmaExtended::VarmaExtended(
   mCalcVariance = calcVariance;
   mHasPcaY = pcaOptionsY && pcaOptionsY->IsEnabled();
   mHasPcaX = pcaOptionsX && pcaOptionsX->IsEnabled();
+  mHorizon = fHorizon;
 
   Sizes = VarmaSizes(sizes); // it changes in the PCA
 
@@ -92,6 +93,10 @@ VarmaExtended::VarmaExtended(
 void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
                               bool useCurrentEstime, Ti horizon, Ti sampleEnd,
                               double maxCn, double stdMultiplier) {
+  if (horizon > mHorizon)
+    throw std::logic_error(
+        "Reserved maximum number of horizon is lower that the given horizon.");
+
   auto temp = VarmaExtended(Sizes, mRestriction, mCheckNan, mDoDetails,
                             mCalcVariance, horizon, pPcaOptionsY, pPcaOptionsX,
                             &Model.Result.Optim.Options);
@@ -161,8 +166,9 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
 
   // Estimate
   Model.EstimateMl(Y, Sizes.ExoCount > 0 ? &X : nullptr, work, estimStorage,
-                   res.R.Data ? &res.R : nullptr, res.r.Data ? &res.r : nullptr,
-                   sampleEnd, useCurrentEstime, stdMultiplier);
+                   res.IsRestricted ? &res.R : nullptr,
+                   res.r.Data ? &res.r : nullptr, sampleEnd, useCurrentEstime,
+                   stdMultiplier);
 
   if (maxCn > 0) { // otherwise we do not check it
     if (Model.Result.cn > maxCn)

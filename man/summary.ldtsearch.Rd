@@ -2,7 +2,7 @@
 % Please edit documentation in R/generic.R
 \name{summary.ldtsearch}
 \alias{summary.ldtsearch}
-\title{Summarize an \code{ldtsearch} object}
+\title{Summarizes Model Search Output}
 \usage{
 \method{summary}{ldtsearch}(
   object,
@@ -19,37 +19,37 @@
 )
 }
 \arguments{
-\item{object}{\code{ldtsearch} object}
+\item{object}{Output from one of the \code{search.?} functions (see \link{search.sur}, \link{search.varma}, or \link{search.bin}).}
 
-\item{y}{dependent variables data (Data is not saved in \code{object})}
+\item{y}{Data for dependent variables (Note that data is not saved in \code{object}).}
 
-\item{x}{exogenous variables data (Data is not saved in \code{object})}
+\item{x}{Data for exogenous variables (Note that data is not saved in \code{object}).}
 
-\item{addModelBests}{if \code{TRUE} and 'model$bests' exists
-(see \code{[GetSearchItems()]}), it estimates them.}
+\item{addModelBests}{If \code{TRUE} and search output contains best models, estimates them.}
 
-\item{addModelAll}{if \code{TRUE} and 'all' exists
-(see \code{[GetSearchItems()]}), it estimates them.}
+\item{addModelAll}{If \code{TRUE} and search output contains all models, estimates them.}
 
-\item{addItem1Bests}{if \code{TRUE} and 'item1' exists
-(see \code{[GetSearchItems()]}), it estimates them.}
+\item{addItem1Bests}{If \code{TRUE} and search output contains \code{item1} part, estimates them.}
 
-\item{printMsg}{if \code{TRUE} details are printed.}
+\item{printMsg}{If \code{TRUE}, prints details.}
 
-\item{w}{weight of observations (if available, e.g., in discrete choice estimation.
-Data is not saved in \code{object})}
+\item{w}{Weight of observations in discrete choice estimation (Note that data is not saved in \code{object}).}
 
-\item{newX}{new exogenous data (if available, e.g., in varma estimation.
-Data is not saved in \code{object})}
+\item{newX}{New exogenous data in VARMA estimation (Note that data is not saved in \code{object}).}
 
-\item{test}{If \code{TRUE}, it helps you make sure everything is working. Please report errors.}
+\item{test}{If \code{TRUE}, verifies everything is working correctly. Please report errors.}
 
-\item{...}{additional arguments}
+\item{...}{Additional arguments}
 }
 \value{
-a list with estimated models along with other kind of information.
-Its structure is similar to the given \code{ldtsearch} object.
+A list with estimated models and other information, structured similarly to the given \code{search.?} output.
 }
 \description{
-Summarize an \code{ldtsearch} object
+This function estimates the reported models in the output of a \code{search.?} function and provides additional information.
+}
+\details{
+The output of \code{search.?} functions in this package only contains the information required
+to re-estimate the models, not the actual estimation results. You can use \link{h.get.estim} to
+get the estimation of specific indices. This function re-estimates everything in the \code{search.?}
+output with a similar structure.
 }

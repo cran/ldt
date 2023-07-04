@@ -21,21 +21,20 @@ NormalM::NormalM(Ti m, Matrix<Tv> *mean, Matrix<Tv> *variance,
                  Tv mean_const, bool variance_is_const, Tv variance_const,
                  bool covariance_is_const, Tv covariance_const) {
   pM = m;
-
   pSampleInRows = samples_in_rows;
 
-  pMean = mean;
-  pVariance = variance;
-
+  // make sure mean is not null
   if (!mean) {
-    pMean = new Matrix<Tv>(new double[m], m, 1);
+    Mean = Matrix<Tv>(new double[m], m, 1);
     pDeleteMean = true;
+    mean_is_const = true;
   } else {
-    if (pMean->length() != m)
+    Mean = *mean;
+    if (Mean.length() != m)
       throw std::invalid_argument("invalid dimension: mean");
   }
   if (mean_is_const)
-    pMean->SetValue(mean_const);
+    Mean.SetValue(mean_const);
 
   pIsZeroVariance = variance_is_const && variance_const == 0;
   if (pIsZeroVariance == false) {
@@ -46,20 +45,22 @@ NormalM::NormalM(Ti m, Matrix<Tv> *mean, Matrix<Tv> *variance,
   }
 
   if (pIsZeroVariance == false && pIsConstantDiagVariance == false) {
+    // make sure variance is not null if it is not zero or is not diagonal
     if (!variance) {
-      pVariance = new Matrix<Tv>(new double[m * m], m, m);
+      Variance = Matrix<Tv>(new double[m * m], m, m);
       pDeleteVariance = true;
     } else {
-      if (pVariance->RowsCount != m || pVariance->ColsCount != m)
+      Variance = *variance;
+      if (Variance.RowsCount != m || Variance.ColsCount != m)
         throw std::invalid_argument("invalid dimension: variance");
     }
 
     if (variance_is_const && covariance_is_const)
-      pVariance->SetValueDiag(variance_const, covariance_const);
+      Variance.SetValueDiag(variance_const, covariance_const);
     else if (covariance_is_const)
-      pVariance->SetValueOffDiag(covariance_const);
+      Variance.SetValueOffDiag(covariance_const);
     else if (variance_is_const)
-      pVariance->SetValueDiag(variance_const);
+      Variance.SetValueDiag(variance_const);
   }
 
   WorkSize = 0;
@@ -67,44 +68,39 @@ NormalM::NormalM(Ti m, Matrix<Tv> *mean, Matrix<Tv> *variance,
 
   if (sampling_length > 0) {
     if (pSampleInRows)
-      pSample = new Matrix<Tv>(sampling_length, m);
+      Sample = Matrix<Tv>(sampling_length, m);
     else
-      pSample = new Matrix<Tv>(m, sampling_length);
+      Sample = Matrix<Tv>(m, sampling_length);
 
-    WorkSize +=
-        (pIsZeroVariance || pIsConstantDiagVariance) ? 0 : pM * pM + 2 * pM;
+    WorkSize += (pIsZeroVariance || pIsConstantDiagVariance) ? 0 : 2 * m;
     StorageSize = m * sampling_length;
   }
 }
 
 NormalM::~NormalM() {
-  if (pSample)
-    delete pSample;
   if (pDeleteMean) {
-    delete pMean->Data;
-    delete pMean;
+    delete Mean.Data;
   }
   if (pDeleteVariance) {
-    delete pVariance->Data;
-    delete pVariance;
+    delete Variance.Data;
   }
 }
 
-void NormalM::GetSample(Tv *storage, Tv *WORK, unsigned int seed) const {
+void NormalM::GetSample(Tv *storage, Tv *WORK, unsigned int seed) {
 
-  pSample->SetData(storage);
+  Sample.SetData(storage);
   Ti i, j;
-  Ti n = pSampleInRows ? pSample->RowsCount : pSample->ColsCount;
+  Ti n = pSampleInRows ? Sample.RowsCount : Sample.ColsCount;
 
   if (pIsZeroVariance || pIsConstantDiagVariance) {
     if (pSampleInRows)
       for (i = 0; i < n; i++)
-        pSample->SetRow0(i, *pMean);
+        Sample.SetRow0(i, Mean);
     else
       for (j = 0; j < n; j++)
-        pSample->SetColumn0(j, *pMean);
+        Sample.SetColumn0(j, Mean);
 
-    if (pIsConstantDiagVariance == false)
+    if (pIsZeroVariance)
       return;
   }
 
@@ -118,44 +114,43 @@ void NormalM::GetSample(Tv *storage, Tv *WORK, unsigned int seed) const {
   }
   std::normal_distribution<Tv> dist(0, 1);
 
-  if (pIsConstantDiagVariance) { // already insearted mean. add random number
+  if (pIsConstantDiagVariance) { // already inserted mean. add random number
                                  // with each row or column
 
     if (pSampleInRows)
       for (i = 0; i < n; i++)
         for (j = 0; j < pM; j++)
-          pSample->Set_Plus0(i, j, dist(eng));
+          Sample.Set_Plus0(i, j, dist(eng));
     else
       for (j = 0; j < n; j++)
         for (i = 0; i < pM; i++)
-          pSample->Set_Plus0(i, j, dist(eng));
+          Sample.Set_Plus0(i, j, dist(eng));
 
     return;
   }
 
+  // we are sure that both mean and variance matrixes exist here
+
   Ti q = 0;
   auto stdnorm = Matrix<Tv>(&WORK[q], pM);
   q += pM;
-  auto L = Matrix<Tv>(&WORK[q], pM, pM);
-  q += pM * pM;
   auto temp = Matrix<Tv>(&WORK[q], pM);
   q += pM;
 
-  pVariance->CopyTo00(L); // do not destroy it in Cholesky
-
-  int info = L.Chol0(false);
+  int info = Variance.Chol0(false);
   if (info != 0)
-    throw std::logic_error("Cholesky decomposition failed.");
+    throw std::logic_error(
+        "Invalid variance matrix. Cholesky decomposition failed.");
 
   for (i = 0; i < n; i++) {
     for (j = 0; j < pM; j++)
       stdnorm.Data[j] = dist(eng);
-    L.Dot0(stdnorm, temp);
-    pMean->Add0(temp, temp);
+    Variance.Dot0(stdnorm, temp);
+    Mean.Add0(temp, temp);
     if (pSampleInRows)
-      pSample->SetRow0(i, temp);
+      Sample.SetRow0(i, temp);
     else
-      pSample->SetColumn0(i, temp);
+      Sample.SetColumn0(i, temp);
   }
 }
 
@@ -163,6 +158,7 @@ void NormalM::GetSample(Tv *storage, Tv *WORK, unsigned int seed) const {
 
 Ti NormalM::GetDensity(Matrix<Tv> *x, Matrix<Tv> *storage, Tv *WORK,
                        bool log) const {
+
   if (x->RowsCount != pM)
     throw std::invalid_argument("invalid dimension: x (rows)");
   if (storage->length() != x->ColsCount)
@@ -177,7 +173,7 @@ Ti NormalM::GetDensity(Matrix<Tv> *x, Matrix<Tv> *storage, Tv *WORK,
     for (Ti j = 0; j < n; j++) {
       bool eq = true;
       for (Ti i = 0; i < pM; i++) {
-        if (pMean->Data[i] != x->Get0(i, j)) {
+        if (Mean.Data[i] != x->Get0(i, j)) {
           eq = false;
           break;
         }
@@ -193,13 +189,13 @@ Ti NormalM::GetDensity(Matrix<Tv> *x, Matrix<Tv> *storage, Tv *WORK,
   // subtract mean. it destroys x
   Tv mi;
   for (Ti i = 0; i < pM; i++) {
-    mi = pMean->Data[i];
+    mi = Mean.Data[i];
     for (Ti j = 0; j < n; j++)
       x->Set0(i, j, x->Get0(i, j) - mi);
   }
 
   auto temp = Matrix<Tv>(WORK, n); // work
-  if (pVariance == nullptr) {      // identity variance
+  if (Variance.Data) {             // identity variance
     x->Power_in(2);
     auto vv = std::vector<Ti>();
     x->ColumnsSum(temp, vv);
@@ -213,7 +209,7 @@ Ti NormalM::GetDensity(Matrix<Tv> *x, Matrix<Tv> *storage, Tv *WORK,
   }
 
   auto L = Matrix<Tv>(&WORK[n], pM, pM);
-  pVariance->CopyTo00(L);
+  Variance.CopyTo00(L);
   auto info = L.Chol0(true);
   if (info != 0)
     return info;

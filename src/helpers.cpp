@@ -6,8 +6,12 @@
 
 #include "helpers.h"
 
-LDT_EXPORT bool StartsWith(const char *code, const char *str) {
+bool StartsWith(const char *code, const char *str) {
   return boost::starts_with(str, code);
+}
+
+bool EndsWith(const char *code, const char *str) {
+  return boost::ends_with(str, code);
 }
 
 bool AreEqual_i(const char *first, const char *second) {

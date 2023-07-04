@@ -158,11 +158,11 @@ void Distance<checkNan, method, corrMethod>::Calculate(const Matrix<Tv> &data,
       for (Ti j = 0; j < data.ColsCount; j++) {
         if (i < j) {
           if constexpr (method == DistanceMethod::kCorrelation) {
-            this->Result.Set(i, j,
-                             std::sqrt((1 - cor.Result.Get(i, j)) / (Tv)2));
+            this->Result.Set0(i, j,
+                              std::sqrt((1 - cor.Result.Get0(i, j)) / (Tv)2));
           } else if constexpr (true) {
-            this->Result.Set(
-                i, j, std::sqrt(1 - std::pow(cor.Result.Get(i, j), (Tv)2)));
+            this->Result.Set0(
+                i, j, std::sqrt(1 - std::pow(cor.Result.Get0(i, j), (Tv)2)));
           }
         }
       }
@@ -185,7 +185,7 @@ void Distance<checkNan, method, corrMethod>::Calculate(const Matrix<Tv> &data,
               }
               sum += std::pow(s, (Tv)2);
             }
-            this->Result.Set(i, j, std::sqrt(sum));
+            this->Result.Set0(i, j, std::sqrt(sum));
           } else if constexpr (method == DistanceMethod::kManhattan) {
             Tv sum = 0, s;
             for (Ti k = 0; k < data.RowsCount; k++) {
@@ -196,7 +196,7 @@ void Distance<checkNan, method, corrMethod>::Calculate(const Matrix<Tv> &data,
               }
               sum += std::abs(s);
             }
-            this->Result.Set(i, j, sum);
+            this->Result.Set0(i, j, sum);
           } else if constexpr (method == DistanceMethod::kMaximum) {
             Tv max = -INFINITY, d;
             for (Ti k = 0; k < data.RowsCount; k++) {
@@ -208,7 +208,7 @@ void Distance<checkNan, method, corrMethod>::Calculate(const Matrix<Tv> &data,
               if (max < d)
                 max = d;
             }
-            this->Result.Set(i, j, max);
+            this->Result.Set0(i, j, max);
           }
         }
       }

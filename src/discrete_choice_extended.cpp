@@ -34,6 +34,10 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     pcaOptions->CheckValidity();
     pPcaOptions = pcaOptions;
     Pca = PcaAnalysis(rows, numExo, numForecast, true, true, true, true);
+    auto final_x_count = pPcaOptions->GetFinalCount(Pca);
+    if (final_x_count >= numExo)
+      throw std::logic_error("Invalid PCA options. The requested number of PCs "
+                             "is larger than the number of variables.");
     StorageSize += Pca.StorageSize;
     WorkSize = std::max(WorkSize, Pca.WorkSize);
 
@@ -147,6 +151,20 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     Projections = Matrix<Tv>(&storage[p], numObs, mNumChoices);
     p += numObs * mNumChoices;
     Model->GetProbabilities(X, Projections, work);
+
+    BrierScore = 0;
+    Tv yi, wi = 1, sum = 0;
+    Ti i = -1;
+    for (auto ap = Projections.ColBegin(1); ap != Projections.ColEnd(1); ++ap) {
+      i++;
+      yi = Y.Data[i];
+      if (mHasWeight && mWeightedEval) {
+        wi = W.Data[i];
+      }
+      BrierScore += wi * std::pow(yi - *ap, 2);
+      sum += wi;
+    }
+    BrierScore /= sum;
 
     std::unique_ptr<RocBase> auc0;
     if (mModelType == DiscreteChoiceModelType::kBinary) {

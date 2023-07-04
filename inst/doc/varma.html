@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Ramin Mojab" />
+
+<meta name="date" content="2023-07-04" />
+
+<title>Vector Autoregressive Regression</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Vector Autoregressive Regression</h1>
+<h4 class="author">Ramin Mojab</h4>
+<h4 class="date">2023-07-04</h4>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(ldt) </span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(tdata)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>seed <span class="ot">&lt;-</span> <span class="dv">123</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">set.seed</span>(seed)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this vignette, I will introduce you to the main features of the
+<code>ldt</code> package for dealing with Vector Autoregressive
+Regression models. I will demonstrate how to perform common tasks such
+as estimating a VARMA model and making predictions with it. I will also
+discuss model uncertainty and how to define a VARMA model set and
+automatically search for the best models within this set. Additionally,
+we will explore the use of Principal Component Analysis as an
+alternative approach when dealing with a large number of potential
+endogenous or exogenous variables.</p>
+<p>One of the main ideas behind <code>ldt</code> is to minimize user
+discretion. An analysis in <code>ldt</code> is generally based on a
+dataset and a set of rules that convert this dataset into a list of
+potential regressors and/or predictors. This rule-based approach to
+selecting data not only avoids discretion but is also expected due to
+the word “automatically” used in the previous paragraph.</p>
+<p>In this example, I will create an artificial dataset with relevant
+and irrelevant endogenous variables and some exogenous variables. The
+data is a sample from a known VARMA model. While we can discuss how well
+the estimation process can find the true parameters, this is not the
+main goal here. Instead, I will focus on explaining how to estimate,
+search, predict, and report results.</p>
+<p>Let’s get started!</p>
+</div>
+<div id="a-simple-example" class="section level2">
+<h2>A simple example</h2>
+<p>Let’s assume that we know the structure of the system and simulate
+data from a known VARMA model. The following command generates a sample
+from such a system of equations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>numObs <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>numHorizon <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>startDate <span class="ot">&lt;-</span> <span class="fu">f.yearly</span>(<span class="dv">1900</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>numEndo <span class="ot">&lt;-</span> 2L</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>numExo <span class="ot">&lt;-</span> 3L</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>numAr <span class="ot">&lt;-</span> 2L</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>numMa <span class="ot">&lt;-</span> 1L </span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>sample <span class="ot">&lt;-</span> <span class="fu">sim.varma</span>(numEndo, numAr, numMa, </span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>                    numExo, numObs, <span class="dv">10</span>, <span class="cn">TRUE</span>, d, </span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>                    <span class="at">startFrequency =</span> startDate)</span></code></pre></div>
+<p>The parameters of the system are included in the output of the
+<code>sim.varma</code> function. This system has <code>numEndo</code>
+endogenous variables determined by an intercept, 2 exogenous
+variable(s), and the dynamics of the system. The sample size is 100. All
+coefficients of the model are generated randomly and are listed in the
+output <code>sample</code>. The MA coefficients are diagonal and this is
+related to identification issues in VARMA models. The parameter
+<code>d</code> shows that data is integrated. There is a
+<code>numHorizon</code> value that determines the prediction horizon. We
+use the <code>f.yearly</code> function from the <code>tdata</code>
+package and assume that our data is yearly.</p>
+<p>The LaTeX code for the equations of the system is in the
+<code>eqsLatex</code> element:</p>
+<p><span class="math display">\[\begin{gather} \Delta Y_{1t} = -0.47 -
+0.06\Delta Y_{1t-1} + 0.16\Delta Y_{2t-1} + 0.01\Delta Y_{1t-2} +
+0.05\Delta Y_{2t-2} + 0.11 X_1 + 1.79 X_2 - 1.97 X_3\\ - 0.07 E_{1t-1} +
+0 E_{2t-1} + E_{1t},\quad \sigma_1^2 = 1.70\\\Delta Y_{2t} = -1.07 -
+0.02\Delta Y_{1t-1} + 0.01\Delta Y_{2t-1} + 0.17\Delta Y_{1t-2} -
+0.13\Delta Y_{2t-2} - 0.56 X_1 + 0.50 X_2 + 0.70 X_3\\ + 0 E_{1t-1} -
+0.07 E_{2t-1} + E_{2t},\quad \sigma_2^2 = 0.29 \end{gather}\]</span></p>
+<p>The matrix representation is in the <code>eqsLatexSys</code>
+element:</p>
+<p><span class="math display">\[\begin{gather}  \begin{bmatrix}\Delta
+Y_{1t}\\\Delta Y_{2t}\end{bmatrix} =
+\begin{bmatrix}-0.47\\-1.07\end{bmatrix} + \begin{bmatrix}-0.06 &amp;
+0.16\\-0.02 &amp; 0.01\end{bmatrix} \begin{bmatrix}\Delta
+Y_{1t-1}\\\Delta Y_{2t-1}\end{bmatrix} + \begin{bmatrix}0.01 &amp;
+0.05\\0.17 &amp; -0.13\end{bmatrix} \begin{bmatrix}\Delta
+Y_{1t-2}\\\Delta Y_{2t-2}\end{bmatrix} + \\\begin{bmatrix}0.11 &amp;
+1.79 &amp; -1.97\\-0.56 &amp; 0.50 &amp;
+0.70\end{bmatrix}\begin{bmatrix}X_1\\X_2\\X_3\end{bmatrix}+
+\\\begin{bmatrix}-0.07 &amp; 0.00\\0.00 &amp;
+-0.07\end{bmatrix}\begin{bmatrix}E_{1t-1}\\E_{2t-1}\end{bmatrix} +
+\begin{bmatrix}E_{1t}\\E_{2t}\end{bmatrix},\\ \Sigma = \begin{bmatrix}
+1.70 &amp; 0.33 \\ 0.33 &amp; 0.29 \end{bmatrix}
+\end{gather}\]</span></p>
+<p>We can use the <code>ldt</code> package to estimate them:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">structure</span>(sample<span class="sc">$</span>y[<span class="dv">1</span><span class="sc">:</span>(numObs<span class="sc">-</span>numHorizon), , <span class="at">drop =</span> <span class="cn">FALSE</span>], </span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                                 <span class="at">ldtf =</span> <span class="fu">attr</span>(sample<span class="sc">$</span>y, <span class="st">&quot;ldtf&quot;</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>x <span class="ot">&lt;-</span> sample<span class="sc">$</span>x[<span class="dv">1</span><span class="sc">:</span>(numObs<span class="sc">-</span>numHorizon), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.varma</span>(<span class="at">y =</span> y, <span class="at">x =</span> x, </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>                   <span class="at">params =</span> <span class="fu">c</span>(numAr, d, numMa, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">get.varma.params</span>(fit<span class="sc">$</span>estimations<span class="sc">$</span>coefs, numAr, numMa, numExo, <span class="cn">TRUE</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>s0 <span class="ot">&lt;-</span> <span class="fu">sim.varma</span>(fit<span class="sc">$</span>estimations<span class="sc">$</span>sigma, params<span class="sc">$</span>arList, params<span class="sc">$</span>maList,</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                params<span class="sc">$</span>exoCoef, <span class="dv">10</span>, <span class="dv">0</span>, params<span class="sc">$</span>integer)</span></code></pre></div>
+<p>In the first two lines we exclude <code>numHorizon</code>
+observations from the end of the sample in the estimation process. We
+will use the excluded part for prediction in the next subsection. The
+argument <code>params</code> determines the lags of the model. The
+second part of the code is for presentation. It converts the coefficient
+matrix into AR, MA and other coefficient matrices and generates a LaTeX
+formula. Here is the result in matrix form:</p>
+<p><span class="math display">\[\begin{gather}  \begin{bmatrix} Y_{1t}\\
+Y_{2t}\end{bmatrix} = \begin{bmatrix}0.68\\-2.11\end{bmatrix} +
+\begin{bmatrix}-0.05 &amp; 0.20\\-0.01 &amp; 0.03\end{bmatrix}
+\begin{bmatrix} Y_{1t-1}\\ Y_{2t-1}\end{bmatrix} + \begin{bmatrix}0.11
+&amp; -0.02\\0.20 &amp; -0.16\end{bmatrix} \begin{bmatrix} Y_{1t-2}\\
+Y_{2t-2}\end{bmatrix} + \\\begin{bmatrix}0.19 &amp; 1.51 &amp;
+-1.87\\-0.59 &amp; 0.56 &amp;
+0.79\end{bmatrix}\begin{bmatrix}X_1\\X_2\\X_3\end{bmatrix}+
+\\\begin{bmatrix}-0.22 &amp; 0.00\\0.00 &amp;
+-0.22\end{bmatrix}\begin{bmatrix}E_{1t-1}\\E_{2t-1}\end{bmatrix} +
+\begin{bmatrix}E_{1t}\\E_{2t}\end{bmatrix},\\ \Sigma = \begin{bmatrix}
+1.17 &amp; 0.24 \\ 0.24 &amp; 0.23 \end{bmatrix}
+\end{gather}\]</span></p>
+<p>We can compare estimated parameters to actual ones. Keep in mind that
+we can get more satisfactory results by increasing sample size
+(<code>numObs</code>) or decreasing variance of disturbances.</p>
+</div>
+<div id="prediction" class="section level2">
+<h2>Prediction</h2>
+<p>One of the main goals in estimating and using a VARMA model is
+prediction. In the following code, I estimate the model and set the
+value of <code>maxHorizon</code> and <code>newX</code> arguments to tell
+<code>estim.varma</code> function to return the predictions:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.varma</span>(<span class="at">y =</span> y, <span class="at">x =</span> x,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                   <span class="at">params =</span> <span class="fu">c</span>(numAr, <span class="dv">1</span>, numMa, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>                   <span class="at">newX =</span> sample<span class="sc">$</span>x[(numObs<span class="sc">-</span>numHorizon<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>numObs, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>                   <span class="at">maxHorizon =</span> numHorizon)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>y_actual <span class="ot">&lt;-</span> sample<span class="sc">$</span>y[(numObs<span class="sc">-</span>numHorizon<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>numObs, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span></code></pre></div>
+<p>The variable <code>y_actual</code> shows the actual observations at
+the prediction horizon. There are several ways to compare the
+predictions with the actual values. In this section, we plot them
+against each other using the <code>ldt::fan.plot</code> function. Note
+that predictions are in rows of <code>means</code> and <code>vars</code>
+matrices in <code>fit$prediction</code> element. The following plot
+shows the predictions and actual data:</p>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Plotting prediction bounds (0.95 percent) for the two endogenous variables of the system." />
+<div class="figcaption">Plotting prediction bounds (0.95 percent) for
+the two endogenous variables of the system.</div>
+</div>
+</div>
+<div id="seasonality" class="section level2">
+<h2>Seasonality</h2>
+<p>We are going to repeat the previous example’s procedure, but this
+time with seasonal data. The following code generates the required
+data:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>numObs_s <span class="ot">&lt;-</span> <span class="dv">400</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>numHorizon_s <span class="ot">&lt;-</span> <span class="dv">40</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>startDate_s <span class="ot">&lt;-</span> <span class="fu">f.quarterly</span>(<span class="dv">1900</span>, <span class="dv">1</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>numAr_s <span class="ot">&lt;-</span> 1L</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>numMa_s <span class="ot">&lt;-</span> 1L</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>d_s <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>D_s <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>sample_s <span class="ot">&lt;-</span> <span class="fu">sim.varma</span>(numEndo, numAr, numMa, </span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>                    numExo, numObs_s, <span class="dv">10</span>, <span class="cn">TRUE</span>, d_s, </span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>                    <span class="at">startFrequency =</span>startDate_s,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>                    <span class="at">seasonalCoefs =</span> <span class="fu">c</span>(numAr_s,D_s,numMa_s,<span class="dv">4</span>))</span></code></pre></div>
+<p>The parameter <code>D_s</code> determines that the model is
+seasonally integrated. The two parameters <code>numAr_s</code> and
+<code>numMa_s</code> determine the seasonal dynamics of the system. The
+matrix representation is in the <code>eqsLatexSys</code> element:</p>
+<p><span class="math display">\[\begin{gather}  \begin{bmatrix}\Delta\Delta_4
+Y_{1t}\\\Delta\Delta_4 Y_{2t}\end{bmatrix} =
+\begin{bmatrix}-1.94\\0.11\end{bmatrix} + \begin{bmatrix}0.02 &amp;
+-0.14\\-0.11 &amp; 0.21\end{bmatrix} \begin{bmatrix}\Delta\Delta_4
+Y_{1t-1}\\\Delta\Delta_4 Y_{2t-1}\end{bmatrix} + \begin{bmatrix}-0.07
+&amp; 0.05\\-0.19 &amp; 0.03\end{bmatrix} \begin{bmatrix}\Delta\Delta_4
+Y_{1t-2}\\\Delta\Delta_4 Y_{2t-2}\end{bmatrix} + \begin{bmatrix}-0.14
+&amp; -0.01\\-0.19 &amp; 0.11\end{bmatrix} \begin{bmatrix}\Delta\Delta_4
+Y_{1t-4}\\\Delta\Delta_4 Y_{2t-4}\end{bmatrix} + \\\begin{bmatrix}-0.40
+&amp; -0.83 &amp; 0.74\\0.90 &amp; -0.33 &amp;
+0.99\end{bmatrix}\begin{bmatrix}X_1\\X_2\\X_3\end{bmatrix}+
+\\\begin{bmatrix}0.06 &amp; 0.00\\0.00 &amp;
+0.06\end{bmatrix}\begin{bmatrix}E_{1t-1}\\E_{2t-1}\end{bmatrix} +
+\begin{bmatrix}-0.05 &amp; 0.00\\0.00 &amp;
+-0.05\end{bmatrix}\begin{bmatrix}E_{1t-4}\\E_{2t-4}\end{bmatrix} +
+\begin{bmatrix}E_{1t}\\E_{2t}\end{bmatrix},\\ \Sigma = \begin{bmatrix}
+0.77 &amp; 0.04 \\ 0.04 &amp; 0.42 \end{bmatrix}
+\end{gather}\]</span></p>
+<p>The following code estimates these parameters using the
+<code>estim.varma</code> function:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">structure</span>(sample_s<span class="sc">$</span>y[<span class="dv">1</span><span class="sc">:</span>(numObs_s<span class="sc">-</span>numHorizon_s), , <span class="at">drop =</span> <span class="cn">FALSE</span>], </span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>                                 <span class="at">ldtf =</span> <span class="fu">attr</span>(sample_s<span class="sc">$</span>y, <span class="st">&quot;ldtf&quot;</span>))</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>x <span class="ot">&lt;-</span> sample_s<span class="sc">$</span>x[<span class="dv">1</span><span class="sc">:</span>(numObs_s<span class="sc">-</span>numHorizon_s), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.varma</span>(<span class="at">y =</span> y, <span class="at">x =</span> x, </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>                   <span class="at">params =</span> <span class="fu">c</span>(numAr_s, d_s, numMa_s, numAr_s, D_s, numMa_s),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>                   <span class="at">newX =</span> sample_s<span class="sc">$</span>x[(numObs_s<span class="sc">-</span>numHorizon_s<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>numObs_s, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>                   <span class="at">maxHorizon =</span> numHorizon_s,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>                   <span class="at">seasonsCount =</span> <span class="dv">4</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">get.varma.params</span>(fit<span class="sc">$</span>estimations<span class="sc">$</span>coefs, numAr_s, numMa_s, numExo, <span class="cn">TRUE</span>, numAr_s, numMa_s, <span class="dv">4</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>s0 <span class="ot">&lt;-</span>  <span class="fu">sim.varma</span>(fit<span class="sc">$</span>estimations<span class="sc">$</span>sigma, params<span class="sc">$</span>arList, params<span class="sc">$</span>maList, </span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>                 params<span class="sc">$</span>exoCoef, <span class="at">d =</span> d_s, <span class="at">nObs =</span>  <span class="dv">10</span>, <span class="at">intercept =</span>  params<span class="sc">$</span>integer,</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>                 <span class="at">seasonalCoefs =</span> <span class="fu">c</span>(numAr_s, D_s, numMa_s, <span class="dv">4</span>))</span></code></pre></div>
+<p><span class="math display">\[\begin{gather} r s0$eqsLatexSys
+\end{gather}\]</span></p>
+<p>Predicting with this model is similar to the previous subsection. I
+do not report the code but just the result.</p>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Plotting prediction bounds (0.95 percent) for the two endogenous variables of the seasonal system." />
+<div class="figcaption">Plotting prediction bounds (0.95 percent) for
+the two endogenous variables of the seasonal system.</div>
+</div>
+</div>
+<div id="model-uncertainty" class="section level2">
+<h2>Model uncertainty</h2>
+<p>Let’s consider a more realistic situation where model uncertainty
+exists. That’s where <code>ldt</code> can specifically help. In the
+previous subsections, we knew all relevant endogenous variables. Here,
+we continue the non-seasonal example and consider a situation where
+there are some irrelevant endogenous variables too. We limit the level
+of uncertainty and other practical issues by restricting the number of
+these variables. The following code reflects our assumptions:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>sample<span class="sc">$</span>y <span class="ot">&lt;-</span> <span class="fu">cbind</span>(sample<span class="sc">$</span>y, <span class="fu">matrix</span>(<span class="fu">rnorm</span>(numObs <span class="sc">*</span> <span class="dv">50</span>), <span class="at">ncol =</span> <span class="dv">50</span>, </span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>                                   <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>,<span class="fu">paste0</span>(<span class="st">&quot;w&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>))))</span></code></pre></div>
+<p>There are 50 irrelevant and 2 relevant endogenous variables. The
+number of irrelevant data is relatively large and their names start with
+the <code>w</code> character.</p>
+<p>The following code uses the <code>search.varma</code> function to
+find the true model:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.varma</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="dv">1</span>,</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                        <span class="at">ySizes =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), </span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                        <span class="at">maxParams =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                        <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;sic&quot;</span>)),</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>                        <span class="at">searchOptions =</span> <span class="fu">get.options.search</span>(<span class="at">printMsg =</span> <span class="cn">TRUE</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
+<p>The <code>ySizes = c(1:3)</code> part assumes that we know the number
+of relevant dependent variables is less than 3. The
+<code>metric_options</code> part shows that we use SIC metrics to
+evaluate and compare models. Also, <code>numTargets = 1</code> shows
+that we are focusing on the first variable <code>Y1.</code> Finding the
+best model means finding <code>Y2</code> and correct lag structure
+automatically. Here, the value of <code>maxParams</code> determines our
+guess about the lag structure.</p>
+<p>This code is very time-consuming and is not evaluated here. However,
+on my system, the elapsed time is 27 minutes (the number of searched
+models is 21232). You can compare it with similar experiments in <a href="bin.html">binary regression</a> or <a href="sur.html">SUR
+model</a> and see that it is relatively much more time-consuming. Apart
+from other factors, VARMA models are relatively large (in sense of the
+number of parameters). Also, in the current implementation,
+<code>ldt</code> uses numerical first and second derivatives in L-BFGS
+optimization algorithm. Therefore, we really need to reduce the number
+of potential models.</p>
+<p>One might reduce the number of potential explanatory variables using
+theory or statistical testing. Since <code>ldt</code> avoids user
+discretion, it provides a more systematic approach. The idea behind it
+is simple: estimate smaller models, select variables, estimate larger
+models with fewer potential endogenous variables. Here is the code:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>y_size_steps <span class="ot">=</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">3</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>count_steps <span class="ot">=</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">10</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>search_step_res <span class="ot">&lt;-</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">search.varma.stepwise</span>(<span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="dv">1</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                        <span class="at">maxParams =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                        <span class="at">ySizeSteps =</span> y_size_steps, <span class="at">countSteps =</span> count_steps,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>                        <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>,<span class="st">&quot;sic&quot;</span>)),</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>                        <span class="at">searchItems =</span> <span class="fu">get.items.search</span>(<span class="at">bestK =</span> <span class="dv">10</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>                        <span class="at">searchOptions =</span> <span class="fu">get.options.search</span>(<span class="at">printMsg =</span> <span class="cn">FALSE</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>search_step_res</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> varma </span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">832</span>, searched<span class="sc">:</span> <span class="dv">832</span> (<span class="dv">100</span><span class="sc">%), failed: 0 (0%</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.1513225</span> minutes </span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> aic<span class="sc">:</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">309.752</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">2.</span> sic<span class="sc">:</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">321.315</span>)</span></code></pre></div>
+<p>The first two lines define the steps. We use all variables
+(<code>NA</code> in count_steps means all) to estimate models with sizes
+defined as the first element of <code>y_size_steps</code>. Then we
+select a number of variables from the information provided by the best
+models and estimate models with sizes determined by the second element
+of <code>y_size_steps</code>. And so on.</p>
+<p>The size of the model subset and running time are greatly reduced. We
+can talk about performance; however if the result is not satisfactory,
+note that the time-consuming part of the search is with “moving average”
+part of the VARMA model. Therefore one can find a smaller subset of
+potential variables by estimating VAR models and using the results to
+estimate VARMA models.</p>
+<p>To study or report results, we should use the <code>summary</code>
+function. The output of a search project in <code>ldt</code> does not
+contain estimation results but only the minimum level of information to
+replicate them. The <code>summary</code> function estimates the models.
+Here is the code:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>ssum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_step_res, </span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                <span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>x, <span class="at">test =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Usually, there is more than one model in the summary output. This is
+because the output is first “target-variable-specific” and second
+“evaluation-specific”. As before, we can use the estimated best models
+for prediction.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

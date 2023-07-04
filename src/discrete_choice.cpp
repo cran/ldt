@@ -146,8 +146,9 @@ void calculate_goodness(DiscreteChoice<modelType, distType> &model) {
   // non-weight observations (e.g. by ungrouping), but Aic and Sic will differ
 
   auto k = model.Beta.length();
-  model.Aic = (2 * k - 2 * model.LogL) / model.NumObs;
-  model.Sic = (std::log(model.NumObs) * k - 2 * model.LogL) / model.NumObs;
+  model.Aic = (2 * k - 2 * model.LogL);
+  model.Sic = (std::log(model.NumObs) * k - 2 * model.LogL);
+  // TODO: check division by number of observations (I can't remember why)
 }
 
 static void ordermu(Ti k0, const Matrix<Tv> *Beta, Matrix<Tv> *mu, Ti NumCutoff,
@@ -391,7 +392,7 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
         Hi.Multiply_in(Li * (Li + xb.Data[i]));
         stro.Add_in(Hi);
 
-        // can be more effiecient. You need it just the last time:
+        // can be more efficient. You need it just the last time:
         // if (yi == 1)
         //	resid->Data[i] = yi - c;
         // else
@@ -411,7 +412,10 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
   // calculate variances from Hessian
   hfun(this->Beta, this->BetaVar); // Hessian gets destroyed in optimization
   auto ipiv = std::unique_ptr<int[]>(new int[k]);
+
+  this->condition_number = this->BetaVar.Norm('1'); // condition number
   this->BetaVar.Inv00(ipiv.get(), Hi.Data);
+  this->condition_number *= this->BetaVar.Norm('1');
 
   this->LogL = -this->Optim.FunctionValue;
   calculate_goodness(*this);
@@ -1057,23 +1061,23 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
       for (Ti i = 0; i < m; i++) {
         fxb = std::exp(xb.Data[i]);
         if (std::isinf(fxb))
-          fxb = 1; // the limit (positive and nevative?)
+          fxb = 1; // the limit (positive and negative?)
         else
           fxb = fxb / ((Tv)1 + fxb);
 
-        result.Set(i, 0, fxb);
-        result.Set(i, 1, (Tv)1 - fxb);
+        result.Set0(i, 1, fxb);
+        result.Set0(i, 0, (Tv)1 - fxb);
       }
     } else if constexpr (distType == DiscreteChoiceDistType::kProbit) {
       Tv c;
       for (Ti i = 0; i < m; i++) {
         c = dist_normal_cdf(xb.Data[i], (Tv)0, (Tv)1);
-        result.Set(i, 0, c);
-        result.Set(i, 1, (Tv)1 - c);
+        result.Set0(i, 1, c);
+        result.Set0(i, 0, (Tv)1 - c);
       }
     } else if constexpr (true) {
       throw std::logic_error(
-          "not implemented (discerete choice distribution type).");
+          "not implemented (discrete choice distribution type).");
     }
   } else if constexpr (modelType == DiscreteChoiceModelType::kOrdered) {
     Ti j;
@@ -1091,10 +1095,11 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
 
           // should we check infinity like the binary case ??!!
 
-          result.Set(i, j, F - preF);
+          result.Set0(i, j, F - preF);
           // update
           if (j == this->NumCutoff - 1) {
-            result.Set(i, j + 1, (Tv)1 - F);
+            result.Set0(i, j + 1,
+                        (Tv)1 - F); // TODO: Check if the indexation is correct
             break;
           }
           preF = F;
@@ -1107,11 +1112,13 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         preF = (Tv)0;
         xib = xb.Data[i];
         for (j = 0; j < this->NumCutoff + 1; j++) {
-          F = dist_normal_cdf(mui - xib, (Tv)0, (Tv)1);
-          result.Set(i, j, F - preF);
+          F = dist_normal_cdf(
+              mui - xib, (Tv)0,
+              (Tv)1); // TODO: Check if the indexation is correct
+          result.Set0(i, j, F - preF);
           // update
           if (j == this->NumCutoff - 1) {
-            result.Set(i, j + 1, (Tv)1 - F);
+            result.Set0(i, j + 1, (Tv)1 - F);
             break;
           }
           preF = F;
@@ -1120,10 +1127,10 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
       }
     } else if constexpr (true) {
       throw std::logic_error(
-          "not implemented (discerete choice distribution type).");
+          "not implemented (discrete choice distribution type).");
     }
   } else if constexpr (true) {
-    throw std::logic_error("not implemented (discerete choice model type).");
+    throw std::logic_error("not implemented (discrete choice model type).");
   }
 }
 

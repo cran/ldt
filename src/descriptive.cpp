@@ -298,7 +298,7 @@ void Descriptive::RegressionTrend(double *storage2) {
   auto mat = Matrix<Tv>(data, 2, 2);
   int info = mat.Inv2x2();
   if (info != 0)
-    throw exp_mat_sin;
+    throw std::logic_error("matrix singularity");
 
   auto b0 = pArray->Sum();
   double b1 = 0.0;

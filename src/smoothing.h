@@ -131,12 +131,12 @@ struct expsmoothing_outsample_res_details {
   Ti sampleEnd;
   bool isValid;
   Matrix<Tv> *act_for_sd;
-  Matrix<Tv> *measures;
+  Matrix<Tv> *metrics;
 };
 
 struct expsmoothing_outsample_res {
   bool hasDetails;
-  Matrix<Tv> *measures;
+  Matrix<Tv> *metrics;
   std::vector<expsmoothing_outsample_res_details *> *details;
   Ti validCount;
 
@@ -186,7 +186,7 @@ public:
                         Matrix<Tv> *varianceF, bool forceSimV = false,
                         Ti simFixSize = 500, unsigned int seed = 0) = 0;
 
-  virtual void calculatemeasure(bool forsize, std::vector<Ti> *measures,
+  virtual void calculatemeasure(bool forsize, std::vector<Ti> *metrics,
                                 std::vector<Ti> *horizons, Ti outOfSampleCount,
                                 Tv outOfSamplePercentage, bool keepDetails,
                                 expsmoothing_outsample_res *result,
@@ -265,7 +265,7 @@ public:
                         Ti simFixSize = 500, unsigned int seed = 0) override;
 
   virtual void
-  calculatemeasure(bool forsize, std::vector<Ti> *measures,
+  calculatemeasure(bool forsize, std::vector<Ti> *metrics,
                    std::vector<Ti> *horizons, Ti outOfSampleCount,
                    Tv outOfSamplePercentage, bool keepDetails,
                    expsmoothing_outsample_res *result, Matrix<Tv> *data,

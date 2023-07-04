@@ -1,142 +1,4 @@
 
-
-#' Determines if an email address is valid (this is not exact. Just use it to avoid mistakes)
-#'
-#' @param x email
-#'
-#' @return \code{TRUE} if email is valid, \code{FALSE} otherwise.
-IsEmailValid <- function(x) {
-  x <- as.character(x)
-  grepl("^[A-Z0-9._%+-]+@[A-Z0-9._%+-]+\\.[A-Z0-9._%+-]+$", x, ignore.case = TRUE)
-}
-
-#' Determines if a GUID is valid
-#'
-#' @param x GUID
-#'
-#' @return \code{TRUE} if GUID is valid, \code{FALSE} otherwise.
-IsGuidValid <- function(x) {
-  x <- as.character(x)
-  grepl("^[{]?[A-F0-9]{8}-([A-F0-9]{4}-){3}[A-F0-9]{12}[}]?$", x, ignore.case = TRUE)
-}
-
-
-
-
-#' Remove NA and Count the Number of Observations in Different Scenarios
-#'
-#' When a matrix has NA, one can omit columns with NA or rows with NA or a combination of these two.
-#' Total number of observations is a function the order.
-#' This function tries all combinations returns the results.
-#'
-#' @param data A matrix with NA
-#' @param countFun a function to determine how strategies are sorted.
-#' Default counts the number of observations. You might want to give columns a
-#' higher level of importance for example by using \code{nRows*nCols^1.5}.
-#' @param rowIndices Indices of sorted rows to search. Use it to create jumps for large number of rows (E.g., if the first sorted strategies suggest small number of columns and you are looking for other strategies). Use \code{NULL} to disable
-#' @param colIndices similar to \code{rowsMaxCount} for columns.
-#' @param printMsg If \code{TRUE}, it prints progress.
-#'
-#' @return a list of lists with four elements:
-#' \itemize{
-#'   \item nRows: number of rows in the matrix
-#'   \item nCols: number of cols in the matrix
-#'   \item colFirst: whether to remove columns or rows first
-#'   \item colRemove: indexes of the columns to be removed
-#'   \item rowRemove: indexes of the rows to be removed
-#' }
-#'
-#' @export
-#'
-#' @examples
-#' data <- matrix(c(NA, 2, 3, 4, NA, 5, NA, 6, 7, NA, 9, 10, 11, 12, 13, 14, 15, NA, 16, 17), 4, 5)
-#' RemoveNaStrategies(data)
-RemoveNaStrategies <- function(data, countFun = function(nRows, nCols) nRows * nCols,
-                               rowIndices = NULL, colIndices = NULL, printMsg = FALSE) {
-  data <- as.matrix(data)
-  Nrow = nrow(data)
-  Ncol = ncol(data)
-  data_na <- is.na(data)
-  c_cols <- sort(colSums(data_na), index.return = TRUE, decreasing = TRUE)
-
-
-  rowIndices = as.integer(rowIndices)
-  colIndices = as.integer(colIndices)
-
-  if (length(colIndices) == 0)
-    colIndices = c(1:length(c_cols$ix))
-  cmaxCount = length(colIndices)
-  if (printMsg)
-    cat("Searching columns: \n")
-  result <- list()
-  j <- 0
-  for (i in colIndices) { # remove i columns with most NAs
-    j = j + 1
-    colRemove <- c(c_cols$ix[1:i])
-    if (length(colRemove) > 0) {
-      mat <- data[, -colRemove, drop = FALSE]
-    }
-    rowRemove <- which(rowSums(is.na(mat)) > 0)
-    if (length(rowRemove) == Nrow){
-      if (printMsg)
-        cat("    breaking the loop. All rows are removed after removing the columns\n")
-      break # all rows will be removed
-    }
-    result[[length(result) + 1]] <- list(
-      nRows = Nrow - length(rowRemove),
-      nCols = Ncol - length(colRemove), colFirst = TRUE,
-      colRemove = sort(colRemove), rowRemove = as.integer(sort(rowRemove))
-    )
-    if (printMsg)
-      cat(paste0("    ", j, "/", cmaxCount,
-                 ", index=", i,
-                 ", nrow=", Nrow - length(rowRemove),
-                 ", ncol=",Ncol - length(colRemove), "\n"))
-  }
-
-  c_rows <- sort(rowSums(data_na), index.return = TRUE, decreasing = TRUE)
-
-  if (length(rowIndices) == 0)
-    rowIndices = c(1:length(c_rows$ix))
-  rmaxCount = length(rowIndices)
-
-  if (printMsg)
-    cat("Searching rows: \n")
-  j <- 0
-  for (i in rowIndices) { # remove i row with most NAs
-    j <- j + 1
-    rowRemove <- c(c_rows$ix[1:i])
-    if (length(rowRemove) > 0) {
-      mat <- data[-rowRemove, , drop = FALSE]
-    }
-    colRemove <- which(colSums(is.na(mat)) > 0)
-    if (length(colRemove) == Ncol){
-      if (printMsg)
-        cat("    breaking the loop. All columns are removed after removing the rows\n")
-      break
-    }
-    result[[length(result) + 1]] <- list(
-      nRows = Nrow - length(rowRemove),
-      nCols = Ncol - length(colRemove), colFirst = FALSE,
-      colRemove = as.integer(sort(colRemove)), rowRemove = sort(rowRemove)
-    )
-
-    if (printMsg)
-      cat(paste0("    ", j, "/", rmaxCount,
-                 ", index=", i,
-                 ", nrow=", Nrow - length(rowRemove),
-                 ", ncol=",Ncol - length(colRemove), "\n"))
-  }
-
-  inx <- sort(sapply(result, function(r) countFun(r$nRows, r$nCols)),
-    index.return = TRUE, decreasing = TRUE
-  )
-
-  result <- result[inx$ix]
-  result
-}
-
-
 #' Combine More Than One \code{ldtsearch} Objects
 #'
 #' @param list a list with \code{ldtsearch} objects
@@ -233,7 +95,7 @@ combineSearch <- function(list, type1Name = "coefs") {
       ind <- which(n == firstNames)
       if (length(ind) > 0) {
         ind <- ind[[1]]
-        mix <- GetCombination4Moments(
+        mix <- s.combine.by.moments4(
           list(
             mean = first[[ind, 1]], variance = first[[ind, 2]],
             skewness = first[[ind, 3]], kurtosis = first[[ind, 4]],
@@ -407,21 +269,22 @@ combineSearch <- function(list, type1Name = "coefs") {
 
 #' Stepwise estimation
 #'
-#' @param method sur, dc or varma
-#' @param data exogenous (for sur and dc) or endogenous (for varma)
-#' @param sizes detemines the steps
+#' @param method sur, bin or varma
+#' @param data exogenous (for sur and bin) or endogenous (for varma)
+#' @param sizes determines the steps
 #' @param counts determines the size in each step
 #' @param savePre if not \code{NULL}, it saves and tries to load the
 #' progress of search step in a file (name=\code{paste0(savePre,i)} where
 #' \code{i} is the index of the step).
-#' @param printMsg If true, some information about the steps is printed.
-#' Note that it is different from searchers' \code{printMsg}.
 #' @param ... Additional arguments
 #'
 #' @return the result
 Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                     counts = c(NA, 40, 30, 20), savePre, printMsg = FALSE, ...) {
+                     counts = c(NA, 40, 30, 20), savePre, ...) {
   dots <- list(...)
+  printMsg = dots$searchOptions$printMsg
+  if (is.null(printMsg))
+    printMsg = FALSE
 
   # TODO: check search items here
   # dots <- list(...)
@@ -431,7 +294,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   }
 
   if (is.null(colnames(data))) {
-    stop("'data' must have column names.")
+    stop("'data' must have column names.") # don't set it here, due to the loading part
   }
 
   estims <- list()
@@ -487,7 +350,12 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
           if (is.null(tar$model$bests) == FALSE && length(tar$model$bests) > 0) {
             for (b in c(1:length(tar$model$bests))) {
               bst <- tar$model$bests[[b]]
-              bests[[length(bests) + 1]] <- list(index = b, names = x_i_names[bst$exoIndices])
+              names <- NULL
+              if (method == "sur" || method == "bin")
+                names <- x_i_names[bst$exoIndices]
+              else
+                names <- x_i_names[bst$depIndices]
+              bests[[length(bests) + 1]] <- list(index = b, names = names)
             }
           }
         }
@@ -509,7 +377,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       }
 
       # TODO: we can use or fill the gap with Inclusion weights. However,
-      # first we should determine which measure or target to use ?!
+      # first we should determine which metric or target to use ?!
 
       if (printMsg) {
         cat(paste0("Selected Variables: ", paste0(vars, sep = ";", collapse = ""), "\n"))
@@ -518,19 +386,26 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       data_i <- data_i[, vars, drop = FALSE]
     }
     if (any(ncol(data_i) < size_i)) {
-      stop("There is not enough variables in this step. Increase the value of
-      'bestK' or if you have fix variables, adjust the sizes.")
+      warning("There are not enough variables in this step. Increase the value of
+      'bestK' or if you have fix variables, adjust the sizes. Search is stoped.")
+      break
     }
 
+    if (printMsg)
+      cat("\n=================\n")
+
     if (method == "sur") {
-      estims[[i]] <- SurSearch(x = data_i, xSizes = size_i, ...)
-    } else if (method == "dc") {
-      estims[[i]] <- DcSearch(x = data_i, xSizes = size_i, ...)
+      estims[[i]] <- search.sur(x = data_i, xSizes = size_i, ...)
+    } else if (method == "bin") {
+      estims[[i]] <- search.bin(x = data_i, xSizes = size_i, ...)
     } else if (method == "varma") {
-      estims[[i]] <- VarmaSearch(y = data_i, ySizes = size_i, ...)
+      estims[[i]] <- search.varma(y = data_i, ySizes = size_i, ...)
     } else {
       stop("invalid method")
     }
+
+    if (printMsg)
+      cat("\n=================\n")
 
     if (estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount) {
       if (printMsg){
@@ -557,282 +432,20 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   if (method == "sur") {
     class(result) <- c("ldtsearchsur", "ldtsearch", "list")
     attr(result, "method") <- "sur"
-  } else if (method == "dc") {
+  } else if (method == "bin") {
     class(result) <- c("ldtsearchdc", "ldtsearch", "list")
-    attr(result, "method") <- "dc"
+    attr(result, "method") <- "bin"
   } else if (method == "varma") {
     class(result) <- c("ldtsearchvarma", "ldtsearch", "list")
     attr(result, "method") <- "varma"
   }
 
+  result$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(result$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
+                                               as.POSIXct(result$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+
+
   return(result)
 }
-
-
-
-
-#' Extract Coefficients from a list of \code{ldtestim} object
-#'
-#'
-#' @param list a named list of \code{ldtestim} objects.
-#' @param depInd index of the dependent variable.
-#' @param regInfo A list of pairs of keys and names to determine
-#' the information at the bottom of the table. Use "" (empty) for
-#' empty rows. \code{num_eq} and \code{num_endo} (and \code{num_x} and
-#' \code{num_exo}) will be different with PCA analysis enabled.
-#' @param hnameFun A function to change the name of the headers.
-#' @param vnamesFun A function to change the name of the variables or the codes in \code{regInfo}.
-#' @param vnamesFun_sub A list for replacing special characters vectors in \code{vnamesFun}.
-#' @param vnamesFun_max Maximum length for names in \code{vnamesFun}.
-#' @param tableFun A function (i.e., \code{function(coef,std,pvalue,minInColm,maxInCol)})
-#' one of the following for default sign or coefficients table: "sign",
-#' "sign_star", "coef", "coef_star", "coef_star_std"
-#' @param formatNumFun A function to format the numbers if \code{tableFun} uses default values.
-#' @param numCoefs if \code{NA}, it inserts all coefficients. If a positive number,
-#' it inserts that number of coefficients.
-#' @param formatLatex If true, default options are for 'latex', otherwise, 'html'.
-#'
-#' @details
-#' #' Possible codes (first element) for \code{regInfo}:
-#' \itemize{
-#' \item "" : empty line
-#' \item num_obs : No. Obs.; number of observations.
-#' \item num_endo : No. Eq. (orig.); original number of equations
-#' or endogenous variables before being changed by PCA analysis.
-#' \item pca_y_exact : PCA Count (y);
-#' \item pca_y_cutoff : PCA Cutoff (y)
-#' \item pca_y_max : PCA Max (y)
-#' \item num_eq : No. Eq.; number of equations after PCA analysis.
-#' \item num_exo : No. Exo. (orig.)
-#' \item pca_x_exact : PCA Count (x)
-#' \item pca_x_cutoff : PCA Cutoff (x)
-#' \item pca_x_max : PCA Max (x)
-#' \item num_x : No. Exo.
-#' \item num_x_all : No. Exo. (all); number of explanatory variables in all equations.
-#' \item num_rest : No. Rest.; number of restrictions in the equation
-#' \item sigma2 : S.E. Reg.
-#' \item ... others can be a measure name (i.e., elements of 'measures' item in the results)
-#' }
-#'
-#' @return the generated table.
-#' @export
-CoefTable <- function(list, depInd = 1,
-                      regInfo = list(
-                        c("", " "), c("num_obs", "No. Obs."), c("num_eq", "No. Eq."),
-                        c("num_x", "No. Exo."), c("sigma2", "S.E. Reg."),
-                        c("aic", "AIC"), c("sic", "SIC")
-                      ),
-                      hnameFun = function(x) x,
-                      vnamesFun = function(x) x,
-                      vnamesFun_sub = list(c("%", "\\\\%"), c("_", "\\\\_")), vnamesFun_max = 20,
-                      tableFun = "coef_star", formatNumFun = function(colIndex, x) {
-                        x
-                      }, numCoefs = NA, formatLatex = TRUE) {
-  get_stars <- function(pvalue) {
-    if (is.nan(pvalue)) { # e.g., restricted to zero
-      return(if (formatLatex) "\\textsuperscript{(r)}" else "<sup>(r)</sup>")
-    }
-    paste0(
-      (if (formatLatex) "\\textsuperscript{" else "<sup>"),
-      if (pvalue <= 0.01) {
-        "***"
-      } else if (pvalue <= 0.05) {
-        "**"
-      } else if (pvalue <= 0.1) {
-        "*"
-      } else {
-        ""
-      }, (if (formatLatex) "}" else "</sup>")
-    )
-  }
-
-  if (tableFun == "sign") {
-    tableFun <- function(j, coef, std, pvalue) {
-      if (coef > 0) {
-        "+"
-      } else if (coef < 0) {
-        "-"
-      } else {
-        "0"
-      }
-    }
-  }
-  if (tableFun == "sign_star") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(if (coef > 0) {
-        "+"
-      } else if (coef < 0) {
-        "-"
-      } else {
-        "0"
-      }, get_stars(pvalue))
-    }
-  } else if (tableFun == "coef") {
-    tableFun <- function(j, coef, std, pvalue) {
-      formatNumFun(j, coef)
-    }
-  } else if (tableFun == "coef_star") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(formatNumFun(j, coef), get_stars(pvalue))
-    }
-  } else if (tableFun == "coef_star_std") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(formatNumFun(j, coef), get_stars(pvalue), " (", formatNumFun(j, std), ")")
-    }
-  }
-
-  list_names <- names(list)
-  if (is.null(list_names)) {
-    col_names <- paste0("m", rep(1:length(list)))
-  } else {
-    col_names <- lapply(list_names, function(n) hnameFun(n))
-  }
-  vnames <- unique(unlist(lapply(list, function(e) row.names(e$estimations$coefs))))
-  vnames_0 <- sapply(vnames, function(n) {
-    r <- vnamesFun(n)
-    for (sg in vnamesFun_sub) {
-      r <- gsub(sg[[1]], sg[[2]], r, fixed = TRUE)
-    }
-    if (nchar(r) > vnamesFun_max) {
-      r <- paste0(substr(r, 1, vnamesFun_max - 3), "...")
-    }
-    r
-  })
-  regnam_0 <- sapply(regInfo, function(n) n[[2]])
-  numCoefs <- as.integer(numCoefs)
-  if (is.na(numCoefs)) {
-    vvnames <- c(vnames_0, regnam_0)
-  } else if (numCoefs > 0) {
-    vvnames <- c(vnames_0[1:numCoefs], regnam_0)
-  } else {
-    vvnames <- regnam_0
-  }
-
-  r_table <- matrix("", (if (is.na(numCoefs)) {
-    length(vnames) + length(regInfo)
-  } else {
-    length(regInfo) + numCoefs
-  }), length(col_names))
-  rownames(r_table) <- vvnames
-  colnames(r_table) <- col_names
-
-  j <- 0
-  for (e in list) {
-    j <- j + 1
-
-    ns <- row.names(e$estimations$coefs)
-    i <- 0
-    # insert coefficients
-    for (v in ns) {
-      i <- i + 1
-      if (is.na(numCoefs) == FALSE && numCoefs < i) {
-        break
-      }
-      ind <- which(vnames == v)
-      if (length(ind) == 1) {
-        k <- ind[[1]]
-        coef <- e$estimations$coefs[i, depInd]
-        std <- e$estimations$stds[i, depInd]
-        pv <- e$estimations$pValues[i, depInd]
-        r <- tableFun(j, coef, std, pv)
-        r_table[k, j] <- r
-      }
-    }
-
-
-    # insert regression information
-    simResNames <- names(e$simulation$results)
-    i <- if (is.na(numCoefs)) length(vnames) else numCoefs
-    for (rn in regInfo) {
-      i <- i + 1
-      v <- NULL
-      r <- rn[[1]]
-
-      if (r == "") {
-        v <- "" # for an empty cell/line
-      } else if (r == "num_obs") {
-        v <- formatNumFun(j, as.integer(e$counts$obs))
-      } else if (r == "num_eq") {
-        v <- formatNumFun(j, as.integer(e$counts$eq))
-      } else if (r == "num_endo") {
-        v <- formatNumFun(j, as.integer(ncol(e$info$y)))
-      } else if (r == "num_x") {
-        v <- formatNumFun(j, as.integer(length(which(
-          is.na(e$estimations$coefs[, depInd]) == FALSE
-        ))))
-      } else if (r == "num_exo") {
-        v <- formatNumFun(j, as.integer(ncol(e$info$x)))
-      } else if (r == "num_x_all") {
-        v <- formatNumFun(j, as.integer(e$counts$exoAll))
-      } else if (r == "num_rest") {
-        v <- if (is.null(e$estimations$isRestricted)) {
-          0L
-        } else {
-          as.integer(sum(e$estimations$isRestricted[, depInd]))
-        }
-      } else if (r == "pca_y_exact") {
-        v <- formatNumFun(j, as.integer(e$info$pcaOptionsY$exactCount))
-      } else if (r == "pca_x_exact") {
-        v <- formatNumFun(j, as.integer(e$info$pcaOptionsX$exactCount))
-      } else if (r == "pca_y_cutoff") {
-        v <- formatNumFun(j, if (is.null(e$info$pcaOptionsY$exactCount) == F &&
-          e$info$pcaOptionsY$exactCount == 0) {
-          e$info$pcaOptionsY$cutoffRate
-        } else {
-          NA
-        })
-      } else if (r == "pca_x_cutoff") {
-        v <- formatNumFun(j, if (is.null(e$info$pcaOptionsX$exactCount) == F &&
-          e$info$pcaOptionsX$exactCount == 0) {
-          e$info$pcaOptionsX$cutoffRate
-        } else {
-          NA
-        })
-      } else if (r == "pca_y_max") {
-        v <- formatNumFun(j, as.integer(if (is.null(e$info$pcaOptionsY$exactCount) == F &&
-          e$info$pcaOptionsY$exactCount == 0) {
-          e$info$pcaOptionsY$max
-        } else {
-          NA
-        }))
-      } else if (r == "pca_x_max") {
-        v <- formatNumFun(j, as.integer(if (is.null(e$info$pcaOptionsX$exactCount) == F &&
-          e$info$pcaOptionsX$exactCount == 0) {
-          e$info$pcaOptionsX$max
-        } else {
-          NA
-        }))
-      } else if (r == "sigma2") {
-        v <- formatNumFun(j, e$estimations$sigma[depInd, depInd])
-      } else { # must be a measure
-        ind <- which(r == rownames(e$measures))
-        if (length(ind) != 0) {
-          v <- formatNumFun(j, e$measures[ind, depInd])
-
-          if (r == "f") {
-            ind0 <- which("fProb" == rownames(e$measures))
-            fp <- e$measures[ind0, depInd]
-            if (is.na(fp)) {
-              warning("p-value of 'F' statistics is NA.")
-            }
-            v <- paste0(v, get_stars(fp))
-          }
-        }
-      }
-
-      if (is.null(v) || length(v) == 0) {
-        warning(paste0("Invalid 'regInfo' member is requested. 'NA' is used. code=", r))
-        v <- NA
-      }
-      r_table[i, j] <- v
-    }
-  }
-
-  return(r_table)
-}
-
-
-
 
 is.empty <- function(arg) {
   if (is.null(arg) || is.na(arg)) {
@@ -868,4 +481,85 @@ if.not.null <- function(arg, default = NULL) {
     return(default)
   }
   return(arg)
+}
+
+sprintf0 <- function(numFormat, x) {
+  if (length(x) == 0) {
+    return(ifelse(x==0,"0",sprintf(numFormat, x)))
+  } else {
+    return(sapply(x, function(d)ifelse(d==0,0,sprintf(numFormat, d))))
+  }
+}
+
+
+#' Convert a matrix to LaTeX code
+#'
+#' This function takes a matrix and returns the LaTeX code for the matrix,
+#' using the specified matrix environment and number format.
+#'
+#' @param mat A matrix to convert to LaTeX code.
+#' @param env A character string specifying the matrix environment to use.
+#'   Possible values are "bmatrix", "pmatrix", "Bmatrix", "vmatrix", and "Vmatrix".
+#' @param numFormat A character string specifying the format to use when displaying the numbers.
+#'   This value can be any valid format string accepted by the sprintf function.
+#'
+#' @return A character string containing the LaTeX code for the matrix.
+#'
+#' @examples
+#' #mat <- matrix(1:4, ncol = 2)
+#' #latex.matrix(mat)
+#' #latex.matrix(mat, env = "pmatrix")
+#' #latex.matrix(mat, numFormat = "%.0f")
+latex.matrix <- function(mat, env = "bmatrix", numFormat = "%.2f") {
+
+  mat_str <- apply(mat, 1, function(row) {
+    paste0(sprintf0(numFormat, row), collapse = " & ")
+  })
+  mat_str <- paste(mat_str, collapse = " \\\\ ")
+  mat_str <- paste0("\\begin{", env, "} ", mat_str, " \\end{", env, "}")
+  return(mat_str)
+}
+
+#' Generate LaTeX code for a variable vector
+#'
+#'
+#' @param vec_size An integer specifying the size of the vector.
+#' @param label A character string specifying the label to use when filling the cell values.
+#' @param intercept A logical value indicating whether to add `1` to the vector.
+#' @param max_size An integer specifying the maximum size of the vector before using `\\vdots` to remove middle elements.
+#' @param env A character string specifying the matrix environment to use.
+#'   Possible values are "bmatrix", "pmatrix", "Bmatrix", "vmatrix", and "Vmatrix".
+#'
+#' @return A character string containing the LaTeX code for the vector.
+#'
+#' @examples
+#' #latex.variable.vector(3, "X")
+#' #latex.variable.vector(5, "X")
+#' #latex.variable.vector(5, "X", intercept = FALSE)
+latex.variable.vector <- function(vec_size, label, intercept = FALSE, max_size = 3, env = "pmatrix") {
+
+
+  if (vec_size == 0){
+    if (intercept)
+      vec_names <- paste0("\\begin{",env,"}   1 \\end{",env,"}")
+    else
+      vec_names <- paste0("\\begin{",env,"} \\end{",env,"}")
+  }
+  else if (vec_size <= max_size) {
+    vec_names <- paste0(label,"_", seq_len(vec_size - ifelse(intercept,1,0)), collapse = " \\\\ ")
+    if (intercept) {
+      vec_names <- paste0("1 \\\\ ", vec_names)
+    }
+    vec_names <- paste0("\\begin{",env,"} ", vec_names, " \\end{",env,"}")
+  } else {
+    vec_names <- paste0("\\begin{",env,"}")
+    if (intercept) {
+      vec_names <- paste0(vec_names,"1 \\\\ ",label,"_1 \\\\ \\vdots \\\\ ",label,"_", vec_size - 1)
+    } else {
+      vec_names <- paste0(vec_names,label,"_1 \\\\ \\vdots \\\\ ",label,"_", vec_size)
+    }
+    vec_names <- paste0(vec_names,"\\end{",env,"}")
+  }
+
+  return(vec_names)
 }

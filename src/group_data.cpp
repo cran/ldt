@@ -69,7 +69,7 @@ void GroupData<linkMethod, distMethod, corrMethod>::Calculate(
     for (auto &g : this->Groups) {
       for (auto i = 0; i < (Ti)g->size(); i++) {
         for (auto j = i + 1; j < (Ti)g->size(); j++) {
-          auto dis = distance.Result.Get(g->at(i), g->at(j));
+          auto dis = distance.Result.Get0(g->at(i), g->at(j));
           if (dis < removeThreshold) {
             remove.insert(j);
             this->Removed.insert(j);

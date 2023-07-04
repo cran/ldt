@@ -385,7 +385,6 @@ template <typename Tw> void Matrix<Tw>::Transpose0(Matrix<Tw> &storage) const {
 }
 
 template <typename Tw> void Matrix<Tw>::Transpose() {
-  Tw temp;
   Ti c, a;
   if (RowsCount == ColsCount) {
     for (Ti i = 0; i < RowsCount; i++) {

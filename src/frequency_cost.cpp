@@ -36,7 +36,7 @@ void FrequencyCost<hasWeight>::Calculate(const std::vector<Matrix<Tv>> &costs,
     } else if constexpr (true) {
       weight = 1;
     }
-    maxprob = scores.Get(i, actualCol);
+    maxprob = scores.Get0(i, actualCol);
     j = -1;
     for (const auto &c : costs) {
       j++;

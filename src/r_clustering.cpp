@@ -5,25 +5,11 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// clang-format off
-
-//' Gets Distances Between Variables
-//'
-//' @param data (numeric matrix) Data with variables in the columns.
-//' @param distance (string) Determines how distances are calculated. It can be \code{correlation}, \code{absCorrelation}, \code{euclidean}, \code{manhattan}, \code{maximum}.
-//' @param correlation (string) If \code{distance} is correlation, it determines the type of the correlation. It can be \code{pearson}, \code{spearman}.
-//' @param checkNan (bool) If false, \code{NAN}s are not omitted.
-//'
-//' @return A symmetric matrix (lower triangle as a vector).
-//'
-//' @export
-// [[Rcpp::export]]
+// [[Rcpp::export(.GetDistance)]]
 NumericVector GetDistance(NumericMatrix data,
                           std::string distance = "correlation",
                           std::string correlation = "pearson",
-                          bool checkNan = true)
-// clang-format on
-{
+                          bool checkNan = true) {
 
   boost::algorithm::to_lower(distance);
   boost::algorithm::to_lower(correlation);
@@ -46,35 +32,15 @@ NumericVector GetDistance(NumericMatrix data,
                            dista.get()->Result.length_array());
 }
 
-// clang-format off
+// [[Rcpp::export(.ClusterH)]]
+List ClusterH(NumericVector distances, std::string linkage) {
 
-//' Hierarchical Clustering
-//'
-//'
-//' @param distances (numeric vector) Determines the distances. This must be the lower triangle of a (symmetric) distance matrix (without the diagonal).
-//' @param numVariables (int) Determines the number of variables. This should hold: '2 * length(\code{distances}) = \code{numVariables}(\code{numVariables} - 1)'.
-//' @param linkage (string) Determines how Distances are calculated in a left-right node merge. It can be \code{single}, \code{complete}, \code{uAverage}, \code{wAverage}, \code{ward}.
-//'
-//' @return A list:
-//' \item{merge}{(integer matrix)}
-//' \item{height}{(numeric vector)}
-//' \item{order}{(integer vector)}
-//'
-//' @export
-// [[Rcpp::export]]
-List ClusterH(NumericVector distances, int numVariables,
-              std::string linkage = "single")
-// clang-format on
-{
+  double n = (1 + sqrt(1 + 8 * distances.length())) / 2;
+  int numVariables = std::floor(n);
+  if (std::abs(n - numVariables) > 1e-16 || numVariables <= 1)
+    throw std::logic_error("Invalid distance vector. It should be the lower "
+                           "triangle of a symmetric matrix.");
 
-  if (numVariables * (numVariables - 1) != 2 * distances.length())
-    throw std::logic_error(
-        "Invalid number of variables. '2 * distances.length() != numVariables "
-        "* (numVariables - 1)'.");
-
-  if (numVariables <= 1)
-    throw std::logic_error(
-        "Invalid number of variables. It must be larger than 1.");
   boost::algorithm::to_lower(linkage);
   HClusterLinkage linkage0 = FromString_HClusterLinkage(linkage.c_str());
 
@@ -97,31 +63,11 @@ List ClusterH(NumericVector distances, int numVariables,
   return L;
 }
 
-// clang-format off
-
-//' Groups Variables with Hierarchical Clustering
-//'
-//' @details The results might be different from R's 'cutree' function. I don't know how 'cutree' works, but here I iterate over the nodes and whenever a split occurs, I add a group until the required number of groups is reached.
-//'
-//' @param data (numeric matrix) Data with variables in the columns.
-//' @param nGroups (int) Number of groups
-//' @param threshold (double) A threshold for omitting variables. If distance between two variables in a group is less than this value, the second one will be omitted. Note that a change in the order of the columns might change the results.
-//' @param distance (string)  Determines how distances are calculated. It can be \code{correlation}, \code{absCorrelation}, \code{euclidean}, \code{manhattan}, \code{maximum}.
-//' @param linkage (string) Determines how Distances are calculated in a left-right node merge. It can be \code{single}, \code{complete}, \code{uAverage}, \code{wAverage}, \code{ward}.
-//' @param correlation (string) If \code{distance} is correlation, it determines the type of the correlation. It can be \code{pearson}, \code{spearman}.
-//'
-//' @return A list:
-//' \item{groups}{(List of integer vectors) indexes of variables in each group.}
-//' \item{removed}{(integer vector) indexes of removed variables.}
-//'
-//' @export
-// [[Rcpp::export]]
+// [[Rcpp::export(.ClusterHGroup)]]
 List ClusterHGroup(NumericMatrix data, int nGroups = 2, double threshold = 0,
                    std::string distance = "correlation",
                    std::string linkage = "single",
-                   std::string correlation = "pearson")
-// clang-format on
-{
+                   std::string correlation = "pearson") {
 
   if (threshold < 0)
     throw std::logic_error("Invalid threshold. It cannot be negative.");

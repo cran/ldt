@@ -13,17 +13,18 @@ using namespace ldt;
 
 VarmaSearcher::VarmaSearcher(
     SearchOptions &searchOptions, const SearchItems &searchItems,
-    const SearchMeasureOptions &measures, const SearchModelChecks &checks,
-    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
-    const std::vector<Ti> &groupSizes, Ti fixFirstG, DatasetTs<true> &source,
-    const VarmaSizes sizes, const std::vector<Ti> &exoIndexes,
-    Matrix<Tv> *forLowerBounds, Matrix<Tv> *forUpperBounds,
-    LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
-    bool usePreviousEstim, Ti maxHorizonCheck)
-    : Searcher::Searcher(searchOptions, searchItems, measures, checks, sizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+    const SearchMetricOptions &metrics, const SearchModelChecks &checks,
+    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
+    DatasetTs<true> &source, const VarmaSizes sizes,
+    const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
+    Matrix<Tv> *forUpperBounds, LimitedMemoryBfgsbOptions *optimOptions,
+    Tv stdMultiplier, bool usePreviousEstim, Ti maxHorizonCheck)
+    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, sizeG,
+                         groupIndexMap, fixFirstG, 0) {
   Source = source; // copy for parallel (It uses the indexes)
   pExoIndexes = &exoIndexes;
+  this->mFixFirstItems =
+      searchItems.LengthTargets; // don't estimate models without targets
 
   UsePreviousEstim = usePreviousEstim;
   StdMultiplier = stdMultiplier;
@@ -58,12 +59,12 @@ VarmaSearcher::VarmaSearcher(
     }
   }
 
-  if (measures.SimFixSize > 0) { // we estimate a simulation model
-    if (measures.MeasuresOut.size() == 0)
+  if (metrics.SimFixSize > 0) { // we estimate a simulation model
+    if (metrics.MetricsOut.size() == 0)
       throw std::logic_error(
-          "Simulation is requested by there is no evaluation measure.");
-    Model = VarmaSimulation(Sizes, measures.SimFixSize, measures.Horizons,
-                            measures.MeasuresOut,
+          "Simulation is requested by there is no evaluation metric.");
+    Model = VarmaSimulation(Sizes, metrics.SimFixSize, metrics.Horizons,
+                            metrics.MetricsOut,
                             optimOptions); // no PCA in search
   }
 
@@ -90,8 +91,8 @@ VarmaSearcher::VarmaSearcher(
     Indexes.at(sizeG + i) = a;
   }
 
-  auto numMeas = (Ti)(this->pMeasures->MeasuresOut.size() +
-                      this->pMeasures->MeasuresIn.size());
+  auto numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
+                      this->pMetrics->MetricsIn.size());
   this->WorkSize += numMeas * this->pItems->LengthTargets; // weights matrix
 }
 
@@ -109,7 +110,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
   Ti ycount;
   bool hasExo;
-  auto measures = *this->pMeasures;
+  auto metrics = *this->pMetrics;
   std::vector<Ti> targetPositions;
   Matrix<Tv> weights;
   Ti numMeas;
@@ -124,8 +125,8 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
   }
   hasExo = ExoIndexes.RowsCount > 0;
 
-  numMeas = (Ti)(this->pMeasures->MeasuresOut.size() +
-                 this->pMeasures->MeasuresIn.size());
+  numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
+                 this->pMetrics->MetricsIn.size());
   weights = Matrix<Tv>(NAN, &work[s], numMeas, (Ti)targetPositions.size());
   s += numMeas * this->pItems->LengthTargets;
   Source.Update(&Indexes, nullptr); // update indexes
@@ -220,7 +221,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
         i++;
         if (t < this->pItems->LengthTargets) {
           j = -1;
-          for (auto &h : this->pMeasures->Horizons) {
+          for (auto &h : this->pMetrics->Horizons) {
             j++;
 
             if (this->pOptions->RequestCancel)
@@ -241,21 +242,21 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
       }
     }
 
-    if (measures.mIndexOfAic >= 0) {
+    if (metrics.mIndexOfAic >= 0) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Result.Aic);
       for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set(measures.mIndexOfAic, t, weight);
+        weights.Set0(metrics.mIndexOfAic, t, weight);
     }
-    if (measures.mIndexOfSic >= 0) {
+    if (metrics.mIndexOfSic >= 0) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Result.Sic);
       for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set(measures.mIndexOfSic, t, weight);
+        weights.Set0(metrics.mIndexOfSic, t, weight);
     }
   }
 
-  if (this->pMeasures->SimFixSize > 0) {
+  if (this->pMetrics->SimFixSize > 0) {
     auto count0 = Model.mCount;
 
     if (this->pOptions->RequestCancel)
@@ -272,43 +273,43 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     if (Model.ValidCounts == 0)
       throw std::logic_error("Number of valid simulations is 0.");
 
-    j = (Ti)this->pMeasures->MeasuresIn.size();
+    j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)targetPositions.size(); t++) {
-      if (measures.mIndexOfSign >= 0)
-        weights.Set(
-            j + measures.mIndexOfSign, t,
+      if (metrics.mIndexOfSign >= 0)
+        weights.Set0(
+            j + metrics.mIndexOfSign, t,
             Scoring::ToWeight(ScoringType::kSign,
-                              Model.ResultAggs.Get0(measures.mIndexOfSign, t)));
-      if (measures.mIndexOfDirection >= 0)
-        weights.Set(j + measures.mIndexOfDirection, t,
-                    Scoring::ToWeight(
-                        ScoringType::kDirection,
-                        Model.ResultAggs.Get0(measures.mIndexOfDirection, t)));
-      if (measures.mIndexOfMae >= 0)
-        weights.Set(
-            j + measures.mIndexOfMae, t,
+                              Model.ResultAggs.Get0(metrics.mIndexOfSign, t)));
+      if (metrics.mIndexOfDirection >= 0)
+        weights.Set0(j + metrics.mIndexOfDirection, t,
+                     Scoring::ToWeight(
+                         ScoringType::kDirection,
+                         Model.ResultAggs.Get0(metrics.mIndexOfDirection, t)));
+      if (metrics.mIndexOfMae >= 0)
+        weights.Set0(
+            j + metrics.mIndexOfMae, t,
             Scoring::ToWeight(ScoringType::kMae,
-                              Model.ResultAggs.Get0(measures.mIndexOfMae, t)));
-      if (measures.mIndexOfMaeSc >= 0)
-        weights.Set(j + measures.mIndexOfMaeSc, t,
-                    Scoring::ToWeight(
-                        ScoringType::kScaledMae,
-                        Model.ResultAggs.Get0(measures.mIndexOfMaeSc, t)));
-      if (measures.mIndexOfRmse >= 0)
-        weights.Set(
-            j + measures.mIndexOfRmse, t,
+                              Model.ResultAggs.Get0(metrics.mIndexOfMae, t)));
+      if (metrics.mIndexOfMaeSc >= 0)
+        weights.Set0(
+            j + metrics.mIndexOfMaeSc, t,
+            Scoring::ToWeight(ScoringType::kMape,
+                              Model.ResultAggs.Get0(metrics.mIndexOfMaeSc, t)));
+      if (metrics.mIndexOfRmse >= 0)
+        weights.Set0(
+            j + metrics.mIndexOfRmse, t,
             Scoring::ToWeight(ScoringType::kRmse,
-                              Model.ResultAggs.Get0(measures.mIndexOfRmse, t)));
-      if (measures.mIndexOfRmseSc >= 0)
-        weights.Set(j + measures.mIndexOfRmseSc, t,
-                    Scoring::ToWeight(
-                        ScoringType::kScaledRmse,
-                        Model.ResultAggs.Get0(measures.mIndexOfRmseSc, t)));
-      if (measures.mIndexOfCrps >= 0)
-        weights.Set(
-            j + measures.mIndexOfCrps, t,
+                              Model.ResultAggs.Get0(metrics.mIndexOfRmse, t)));
+      if (metrics.mIndexOfRmseSc >= 0)
+        weights.Set0(j + metrics.mIndexOfRmseSc, t,
+                     Scoring::ToWeight(
+                         ScoringType::kRmspe,
+                         Model.ResultAggs.Get0(metrics.mIndexOfRmseSc, t)));
+      if (metrics.mIndexOfCrps >= 0)
+        weights.Set0(
+            j + metrics.mIndexOfCrps, t,
             Scoring::ToWeight(ScoringType::kCrps,
-                              Model.ResultAggs.Get0(measures.mIndexOfCrps, t)));
+                              Model.ResultAggs.Get0(metrics.mIndexOfCrps, t)));
     }
   }
 
@@ -342,8 +343,8 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
           auto ek = new EstimationKeep(
               weight, &ExoIndexes, &Params, &this->CurrentIndices,
-              FModel.Forecast.Get(j, t + Model.Forecast.StartIndex),
-              FModel.Variance.Get(j, t + Model.Forecast.StartIndex));
+              FModel.Forecast.Get0(j, t + Model.Forecast.StartIndex),
+              FModel.Variance.Get0(j, t + Model.Forecast.StartIndex));
           this->Push1(*ek, i, targetPositions.at(j), t);
         }
       }
@@ -375,19 +376,19 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
 VarmaModelset::VarmaModelset(
     SearchOptions &searchOptions, SearchItems &searchItems,
-    SearchMeasureOptions &measures, SearchModelChecks &checks,
+    SearchMetricOptions &metrics, SearchModelChecks &checks,
     const std::vector<Ti> &sizes, std::vector<std::vector<Ti>> &groupIndexMap,
     DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,
     Ti seasonCount, const std::vector<std::vector<Ti>> &exoIndexes,
     bool usePreviousEstim, LimitedMemoryBfgsbOptions *optimOptions,
     Tv stdMultiplier, Ti maxHorizonCheck) {
-  measures.Update(false, true);
-  checks.Update(measures);
-  searchItems.Update(measures, searchItems.LengthTargets,
+  metrics.Update(false, true);
+  checks.Update(metrics);
+  searchItems.Update(metrics, searchItems.LengthTargets,
                      searchItems.LengthDependents,
                      searchItems.LengthExogenouses);
 
-  // searchItems.Length1 is the forecast horizon in 'measures.Type1'
+  // searchItems.Length1 is the forecast horizon in 'metrics.Type1'
   if (searchItems.Length1 > 0 && checks.Prediction == false)
     throw std::logic_error(
         "Length1 is the forecast horizon. Set 'checks.Prediction=true' when "
@@ -404,7 +405,6 @@ VarmaModelset::VarmaModelset(
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    GroupSizes.push_back((Ti)b.size());
   }
 
   if (varmaMaxParameters6.size() != 6)
@@ -426,7 +426,7 @@ VarmaModelset::VarmaModelset(
               // is required for out-of-sample exogenous data)
 
   bool hasBounds = checks.PredictionBoundMultiplier > 0;
-  if (measures.MeasuresOut.size() != 0) {
+  if (metrics.MetricsOut.size() != 0) {
     if (hasBounds && checks.Prediction == false)
       throw std::logic_error(
           "Forecast bounds are given but 'forecast check' is false.");
@@ -434,11 +434,11 @@ VarmaModelset::VarmaModelset(
       throw std::logic_error("invalid forecast bound multiplier");
     else { // create matrixes
       ForecastLowers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)measures.Horizons.size()],
-          searchItems.LengthTargets, measures.Horizons.size());
+          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
+          searchItems.LengthTargets, metrics.Horizons.size());
       ForecastUppers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)measures.Horizons.size()],
-          searchItems.LengthTargets, measures.Horizons.size());
+          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
+          searchItems.LengthTargets, metrics.Horizons.size());
       for (Ti i = 0; i < searchItems.LengthTargets; i++) {
         auto last = source.pData->Get0(i, T - 1);
         Tv g = 0;
@@ -447,7 +447,7 @@ VarmaModelset::VarmaModelset(
         g /= T - 1;
         g = std::abs(checks.PredictionBoundMultiplier * g);
         Ti j = -1;
-        for (auto &h : measures.Horizons) {
+        for (auto &h : metrics.Horizons) {
           j++;
           ForecastLowers.Set0(i, j, last - h * g);
           ForecastUppers.Set0(i, j, last + h * g);
@@ -478,8 +478,8 @@ VarmaModelset::VarmaModelset(
                                            Q, seasonCount, true);
 
                   auto se = new VarmaSearcher(
-                      searchOptions, searchItems, measures, checks, s,
-                      groupIndexMap, GroupSizes, 0, source, vsizes, exo,
+                      searchOptions, searchItems, metrics, checks, s,
+                      groupIndexMap, 0, source, vsizes, exo,
                       hasBounds ? &ForecastLowers : nullptr,
                       hasBounds ? &ForecastUppers : nullptr, optimOptions,
                       stdMultiplier, usePreviousEstim, maxHorizonCheck);
@@ -493,8 +493,8 @@ VarmaModelset::VarmaModelset(
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, GroupSizes, searchOptions,
-                            searchItems, measures, checks);
+  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
+                            searchItems, metrics, checks);
 }
 
 // #pragma endregion

@@ -16,7 +16,7 @@
 
 using namespace ldt;
 
-//#pragma region Dataset
+// #pragma region Dataset
 
 template <typename Tw>
 Dataset<Tw>::Dataset(Ti rows, Ti cols, bool hasNan, bool selectColumn) {
@@ -58,25 +58,22 @@ void Dataset<Tw>::Calculate(const Matrix<Tw> &data, std::vector<Ti> *colIndexes,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Dataset Time - Series
+// #pragma region Dataset Time - Series
 
 template <bool byRow, typename Tw>
-DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select,
-                                bool interpolate, Ti adjustLeadLagsCount) {
+DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
   if (cols <= 0 || rows <= 0)
     throw std::logic_error("invalid size in 'datasetT'.");
   mHasNaN = hasNan;
   mSelect = select;
-  mInterpolate = interpolate;
-  mAdjustLeadLagsCount = adjustLeadLagsCount;
 
   StorageSize = rows * cols; // Results
 
-  if (interpolate) {
+  if (hasNan) {
     if constexpr (std::numeric_limits<Tw>::has_quiet_NaN == false) {
-      throw std::logic_error("invalid type. disable interpolation, etc.");
+      throw std::logic_error("invalid type. Cannot check NAN.");
     }
   }
 }
@@ -84,19 +81,18 @@ DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select,
 template <bool byRow, typename Tw>
 void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
   pData = &data;
-
-  // find indexes
   Ranges.clear();
-  InterpolationCounts.clear();
+
+  Ti count;
+  if constexpr (byRow) {
+    count = data.RowsCount;
+  } else if constexpr (true) {
+    count = data.ColsCount;
+  }
+
   if (mHasNaN) {
 
     bool hasmissing;
-    Ti count;
-    if constexpr (byRow) {
-      count = data.RowsCount;
-    } else if constexpr (true) {
-      count = data.ColsCount;
-    }
     for (Ti i = 0; i < count; i++) {
       if constexpr (byRow) {
         Ranges.push_back(pData->GetRangeRow(hasmissing, i));
@@ -106,133 +102,13 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
 
       if (hasmissing) {
         HasMissingData = true;
-        WithMissingIndexes.push_back(i);
-        InterpolationCounts.push_back(0);
+        WithMissingIndexes.push_back(std::tuple<Ti, Ti>(i, 0));
       }
     }
 
     for (auto &r : Ranges)
       if (r.IsNotValid())
         throw std::logic_error("Data is not valid. Check missing data points.");
-  }
-
-  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-
-    if (HasMissingData && mInterpolate) {
-      Ti q = -1;
-      for (auto &p : WithMissingIndexes) {
-        q++;
-        bool inMissing = false;
-        Tw first = NAN, last = NAN, d;
-        Ti length = 1;
-        auto range = Ranges.at(p);
-
-        if constexpr (byRow) {
-
-          for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
-            d = data.Get0(p, i);
-            auto isNaN = std::isnan(d);
-
-            if (isNaN)
-              length++;
-
-            if (isNaN == false && inMissing) {
-              last = d;
-
-              // calculate and set
-              Tw step = (last - first) / length;
-              for (int j = 1; j < length; j++) {
-                data.Set0(p, i - j, d - j * step);
-                InterpolationCounts.at(q)++;
-              }
-
-              length = 1;
-              inMissing = false;
-            }
-
-            if (isNaN && inMissing == false) {
-              first = data.Get0(p, i - 1);
-              inMissing = true;
-            }
-          }
-
-        } else if constexpr (true) {
-
-          Tw *col = &data.Data[data.RowsCount * p];
-          for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
-            auto isNaN = std::isnan(col[i]);
-
-            if (isNaN)
-              length++;
-
-            if (isNaN == false && inMissing) {
-              last = col[i];
-
-              // calculate and set
-              Tw step = (last - first) / length;
-              for (int j = 1; j < length; j++) {
-                col[i - j] = col[i] - j * step;
-                InterpolationCounts.at(q)++;
-              }
-
-              length = 1;
-              inMissing = false;
-            }
-
-            if (isNaN && inMissing == false) {
-              first = col[i - 1];
-              inMissing = true;
-            }
-          }
-        }
-      }
-
-      HasMissingData = false;
-      // do not clear 'WithMissingIndexes'  to both signal interpolation and
-      // keep information
-    }
-
-    if (mAdjustLeadLagsCount > 0) { // with respect to the first variable
-      Ti count;
-      if constexpr (byRow) {
-        count = data.RowsCount;
-      } else if constexpr (true) {
-        count = data.ColsCount;
-      }
-      Ti lastIndex = Ranges.at(0).EndIndex;
-      for (Ti i = 1; i < std::min(mAdjustLeadLagsCount, count); i++) {
-        auto index = Ranges.at(i).EndIndex;
-        auto len = lastIndex - index;
-        if (len > 0) { // lag ... move data forward (create a lagged variable)
-          WithLags.push_back(i);
-          for (Ti j = lastIndex; j >= 0; j--) {
-            if constexpr (byRow) {
-              if (j >= len)
-                data.Set0(i, j, data.Get0(i, j - len));
-              else
-                data.Set(i, j, NAN);
-            } else if constexpr (true) {
-              if (j >= len)
-                data.Set0(j, i, data.Get0(j - len, i));
-              else
-                data.Set(j, i, NAN);
-            }
-          }
-          Ranges.at(i).StartIndex = Ranges.at(i).StartIndex + len;
-          Ranges.at(i).EndIndex = lastIndex;
-        } else if (len < 0) { // lead ... just set NAN
-          WithLeads.push_back(i);
-          for (Ti j = 0; j < -len; j++) {
-            if constexpr (byRow) {
-              data.Set(i, lastIndex + j + 1, NAN);
-            } else if constexpr (true) {
-              data.Set(lastIndex + j + 1, i, NAN);
-            }
-          }
-          Ranges.at(i).EndIndex = lastIndex;
-        }
-      }
-    }
   }
 }
 
@@ -307,9 +183,9 @@ void DatasetTs<byRow, Tw>::Update(std::vector<Ti> *indexes, Tw *storage) {
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Standardize
+// #pragma region Standardize
 
 template <typename Tw>
 MatrixStandardized<Tw>::MatrixStandardized(Ti rows, Ti cols, bool removeZeroVar,
@@ -411,7 +287,7 @@ void MatrixStandardized<Tw>::Calculate(const Matrix<Tw> &mat, Tw *storage,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
 template class ldt::Dataset<Tv>;
 template class ldt::Dataset<Ti>;

@@ -65,13 +65,13 @@ struct LDT_EXPORT SearchOptions {
 };
 
 /// @brief Search measuring options
-struct LDT_EXPORT SearchMeasureOptions {
+struct LDT_EXPORT SearchMetricOptions {
 
-  /// @brief List of in-sample measures
-  std::vector<GoodnessOfFitType> MeasuresIn;
+  /// @brief List of in-sample metrics
+  std::vector<GoodnessOfFitType> MetricsIn;
 
-  /// @brief List of out-of-sample measures
-  std::vector<ScoringType> MeasuresOut;
+  /// @brief List of out-of-sample metrics
+  std::vector<ScoringType> MetricsOut;
 
   /// @brief A fixed size for the training sample
   Ti TrainFixSize = 0;
@@ -111,20 +111,20 @@ struct LDT_EXPORT SearchMeasureOptions {
   /// @brief After \ref Update, determines the type of the measuring
   bool mIsTimeSeries = false, mIsOutOfSampleRandom = false;
 
-  /// @brief After \ref Update, it is the index of the measure in \ref
-  /// MeasuresIn or \ref MeasuresOut. If negative, it is not found
+  /// @brief After \ref Update, it is the index of the metric in \ref
+  /// MetricsIn or \ref MetricsOut. If negative, it is not found
   Ti mIndexOfAic = -1, mIndexOfSic = -1, mIndexOfSign = -1,
      mIndexOfDirection = -1, mIndexOfMae = -1, mIndexOfMaeSc = -1,
      mIndexOfRmse = -1, mIndexOfRmseSc = -1, mIndexOfCrps = -1,
      mIndexOfCostMatrixIn = -1, mIndexOfCostMatrixOut = -1, mIndexOfAucIn = -1,
-     mIndexOfAucOut = -1;
+     mIndexOfAucOut = -1, mIndexOfBrierIn = -1, mIndexOfBrierOut = -1;
 };
 
 /// @brief Different options for checking models in the search
 struct LDT_EXPORT SearchModelChecks {
 
   /// @brief If true, model must be estimated without error, given the whole
-  /// data. If there is an in-sample measure or other options such as MinR2,
+  /// data. If there is an in-sample metric or other options such as MinR2,
   /// this is checked automatically.
   bool Estimation = false;
 
@@ -168,8 +168,8 @@ struct LDT_EXPORT SearchModelChecks {
 
   /// @brief Updates the options such as \ref Estimation or \ref Prediction
   /// based on other options
-  /// @param measures Current measure options
-  void Update(const SearchMeasureOptions &measures);
+  /// @param metrics Current metric options
+  void Update(const SearchMetricOptions &metrics);
 
   /// @brief After \ref Update, determines the type of checks
   bool mCheckCN = false, mCheckCN_all = false, mCheckPredBound = false;
@@ -179,7 +179,7 @@ struct LDT_EXPORT SearchModelChecks {
 /// @remark 'Length...' fields are generally set internally based on data
 struct LDT_EXPORT SearchItems {
 
-  /// @brief Length of the first dimension which is the evaluation measures.
+  /// @brief Length of the first dimension which is the evaluation metrics.
   /// (might be overridden internally, given the data)
   Ti LengthEvals = 0;
 
@@ -227,12 +227,12 @@ struct LDT_EXPORT SearchItems {
   double ExtremeBoundsMultiplier = 0;
 
   /// @brief Update the fields given the current state of the project
-  /// @param measures Current measure options
+  /// @param metrics Current metric options
   /// @param targetCount Number of target variables
   /// @param DepenCount Number of dependent variables
   /// @param exoCount Number of exogenous variables
-  void Update(const SearchMeasureOptions measures, Ti targetCount,
-              Ti DepenCount, Ti exoCount);
+  void Update(const SearchMetricOptions metrics, Ti targetCount, Ti DepenCount,
+              Ti exoCount);
 };
 
 /// @brief Keeps information about the current state of the project
@@ -318,8 +318,6 @@ public:
 /// @brief A searcher class with 3 types of summaries: Model, Type1, Type2.
 class LDT_EXPORT Searcher {
 private:
-  Ti mFixFirstG;
-
   bool mIsFinished = false;
 
   void AddState(std::string state);
@@ -329,6 +327,12 @@ private:
   void UpdateCurrent();
 
 protected:
+  /// @brief Number of fixed groups
+  Ti mFixFirstGroups;
+
+  /// @brief Number of fixed first items
+  Ti mFixFirstItems;
+
   /// @brief Group size of this searcher. See the constructor
   Ti SizeG = 0;
 
@@ -349,7 +353,7 @@ protected:
 
   /// @brief Pushes model information to \ref Summaries0
   /// @param estimation The information
-  /// @param evalIndex Index of the evaluation measure
+  /// @param evalIndex Index of the evaluation metric
   /// @param targetIndex Index of the target variable
   /// @param overrideIncExo If not null, it overrides the exogenous inclusion
   /// indices
@@ -358,7 +362,7 @@ protected:
 
   /// @brief Pushes information to \ref Summaries1
   /// @param estimation The information
-  /// @param evalIndex Index of the evaluation measure
+  /// @param evalIndex Index of the evaluation metric
   /// @param targetIndex Index of the target variable
   /// @param thirdIndex Index of the third data (e.g., horizon or index of the
   /// coefficient)
@@ -384,14 +388,14 @@ public:
   /// @brief A pointer to the provided \ref SearchModelChecks
   const SearchModelChecks *pChecks = nullptr;
 
-  /// @brief A pointer to the provided \ref SearchMeasureOptions
-  const SearchMeasureOptions *pMeasures = nullptr;
+  /// @brief A pointer to the provided \ref SearchMetricOptions
+  const SearchMetricOptions *pMetrics = nullptr;
 
   /// @brief Pointer to the provided group mapping
   const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
 
-  /// @brief Pointer to the provided group sizes
-  const std::vector<Ti> *pGroupSizes = nullptr;
+  /// @brief Sizes of \ref pGroupIndexMap
+  std::vector<Ti> GroupSizes;
 
   Matrix<Ti> GroupIndexes;
 
@@ -427,21 +431,21 @@ public:
   /// @brief Initializes a new instance of the class
   /// @param searchOptions Search options in the project
   /// @param searchItems Search items in the project
-  /// @param measures Measures in the project
+  /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
   /// @param SizeG The size of an integer array that can define this
   /// subset of models. E.g. if it is 3, then you should build models with
   ///      Group=[1,2,3], Group=[1,2,4], [1,2,5], ..., [1,3,4], [1,3,5], ...,
   ///      [2,3,4], [2,3,5], ...
   /// @param GroupIndexMap Determines a grouping for the indices
-  /// @param groupSizes Sizes of each groups in \p GroupIndexMap
-  /// @param mFixFirstG Number of fixed groups. \ref CurrentIndices always
+  /// @param fixFirstGroups Number of fixed groups. \ref CurrentIndices always
+  /// contains these indices
+  /// @param fixFirstItems Number of fixed items. \ref CurrentIndices always
   /// contains these indices
   Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-           const SearchMeasureOptions &measures,
-           const SearchModelChecks &checks, Ti SizeG,
-           const std::vector<std::vector<Ti>> &GroupIndexMap,
-           const std::vector<Ti> &groupSizes, Ti mFixFirstG = 0);
+           const SearchMetricOptions &metrics, const SearchModelChecks &checks,
+           Ti SizeG, const std::vector<std::vector<Ti>> &GroupIndexMap,
+           Ti fixFirstGroups = 0, Ti fixFirstItems = 0);
   virtual ~Searcher();
 
   /// @brief Call this function before using 'Start' in an async function
@@ -457,7 +461,7 @@ public:
   /// @param effective If true, it tries to consider the size of the models and
   /// generates a weighted count
   /// @return Size of this searcher
-  Ti GetCount(bool effective = false);
+  Ti GetCount(bool effective = false) const;
 };
 
 /// @brief A helper class for testing
@@ -482,8 +486,8 @@ public:
   /// @brief A pointer to the provided \ref SearchModelChecks
   const SearchModelChecks *pChecks = nullptr;
 
-  /// @brief A pointer to the provided \ref SearchMeasureOptions
-  const SearchMeasureOptions *pMeasures = nullptr;
+  /// @brief A pointer to the provided \ref SearchMetricOptions
+  const SearchMetricOptions *pMetrics = nullptr;
 
   /// @brief A pointer to the given list in the constructor. This
   /// class becomes the owner and deletes them
@@ -492,9 +496,6 @@ public:
 
   /// @brief A pointer to the given list in the constructor
   const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
-
-  /// @brief A pointer to the given list in the constructor
-  const std::vector<Ti> *pGroupSizes = nullptr;
 
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;
@@ -508,17 +509,14 @@ public:
   /// @brief Initializes a new instance of this class
   /// @param searchers List of searchers
   /// @param groupIndexMap Determines a grouping for the indices
-  /// @param groupSizes Sizes of each groups in \p GroupIndexMap
   /// @param searchOptions Search options in the project
   /// @param searchItems Search items in the project
-  /// @param measures Measures in the project
+  /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
   ModelSet(std::vector<Searcher *> &searchers,
            const std::vector<std::vector<Ti>> &groupIndexMap,
-           const std::vector<Ti> &groupSizes,
            const SearchOptions &searchOptions, const SearchItems &searchItems,
-           const SearchMeasureOptions &measures,
-           const SearchModelChecks &checks);
+           const SearchMetricOptions &metrics, const SearchModelChecks &checks);
 
   /// @brief Starts the search in all the searchers
   /// @param work Work array of size \ref WorkSize
@@ -527,11 +525,11 @@ public:
 
   /// @brief Gets the expected number of models
   /// @return expected number of models
-  Ti GetExpectedNumberOfModels();
+  Ti GetExpectedNumberOfModels() const;
 
   /// @brief Gets the number of the estimated of models
   /// @return Number of the estimated of models
-  Ti GetNumberOfEstimatedModels();
+  Ti GetNumberOfEstimatedModels() const;
 
   /// @brief Combines information in all the searchers
   /// @param result On exit, contains combined information
@@ -547,7 +545,7 @@ public:
                    std::vector<SearcherSummary *> &list2);
 
   /// @brief Combines all estimations for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
@@ -557,7 +555,7 @@ public:
                   std::vector<EstimationKeep *> &result);
 
   /// @brief Combines best estimations for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
@@ -567,7 +565,7 @@ public:
                     std::vector<EstimationKeep *> &result);
 
   /// @brief Combines inclusion weights for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
@@ -577,7 +575,7 @@ public:
                                RunningWeightedMean &result);
 
   /// @brief Combines CDF at a specific point for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param cdfIndex the specific point for CDF
@@ -588,7 +586,7 @@ public:
                     RunningWeightedMean &result);
 
   /// @brief Combines extreme bounds for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
@@ -598,7 +596,7 @@ public:
                             double &min, double &max);
 
   /// @brief Combines mixture data for a specific item
-  /// @param index1 Measure index of the item
+  /// @param index1 Metric index of the item
   /// @param index2 Target index of the item
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo

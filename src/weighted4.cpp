@@ -48,10 +48,8 @@ void RunningWeighted4::PushNewDistribution(Tv mean, Tv variance, Tv skewness,
   rwm.mSumWeights = weight;
   rwm.mM1 = mean;
   rwm.mM2 = variance * weight;
-  if (skewness != 0)
-    rwm.mM3 = std::pow(rwm.mM2, (Tv)1.5) * skewness / std::sqrt(weight);
-  if (kurtosis != 0)
-    rwm.mM4 = (kurtosis + (Tv)3) * (rwm.mM2 * rwm.mM2) / weight;
+  rwm.mM3 = std::pow(rwm.mM2, (Tv)1.5) * skewness / std::sqrt(weight);
+  rwm.mM4 = (kurtosis + (Tv)3) * (rwm.mM2 * rwm.mM2) / weight;
 
   Combine(rwm);
 }

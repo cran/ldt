@@ -8,7 +8,7 @@
 
 using namespace ldt;
 
-//#pragma region Discrete
+// #pragma region Discrete
 
 DataSplitDiscrete::DataSplitDiscrete(Ti rows, Ti cols, Ti numChoices) {
 
@@ -127,9 +127,9 @@ void DataSplitDiscrete::Shuffle(const Matrix<Tv> &data, Ti *workI,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Split
+// #pragma region Split
 
 DataSplit::DataSplit(Ti rows, Ti cols) {
   StorageSize = rows * cols;
@@ -174,4 +174,4 @@ void DataSplit::Shuffle(const Matrix<Tv> &data, Ti *workI, std::mt19937 &eng) {
     Sample1.SetRowFromRow0(i, data, workI[N0 + i]);
 }
 
-//#pragma endregion
+// #pragma endregion

@@ -86,6 +86,7 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
   Ti diffl = sizes.DiffPoly.size() == 0 ? 0 : (Ti)(sizes.DiffPoly.size() - 1);
   Ti h_armax_d = horizon + sizes.ArMax_d;
   Ti resid_ind = sizes.T - estimate.SampleEnd - sizes.ArMax_d;
+  StartDiff = resid_ind;
   Ti x_ind = sizes.T - estimate.SampleEnd;
   if (exoIsNew)
     x_ind = -sizes.ArMax_d;
@@ -221,7 +222,7 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
           temp.DotTr(Gs.at(s), &temp0);
           auto j = s + armax_d;
           for (Ti i = 0; i < g; i++)
-              v_storage.Set(j, i, v_storage.Get(j, i) + temp0.Get(i, i));
+              v_storage.Set0(j, i, v_storage.Get0(j, i) + temp0.Get0(i, i));
       }
       */
     }

@@ -119,7 +119,7 @@ void Ols::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   x.TrDot0(x, xx); // kxk
   auto info = xx.Inv00(ip.get(), invW);
   if (info != 0)
-    throw exp_mat_sin;
+    throw std::logic_error("matrix singularity");
   xx.DotTr0(x, xxx); // kxk . kxN  .  kxN
   xxx.Dot0(y, Beta); // kxN . Nxm  .  kxm
 
@@ -198,14 +198,14 @@ void Gls::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Matrix<Tv> &omega,
   if (mIsOmegaInv == false) {
     info = omega.Inv00(ip.get(), invW);
     if (info != 0)
-      throw exp_mat_sin;
+      throw std::logic_error("matrix singularity");
   }
 
   x.TrDot0(omega, xo); // kxN . NxN  .  kxN
   xo.Dot(x, xox);      // kxN . Nxk  .  kxk
   info = xox.Inv00(ip.get(), invW);
   if (info != 0)
-    throw exp_mat_sin;
+    throw std::logic_error("matrix singularity");
   xox.Dot(xo, xoxxo);  // kxk . kxN  .  kxN
   xoxxo.Dot0(y, Beta); // kxN . Nxm  .  kxm
 

@@ -52,13 +52,13 @@ HClusterNode *HCluster<method>::Merge2(Ti &n_i, HClusterNode &leftNode,
     if (a->isMerged)
       continue;
 
-    left_distance = Distances->Get(leftNode.distanceIndex, a->distanceIndex);
-    right_distance = Distances->Get(rightNode.distanceIndex, a->distanceIndex);
+    left_distance = Distances->Get0(leftNode.distanceIndex, a->distanceIndex);
+    right_distance = Distances->Get0(rightNode.distanceIndex, a->distanceIndex);
     calculated_distance = CalculateDistance(
         leftNode.nodesWithin, rightNode.nodesWithin, a->nodesWithin,
         left_distance, right_distance, leftDistanceRight);
 
-    Distances->Set(a->distanceIndex, cn->distanceIndex, calculated_distance);
+    Distances->Set0(a->distanceIndex, cn->distanceIndex, calculated_distance);
   }
 
   // add to cluster array after updating
@@ -78,7 +78,7 @@ HClusterNode *HCluster<method>::GetNearestNeighbor(const HClusterNode &node,
     if (a == &node || a->isMerged)
       continue;
 
-    d = Distances->Get(node.distanceIndex, a->distanceIndex);
+    d = Distances->Get0(node.distanceIndex, a->distanceIndex);
 
     if (d < distance) {
       distance = d;
@@ -134,7 +134,7 @@ void HCluster<method>::Calculate(MatrixSym<false> &distances) {
         neighbors_stack.pop();                            // remove new nearest
         top_node = this->Nodes.at(neighbors_stack.top()); // set the top
         nearest_1_distance =
-            Distances->Get(top_node->distanceIndex, nearest_1->distanceIndex);
+            Distances->Get0(top_node->distanceIndex, nearest_1->distanceIndex);
       }
     } else { // push nearest into the stack and go one level down
       neighbors_stack.push(nearest_1->id);
@@ -149,7 +149,7 @@ static void set_group_var(const std::vector<HClusterNode *> &Nodes,
                           HClusterNode &node, Matrix<Ti> &group_i, Ti last) {
 
   if (node.nodesWithin == 1) { // a single node
-    group_i.Set(node.id, 0, last);
+    group_i.Set0(node.id, 0, last);
   } else {
     set_group_var(Nodes, *Nodes.at(node.idLeft), group_i, last);
     set_group_var(Nodes, *Nodes.at(node.idRight), group_i, last);
@@ -230,13 +230,14 @@ void HCluster<method>::MergeR(Matrix<Ti> &merge, Matrix<Tv> &heights,
     node_right = this->Nodes.at(node->idRight);
 
     auto s = n_i - n;
-    heights0.Set(s, 0, node->leftDistanceRight);
-    merge0.Set(s, 0,
-               (node_left->nodesWithin > 1 ? ((int)node_left->id - (int)n + 1)
-                                           : -((int)node_left->id + 1)));
-    merge0.Set(s, 1,
-               (node_right->nodesWithin > 1 ? ((int)node_right->id - (int)n + 1)
-                                            : -((int)node_right->id + 1)));
+    heights0.Set0(s, 0, node->leftDistanceRight);
+    merge0.Set0(s, 0,
+                (node_left->nodesWithin > 1 ? ((int)node_left->id - (int)n + 1)
+                                            : -((int)node_left->id + 1)));
+    merge0.Set0(s, 1,
+                (node_right->nodesWithin > 1
+                     ? ((int)node_right->id - (int)n + 1)
+                     : -((int)node_right->id + 1)));
   }
 
   heights0.SortIndicesVector(order, true);
@@ -246,10 +247,10 @@ void HCluster<method>::MergeR(Matrix<Ti> &merge, Matrix<Tv> &heights,
   for (auto &i : order) {
     merge.SetRowFromRow(j, merge0, i);
     for (Ti t = 0; t < 2; t++) {
-      auto d = merge.Get(j, t) - 1;
+      auto d = merge.Get0(j, t) - 1;
       if (d >= 0) {
         auto it = (find(order.begin(), order.end(), (Ti)d) - order.begin());
-        merge.Set(j, t, (int)it + 1);
+        merge.Set0(j, t, (int)it + 1);
       }
     }
     j++;

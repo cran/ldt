@@ -9,24 +9,27 @@
 using namespace ldt;
 
 Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-                   const SearchMeasureOptions &measures,
+                   const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks, Ti SizeG,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
-                   const std::vector<Ti> &groupSizes, Ti mFixFirstG) {
+                   Ti fixFirstGroups, Ti fixFirstItems) {
 
-  if (mFixFirstG > SizeG)
+  if (fixFirstGroups > SizeG)
     throw std::logic_error(
         "Fixed number of groups cannot be larger than Size in the searcher.");
 
   pOptions = &searchOptions;
   pItems = &searchItems;
   pChecks = &checks;
-  pMeasures = &measures;
+  pMetrics = &metrics;
 
   this->SizeG = SizeG;
-  this->mFixFirstG = mFixFirstG;
+  this->mFixFirstGroups = fixFirstGroups;
+  this->mFixFirstItems = fixFirstItems;
   this->pGroupIndexMap = &groupIndexMap;
-  this->pGroupSizes = &groupSizes;
+
+  for (auto i = 0; i < (int)this->pGroupIndexMap->size(); i++)
+    this->GroupSizes.push_back(this->pGroupIndexMap->at(i).size());
 
   GroupIndexes = Matrix<Ti>(new Ti[SizeG], SizeG, (Ti)1);
   InnerIndexes = Matrix<Ti>(new Ti[SizeG], SizeG, (Ti)1);
@@ -188,17 +191,17 @@ std::string Searcher::Start(Tv *work, Ti *workI) {
   return "";
 }
 
-bool next(Ti *g_data, Ti SizeG, Ti maxCountG, Ti mFixFirstG, Ti &c, Ti &T,
-          Ti &free) {
+bool next(Ti *g_data, const Ti &SizeG, const Ti &maxCountG,
+          const Ti &mFixFirstGroups, Ti &c, Ti &T, Ti &free) {
   c = 0;
 
-  for (free = SizeG; free > mFixFirstG; free--) {
+  for (free = SizeG; free > mFixFirstGroups; free--) {
     T = maxCountG - c - 1;
     if (g_data[free - 1] < T)
       break;
     c++;
   }
-  if (free == mFixFirstG)
+  if (free == mFixFirstGroups)
     return false;
   else {
     g_data[free - 1]++;
@@ -208,31 +211,54 @@ bool next(Ti *g_data, Ti SizeG, Ti maxCountG, Ti mFixFirstG, Ti &c, Ti &T,
   return true;
 }
 
-bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
+static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
+                      Matrix<Ti> &groupIndexes, const Ti &sizeG,
+                      const std::vector<Ti> &groupSizes,
+                      const std::vector<std::vector<Ti>> &groupIndexMap,
+                      const Ti &fixFirstG, const Ti &fixFirstI) {
   // move the inner indexes
-  for (Ti i = 0; i < SizeG; i++) {
-    if (InnerIndexes.Data[i] < pGroupSizes->at(GroupIndexes.Data[i]) - 1) {
-      InnerIndexes.Data[i]++;
-      return true;
-    } else {
-      InnerIndexes.Data[i] = 0;
+  auto g = &groupIndexMap.at(groupIndexes.Data[0]);
+  for (Ti i = 0; i < sizeG; i++) {
+    if (innerIndexes.Data[i] < groupSizes.at(groupIndexes.Data[i]) - 1) {
+      innerIndexes.Data[i]++;
+
+      if (fixFirstI == 0)
+        return true;
+      // does it contain any fixed items?
+      else if ((int)g->size() > innerIndexes.Data[0] &&
+               g->at(innerIndexes.Data[0]) < fixFirstI)
+        return true;
     }
+    innerIndexes.Data[i] = 0;
   }
 
   // reset inner indexes
-  InnerIndexes.SetValue(0);
+  innerIndexes.SetValue(0);
 
   // move groups
-  if (next(GroupIndexes.Data, SizeG, (Ti)pGroupIndexMap->size(), mFixFirstG, c,
-           T, free)) {
-    return true;
+  if (next(groupIndexes.Data, sizeG, (Ti)groupIndexMap.size(), fixFirstG, c, T,
+           free)) {
+
+    if (fixFirstI == 0)
+      return true;
+    else { // does it contain any fixed items?
+      auto g = &groupIndexMap.at(groupIndexes.Data[0]);
+      if ((Ti)g->size() > innerIndexes.Data[0] &&
+          g->at(innerIndexes.Data[0]) < fixFirstI)
+        return true;
+    }
   }
   return false;
 }
 
-Ti Searcher::GetCount(bool effective) {
-  // auto r = SizeG - mFixFirstG;
-  // auto n = pGroupIndexMap->size() - mFixFirstG;
+bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
+  return move_next(c, T, free, InnerIndexes, GroupIndexes, SizeG, GroupSizes,
+                   *pGroupIndexMap, mFixFirstGroups, mFixFirstItems);
+}
+
+Ti Searcher::GetCount(bool effective) const {
+  // auto r = SizeG - mFixFirstGroups;
+  // auto n = pGroupIndexMap->size() - mFixFirstGroups;
   // auto countG = choose((Ti)n, (Ti)r); // use boost 'binomial_coefficient'
 
   // simulate indexation in groups and multiply sizes
@@ -244,24 +270,42 @@ Ti Searcher::GetCount(bool effective) {
         std::to_string(SizeG) + std::string(", Number of groups=") +
         std::to_string((Ti)pGroupIndexMap->size()));
 
-  Ti count = 0;
-  auto td = std::unique_ptr<Ti[]>(new Ti[SizeG]);
-  auto t = Matrix<Ti>(td.get(), SizeG, (Ti)1);
-  t.SetSequence(0, 1);
+  Ti count;
+  if (mFixFirstItems == 0) {
+    count = 0;
+    auto td = std::unique_ptr<Ti[]>(new Ti[SizeG]);
+    auto t = Matrix<Ti>(td.get(), SizeG, (Ti)1);
+    t.SetSequence(0, 1);
 
-  // first
-  Ti mul = 1;
-  for (Ti i = 0; i < SizeG; i++)
-    mul *= pGroupSizes->at(i);
-  count += mul;
-
-  Ti c, T, free;
-  while (
-      next(t.Data, SizeG, (Ti)pGroupIndexMap->size(), mFixFirstG, c, T, free)) {
-    mul = 1;
+    // first
+    Ti mul = 1;
     for (Ti i = 0; i < SizeG; i++)
-      mul *= pGroupSizes->at(t.Data[i]);
+      mul *= GroupSizes.at(i);
     count += mul;
+
+    Ti c, T, free;
+    while (next(t.Data, SizeG, (Ti)pGroupIndexMap->size(), mFixFirstGroups, c,
+                T, free)) {
+      mul = 1;
+      for (Ti i = 0; i < SizeG; i++)
+        mul *= GroupSizes.at(t.Data[i]);
+      count += mul;
+    }
+  } else {
+
+    auto grpd = std::unique_ptr<Ti[]>(new Ti[SizeG]);
+    auto grp = Matrix<Ti>(grpd.get(), SizeG, (Ti)1);
+    grp.SetSequence(0, 1);
+    auto indd = std::unique_ptr<Ti[]>(new Ti[SizeG]);
+    auto ind = Matrix<Ti>(indd.get(), SizeG, (Ti)1);
+    ind.SetValue(0);
+
+    Ti c, T, free;
+    count = 1;
+    while (move_next(c, T, free, ind, grp, SizeG, GroupSizes, *pGroupIndexMap,
+                     mFixFirstGroups, mFixFirstItems)) {
+      count++;
+    }
   }
 
   // multiply

@@ -185,7 +185,7 @@ Tv DistributionGld::GetMk(int k, Tv L3, Tv L4) {
 
 void DistributionGld::GetMs(Tv H3, Tv H4, Tv &M1, Tv &M2, Tv &M3, Tv &M4) {
 
-  if (H3 == H4) {
+  if (H3 == 0 && H4 == 0) {
     M1 = 0.0;
     M2 = c_pi_pow_2 / 3.0;
     M3 = 0.0;
@@ -323,88 +323,59 @@ DistributionGld::GetFromMoments(Tv mean, Tv variance, Tv skewness,
                                 Tv ex_kurtosis, int type, NelderMead &optim,
                                 Tv startL3, Tv startL4) {
 
-  // type 0: general
-  // type 1: symmetric 'type 0'
-  // type 2: unimodal continuous tail:              L3<1    &  L4<1
-  // type 3: symmetric 'type 2'          L3==L4
-  // type 4: unimodal continuous tail finite slope  L3<=0.5 &  L4<=5
-  // type 5: symmetric 'type 4'          L3==L4
-  // type 6: unimodal truncated density curves:     L3>=2   &  L4>=2  (I include
-  // uniform distribution here) type 7: symmetric 'type 6'          L3==L4 type
-  // 8: S shaped                               L3>2    &  1<L4<2 ||  1<L3<2 &
-  // L4>2 type 9: U shaped                               1<L3<=2 &  1<L4<=2 type
-  // 10: symmetric 'type 9'          L4==L4 type 11: monotone L3>1  &  L4<=1
-  // (???)
+  // type 0: general, no restriction
+  // type 1: symmetric 'type 0', L3 = L4
+  // type 2: unimodal continuous tail,   L3<1    &  L4<1
+  // type 3: symmetric 'type 2',  L3<1    &  L4<1 & L3==L4
+  // type 4: unimodal continuous tail finite slope, L3<=0.5 &  L4<=5
+  // type 5: symmetric 'type 4', L3<=0.5 &  L4<=5 & L3==L4
+  // type 6: unimodal truncated density curves,    L3>=2   &  L4>=2
+  // type 7: symmetric 'type 6', L3>=2   &  L4>=2  & L3==L4
+  // type 8: S shaped, L3>2    &  1<L4<2 ||  1<L3<2 & L4>2
+  // type 9: U shaped, 1<L3<=2 &  1<L4<=2
+  // type 10: symmetric 'type 9', 1<L3<=2 &  1<L4<=2  & L4==L4
+  // type 11: monotone L3>1  &  L4<=1
+
+  Tv work[4] = {-0.25 + DBL_EPSILON, -0.25 + DBL_EPSILON, INFINITY, INFINITY};
+
+  auto lower = Matrix<Tv>(work, 2, 1);
+  auto upper = Matrix<Tv>(&work[2], 2, 1);
 
   std::function<Tv(const Matrix<Tv> &)> objective;
-  std::function<void(Matrix<Tv> &)> constrain;
-  bool hasConstrain = false;
+
   Tv m1, m2, m3, m4;
+
   bool isSymetric =
       type == 1 || type == 3 || type == 5 || type == 7 || type == 10;
+
   if (isSymetric) {
     objective = [skewness, ex_kurtosis, &m1, &m2, &m3,
                  &m4](const Matrix<Tv> &x) -> Tv {
       GetMs(x.Data[0], x.Data[0], m1, m2, m3, m4);
-
       auto v = m2 - m1 * m1;
       Tv skew = (m3 - 3 * m1 * m2 + 2.0 * std::pow(m1, 3.0)) / std::pow(v, 1.5);
       auto exc_kurt = -3.0 + (m4 - 4.0 * m1 * m3 + 6.0 * m1 * m1 * m2 -
                               3.0 * std::pow(m1, 4.0)) /
                                  std::pow(v, 2.0);
-
       return std::pow(ex_kurtosis - exc_kurt, 2.0) +
              std::pow(skew - skewness, 2.0);
     };
 
+    lower.Restructure0(1, 1);
+    upper.Restructure0(1, 1);
     switch (type) {
-    case 1:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-      };
-      hasConstrain = true;
-      break;
     case 3:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] >= 1.0)
-          x.Data[0] = 1.0 - DBL_EPSILON;
-      };
-      hasConstrain = true;
+      upper.Data[0] = 1 - DBL_EPSILON;
       break;
     case 5:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] > 0.5)
-          x.Data[0] = 0.5;
-      };
-      hasConstrain = true;
+      upper.Data[0] = 0.5 - DBL_EPSILON;
       break;
     case 7:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] < 2.0)
-          x.Data[0] = 2.0;
-      };
-      hasConstrain = true;
+      lower.Data[0] = 2 + DBL_EPSILON;
       break;
     case 10:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] > 2.0)
-          x.Data[0] = 2.0;
-        if (x.Data[0] <= 1.0)
-          x.Data[0] = 1.0 + DBL_EPSILON;
-      };
-      hasConstrain = true;
-      break;
-    default:
-      throw std::logic_error("not implemented");
+      lower.Data[0] = 1 + DBL_EPSILON;
+      upper.Data[0] = 2 - DBL_EPSILON;
       break;
     }
 
@@ -413,157 +384,77 @@ DistributionGld::GetFromMoments(Tv mean, Tv variance, Tv skewness,
     objective = [skewness, ex_kurtosis, &m1, &m2, &m3,
                  &m4](const Matrix<Tv> &x) -> Tv {
       GetMs(x.Data[0], x.Data[1], m1, m2, m3, m4);
-
       auto v = m2 - m1 * m1;
       Tv skew = (m3 - 3 * m1 * m2 + 2.0 * std::pow(m1, 3.0)) / std::pow(v, 1.5);
       auto exc_kurt = -3.0 + (m4 - 4.0 * m1 * m3 + 6.0 * m1 * m1 * m2 -
                               3.0 * std::pow(m1, 4.0)) /
                                  std::pow(v, 2.0);
-
       return std::pow(ex_kurtosis - exc_kurt, 2.0) +
              std::pow(skew - skewness, 2.0);
     };
 
     switch (type) {
-    case 0:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-      };
-      hasConstrain = true;
-      break;
     case 2:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] >= 1.0)
-          x.Data[0] = 1.0 - DBL_EPSILON;
-        if (x.Data[1] >= 1.0)
-          x.Data[1] = 1.0 - DBL_EPSILON;
-      };
-      hasConstrain = true;
+      upper.Data[0] = 1 - DBL_EPSILON;
+      upper.Data[1] = 1 - DBL_EPSILON;
       break;
     case 4:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] > 0.5)
-          x.Data[0] = 0.5;
-        if (x.Data[1] >= 0.5)
-          x.Data[1] = 0.5;
-      };
-      hasConstrain = true;
+      upper.Data[0] = 0.5 - DBL_EPSILON;
+      upper.Data[1] = 0.5 - DBL_EPSILON;
       break;
     case 6:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] < 2.0)
-          x.Data[0] = 2.0;
-        if (x.Data[1] < 2.0)
-          x.Data[1] = 2.0;
-      };
-      hasConstrain = true;
-      break;
-    case 8:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-
-        // I think we should have a priority (?!!!)
-
-        if (x.Data[0] > 2.0) { // 0 is ok, try to fix by 1
-          if (x.Data[1] <= 1.0)
-            x.Data[1] = 1.0 + DBL_EPSILON;
-          else if (x.Data[1] >= 2.0)
-            x.Data[1] = 2.0 - DBL_EPSILON;
-          // now we are sure that condition holds
-          return;
-        }
-
-        if (x.Data[1] > 2.0) { // 1 is ok, try to fix by 0
-          if (x.Data[0] <= 1.0)
-            x.Data[0] = 1.0 + DBL_EPSILON;
-          else if (x.Data[0] >= 2.0)
-            x.Data[0] = 2.0 - DBL_EPSILON;
-          // now we are sure that condition holds
-          return;
-        }
-
-        if (x.Data[0] < 2.0 && x.Data[0] > 1.0) { // 0 is ok, try to fix by 1
-          if (x.Data[1] <= 2.0)
-            x.Data[1] = 2.0 + DBL_EPSILON;
-          return;
-        }
-
-        if (x.Data[1] < 2.0 && x.Data[1] > 1.0) { // 1 is ok, try to fix by 0
-          if (x.Data[0] <= 2.0)
-            x.Data[0] = 2.0 + DBL_EPSILON;
-          return;
-        }
-      };
-      hasConstrain = true;
+      lower.Data[0] = 2 + DBL_EPSILON;
+      lower.Data[1] = 2 + DBL_EPSILON;
       break;
     case 9:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-        if (x.Data[0] <= 1.0)
-          x.Data[0] = 1.0 + DBL_EPSILON;
-        if (x.Data[1] <= 1.0)
-          x.Data[1] = 1.0 + DBL_EPSILON;
-        if (x.Data[0] > 2.0)
-          x.Data[0] = 2.0;
-        if (x.Data[1] > 1.0)
-          x.Data[1] = 2.0;
-      };
-      hasConstrain = true;
+      lower.Data[0] = 1 + DBL_EPSILON;
+      lower.Data[1] = 1 + DBL_EPSILON;
+      upper.Data[0] = 2 - DBL_EPSILON;
+      upper.Data[1] = 2 - DBL_EPSILON;
       break;
     case 11:
-      constrain = [](Matrix<Tv> &x) {
-        if (x.Data[0] <= -0.25)
-          x.Data[0] = -0.25 + DBL_EPSILON;
-        if (x.Data[1] <= -0.25)
-          x.Data[1] = -0.25 + DBL_EPSILON;
-
-        if (x.Data[0] <= 1.0)
-          x.Data[0] = 1.0 + DBL_EPSILON;
-        if (x.Data[1] > 1.0)
-          x.Data[1] = 1.0;
-      };
-      hasConstrain = true;
+      lower.Data[0] = 1 + DBL_EPSILON;
+      upper.Data[1] = 1 - DBL_EPSILON;
       break;
-    default:
-      throw std::logic_error("not implemented");
+    case 8:
+      // type 8: S shaped, L3>2    &  1<L4<2 ||  1<L3<2 & L4>2
+      // combine the restriction and the objective
+
+      objective = [skewness, ex_kurtosis, &m1, &m2, &m3,
+                   &m4](const Matrix<Tv> &x) -> Tv {
+        Tv penalty = 0.0;
+        if (x.Data[0] > 2 + DBL_EPSILON && x.Data[1] > 1 + DBL_EPSILON &&
+            x.Data[1] < 2 - DBL_EPSILON) {
+          // ok
+        } else if (x.Data[1] > 2 + DBL_EPSILON && x.Data[0] > 1 + DBL_EPSILON &&
+                   x.Data[0] < 2 - DBL_EPSILON) {
+          // ok
+        } else // what is a good penalty?!
+          penalty +=
+              std::pow(1.5 - x.Data[0], 2) + std::pow(1.5 - x.Data[1], 2);
+
+        GetMs(x.Data[0], x.Data[1], m1, m2, m3, m4);
+        auto v = m2 - m1 * m1;
+        Tv skew =
+            (m3 - 3 * m1 * m2 + 2.0 * std::pow(m1, 3.0)) / std::pow(v, 1.5);
+        auto exc_kurt = -3.0 + (m4 - 4.0 * m1 * m3 + 6.0 * m1 * m1 * m2 -
+                                3.0 * std::pow(m1, 4.0)) /
+                                   std::pow(v, 2.0);
+        return penalty * std::pow(ex_kurtosis - exc_kurt, 2.0) +
+               std::pow(skew - skewness, 2.0);
+      };
       break;
     }
   }
 
-  auto da0 = std::unique_ptr<Tv[]>(new Tv[2]);
-  Tv *da = da0.get();
-  da[0] = startL3;
-
-  if (isSymetric == false)
-    da[1] = startL4;
-
+  Tv da[2] = {startL3, startL4};
   auto x0 = Matrix<Tv>(da, isSymetric ? 1 : 2);
   auto W = std::unique_ptr<Tv[]>(new Tv[optim.WorkSize]);
-  optim.Minimize(objective, x0, W.get(), hasConstrain ? &constrain : nullptr);
+  auto S = std::unique_ptr<Tv[]>(new Tv[optim.StorageSize]);
+  optim.Minimize(objective, x0, W.get(), S.get(), &lower, &upper);
 
-  Tv L3 = da[0];
-  Tv L4 = da[isSymetric ? 0 : 1];
+  Tv L3 = optim.Result.Data[0];
+  Tv L4 = optim.Result.Data[isSymetric ? 0 : 1];
 
   m1 = GetMk(1, L3, L4);
   m2 = GetMk(2, L3, L4);

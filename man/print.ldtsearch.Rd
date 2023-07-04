@@ -2,18 +2,18 @@
 % Please edit documentation in R/generic.R
 \name{print.ldtsearch}
 \alias{print.ldtsearch}
-\title{Print an \code{ldtsearch} object}
+\title{Prints the Output of a Search Process}
 \usage{
 \method{print}{ldtsearch}(x, ...)
 }
 \arguments{
-\item{x}{\code{ldtsearch} object}
+\item{x}{An output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).}
 
-\item{...}{additional arguments}
+\item{...}{Additional arguments}
 }
 \value{
-\code{NULL}
+This function has no output.
 }
 \description{
-Print an \code{ldtsearch} object
+Prints the Output of a Search Process
 }

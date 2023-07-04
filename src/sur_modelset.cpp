@@ -13,15 +13,14 @@ using namespace ldt;
 
 SurSearcher::SurSearcher(SearchOptions &searchOptions,
                          const SearchItems &searchItems,
-                         const SearchMeasureOptions &measures,
+                         const SearchMetricOptions &metrics,
                          const SearchModelChecks &checks, Ti sizeG,
                          const std::vector<std::vector<Ti>> &groupIndexMap,
-                         const std::vector<Ti> &groupSizes, Ti fixFirstG,
-                         Matrix<Tv> &source, std::vector<Ti> &endoIndexes,
-                         Ti sigSearchMaxIter, Tv sigSearchMaxProb,
-                         unsigned int seed)
-    : Searcher::Searcher(searchOptions, searchItems, measures, checks, sizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+                         Ti fixFirstG, Matrix<Tv> &source,
+                         std::vector<Ti> &endoIndexes, Ti sigSearchMaxIter,
+                         Tv sigSearchMaxProb, unsigned int seed)
+    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, sizeG,
+                         groupIndexMap, fixFirstG, 0) {
   Seed = seed;
   pSource = &source; // copy ?!
   EndoIndexes = Matrix<Ti>(&endoIndexes[0], (Ti)endoIndexes.size(), 1);
@@ -40,10 +39,10 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
         nullptr); // do details because we might need to keep variance of a
                   // coefficient (TODO: can be more efficient)
 
-  if (measures.SimFixSize > 0) // we estimate a simulation model
+  if (metrics.SimFixSize > 0) // we estimate a simulation model
     Model = SurSimulation(source.RowsCount, (Ti)endoIndexes.size(), sizeG,
-                          measures.TrainRatio, measures.TrainFixSize,
-                          measures.MeasuresOut, isRestricted, SigSearchMaxIter,
+                          metrics.TrainRatio, metrics.TrainFixSize,
+                          metrics.MetricsOut, isRestricted, SigSearchMaxIter,
                           nullptr, nullptr); // no PCA in search
 
   this->WorkSize += DModel.StorageSize + Model.StorageSize +
@@ -73,20 +72,20 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
     throw std::logic_error("A searcher with no target is not valid.");
 
   auto numMeas =
-      this->pMeasures->MeasuresOut.size() + this->pMeasures->MeasuresIn.size();
+      this->pMetrics->MetricsOut.size() + this->pMetrics->MetricsIn.size();
   this->WorkSize += (Ti)(numMeas * TargetsPositions.size()); // weights matrix
 }
 
 std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
-  auto measures = *this->pMeasures;
+  auto metrics = *this->pMetrics;
 
   Ti i, j = EndoIndexes.RowsCount, t;
   for (i = 0; i < this->SizeG; i++)
     Indexes.at(j++) = this->CurrentIndices.Data[i];
 
   Ti s = 0;
-  auto numMeas = (Ti)(this->pMeasures->MeasuresOut.size() +
-                      this->pMeasures->MeasuresIn.size());
+  auto numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
+                      this->pMetrics->MetricsIn.size());
   auto weights =
       Matrix<Tv>(NAN, &work[s], numMeas, (Ti)TargetsPositions.size());
   s += (Ti)(numMeas * TargetsPositions.size());
@@ -102,62 +101,62 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
     s += DModel.StorageSize;
     // N, Dof, Cn, Aic, Sic, R2   -> are all checked in calculate
 
-    if (measures.mIndexOfAic >= 0) {
+    if (metrics.mIndexOfAic >= 0) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Model.Aic);
       for (t = 0; t < (Ti)TargetsPositions.size(); t++)
-        weights.Set0(measures.mIndexOfAic, t, weight);
+        weights.Set0(metrics.mIndexOfAic, t, weight);
     }
-    if (measures.mIndexOfSic >= 0) {
+    if (metrics.mIndexOfSic >= 0) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Model.Sic);
       for (t = 0; t < (Ti)TargetsPositions.size(); t++)
-        weights.Set0(measures.mIndexOfSic, t, weight);
+        weights.Set0(metrics.mIndexOfSic, t, weight);
     }
   }
 
   if (Model.WorkSize > 0 /*otherwise, not initialized*/ &&
-      this->pMeasures->MeasuresOut.size() > 0) {
+      this->pMetrics->MetricsOut.size() > 0) {
     Model.Calculate(
         Data.Result, EndoIndexes.RowsCount, &work[s],
         &work[s + Model.StorageSize], SigSearchMaxIter > 0 ? &R : nullptr,
-        this->pOptions->RequestCancel, this->pMeasures->SimFixSize, Seed,
+        this->pOptions->RequestCancel, this->pMetrics->SimFixSize, Seed,
         SigSearchMaxProb,
         this->pChecks->mCheckCN ? this->pChecks->MaxConditionNumber : INFINITY,
-        this->pMeasures->SimFixSize - this->pChecks->MinOutSim);
+        this->pMetrics->SimFixSize - this->pChecks->MinOutSim);
 
-    j = (Ti)this->pMeasures->MeasuresIn.size();
+    j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)TargetsPositions.size(); t++) {
-      if (measures.mIndexOfSign >= 0)
+      if (metrics.mIndexOfSign >= 0)
         weights.Set0(
-            j + measures.mIndexOfSign, t,
+            j + metrics.mIndexOfSign, t,
             Scoring::ToWeight(ScoringType::kSign,
-                              Model.Results.Get0(measures.mIndexOfSign, t)));
-      if (measures.mIndexOfMae >= 0)
+                              Model.Results.Get0(metrics.mIndexOfSign, t)));
+      if (metrics.mIndexOfMae >= 0)
         weights.Set0(
-            j + measures.mIndexOfMae, t,
+            j + metrics.mIndexOfMae, t,
             Scoring::ToWeight(ScoringType::kMae,
-                              Model.Results.Get0(measures.mIndexOfMae, t)));
-      if (measures.mIndexOfMaeSc >= 0)
+                              Model.Results.Get0(metrics.mIndexOfMae, t)));
+      if (metrics.mIndexOfMaeSc >= 0)
         weights.Set0(
-            j + measures.mIndexOfMaeSc, t,
-            Scoring::ToWeight(ScoringType::kScaledMae,
-                              Model.Results.Get0(measures.mIndexOfMaeSc, t)));
-      if (measures.mIndexOfRmse >= 0)
+            j + metrics.mIndexOfMaeSc, t,
+            Scoring::ToWeight(ScoringType::kMape,
+                              Model.Results.Get0(metrics.mIndexOfMaeSc, t)));
+      if (metrics.mIndexOfRmse >= 0)
         weights.Set0(
-            j + measures.mIndexOfRmse, t,
+            j + metrics.mIndexOfRmse, t,
             Scoring::ToWeight(ScoringType::kRmse,
-                              Model.Results.Get0(measures.mIndexOfRmse, t)));
-      if (measures.mIndexOfRmseSc >= 0)
+                              Model.Results.Get0(metrics.mIndexOfRmse, t)));
+      if (metrics.mIndexOfRmseSc >= 0)
         weights.Set0(
-            j + measures.mIndexOfRmseSc, t,
-            Scoring::ToWeight(ScoringType::kScaledRmse,
-                              Model.Results.Get0(measures.mIndexOfRmseSc, t)));
-      if (measures.mIndexOfCrps >= 0)
+            j + metrics.mIndexOfRmseSc, t,
+            Scoring::ToWeight(ScoringType::kRmspe,
+                              Model.Results.Get0(metrics.mIndexOfRmseSc, t)));
+      if (metrics.mIndexOfCrps >= 0)
         weights.Set0(
-            j + measures.mIndexOfCrps, t,
+            j + metrics.mIndexOfCrps, t,
             Scoring::ToWeight(ScoringType::kCrps,
-                              Model.Results.Get0(measures.mIndexOfCrps, t)));
+                              Model.Results.Get0(metrics.mIndexOfCrps, t)));
     }
   }
 
@@ -165,7 +164,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
   for (i = 0; i < weights.RowsCount; i++) { // evaluation index
     for (j = 0; j < weights.ColsCount;
          j++) { // target index (use TargetsPositions to interpret)
-      weight = weights.Get(i, j);
+      weight = weights.Get0(i, j);
       if (std::isnan(weight))
         continue;
 
@@ -183,8 +182,8 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
         for (t = 0; t < this->SizeG; t++) {
           auto ek = new EstimationKeep(
               weight, &this->CurrentIndices, nullptr, &EndoIndexes,
-              DModel.Model.beta.Get(t, j),
-              std::pow(DModel.Model.e_beta_std.Get(t, j), 2));
+              DModel.Model.beta.Get0(t, j),
+              std::pow(DModel.Model.e_beta_std.Get0(t, j), 2));
           this->Push1(*ek, i, TargetsPositions.at(j),
                       this->CurrentIndices.Data[t] -
                           this->pItems->LengthDependents);
@@ -210,16 +209,16 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
 // #pragma region Modelset
 
 SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
-                         SearchMeasureOptions &measures,
+                         SearchMetricOptions &metrics,
                          SearchModelChecks &checks,
                          const std::vector<Ti> &exoSizes,
                          std::vector<std::vector<Ti>> &groupIndexMap,
                          Ti numFixXPartitions, Matrix<Tv> &source,
                          std::vector<std::vector<Ti>> &endoIndexes,
                          Ti sigSearchMaxIter, Tv sigSearchMaxProb) {
-  measures.Update(true, false);
-  checks.Update(measures);
-  searchItems.Update(measures, searchItems.LengthTargets,
+  metrics.Update(true, false);
+  checks.Update(metrics);
+  searchItems.Update(metrics, searchItems.LengthTargets,
                      searchItems.LengthDependents,
                      searchItems.LengthExogenouses);
 
@@ -243,7 +242,6 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    GroupSizes.push_back((Ti)b.size());
   }
 
   unsigned int co = 0;
@@ -260,22 +258,20 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
 
       if (e.at(0) > searchItems.LengthTargets)
         continue; // no target here
-      auto seed =
-          measures.Seed == 0
-              ? 0
-              : (unsigned int)(measures.Seed < 0 ? -measures.Seed
-                                                 : (measures.Seed + co));
+      auto seed = metrics.Seed == 0
+                      ? 0
+                      : (unsigned int)(metrics.Seed < 0 ? -metrics.Seed
+                                                        : (metrics.Seed + co));
       co++;
-      auto se =
-          new SurSearcher(searchOptions, searchItems, measures, checks, s,
-                          groupIndexMap, GroupSizes, numFixXPartitions, source,
-                          e, sigSearchMaxIter, sigSearchMaxProb, seed);
+      auto se = new SurSearcher(searchOptions, searchItems, metrics, checks, s,
+                                groupIndexMap, numFixXPartitions, source, e,
+                                sigSearchMaxIter, sigSearchMaxProb, seed);
       Searchers.push_back(se);
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, GroupSizes, searchOptions,
-                            searchItems, measures, checks);
+  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
+                            searchItems, metrics, checks);
 }
 
 // #pragma endregion

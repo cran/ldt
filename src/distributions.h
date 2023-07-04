@@ -436,6 +436,42 @@ public:
   void GetSample(Tv *storage, Ti length, unsigned int seed);
 };
 
+/// @brief It is defined with 103 parameters: The valud of the CDF function at
+/// (0.0001, 0.001, 0.01:0.01:0.99, 0.999, 0.9999)
+class LDT_EXPORT DistributionEmpirical103 {
+
+public:
+  /// @brief 103 parameters of the distribution. These are the value of the CDF
+  /// function at (0.0001, 0.001, 0.01:0.01:0.99, 0.999, 0.9999). It is a
+  /// pointer to the vector given in the constructor.
+  Tv *Quantiles = nullptr;
+
+  /// @brief Initializes a new instance of this class
+  DistributionEmpirical103();
+
+  /// @brief Initializes a new instance of this class
+  /// @param parameters parameters (which are the required quantiles)
+  DistributionEmpirical103(Tv *quantiles);
+
+  /// @brief Approximately calculates the CDF at a point
+  /// @param p the point
+  /// @return cdf
+  Tv GetCDFApprox(Tv x) const;
+
+  /// @brief Approximately calculates the quantile at a probability
+  /// @param p the point
+  /// @return quantile
+  Tv GetQuantileApprox(Tv p) const;
+
+  /// @brief Combines a list of distributions (It uses Nelder-Mead
+  /// optimization).
+  /// @param dists the list
+  /// @param weights the weights. If empty, they will have equal weights.
+  /// @param result the parameters of the combination. Its length should be 103
+  static void Combine(const std::vector<DistributionEmpirical103> &dists,
+                      const Tv *weights, Tv *result);
+};
+
 /// @brief A histogram
 /// todo: this class needs a restructure (e.g., separate storage sizes, or split
 /// to helper classes)
@@ -500,7 +536,8 @@ public:
   /// @brief Initializes a new instance of this class
   /// @param m Dimension of this function
   /// @param mean Mean of the distribution
-  /// @param variance Variance of the distribution
+  /// @param variance Variance of the distribution. It gets destroyed in
+  /// GetSample method.
   /// @param sampling_length
   /// @param samples_in_rows
   /// @param mean_is_const
@@ -520,9 +557,9 @@ public:
   Ti StorageSize = 0;
   Ti WorkSize = 0;
 
-  Matrix<Tv> *pMean = nullptr;
-  Matrix<Tv> *pVariance = nullptr;
-  Matrix<Tv> *pSample = nullptr;
+  Matrix<Tv> Mean;
+  Matrix<Tv> Variance;
+  Matrix<Tv> Sample;
 
   /// @brief Generates samples from this distribution using Cholesky
   /// decomposition
@@ -530,7 +567,7 @@ public:
   /// @param WORK An array of size: 2m+m^2 where m
   /// is length of X
   /// @param seed A seed for random generator
-  void GetSample(Tv *storage, Tv *WORK, unsigned int seed) const;
+  void GetSample(Tv *storage, Tv *WORK, unsigned int seed);
 
   /// @brief Calculates the density of normal distribution with m variables
   /// @param x An m x n Matrix where n is the number of observations

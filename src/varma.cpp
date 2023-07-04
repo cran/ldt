@@ -102,11 +102,12 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
     exodata = Matrix<Tv>(new std::vector<Tv>((count + horizon) * k), k,
                          count + horizon); // (count + horizon) * k
 
-    throw std::logic_error("not implemented (exogenous is varma simulation).");
-    // Matrix<Tv>::FillRandom_normal(&exodata, unifseed(eng), 0, 1);
+    std::normal_distribution<Tv> dist(1000, 600000);
+    for (Ti i = 0; i < exodata.length(); i++)
+      exodata.Data[i] = dist(eng);
   }
 
-  auto e = NormalM(m, {}, sigma, (count + horizon), false, true, 0);
+  auto e = NormalM(m, nullptr, sigma, (count + horizon), false, true, 0);
 
   auto shocks = new Tv[e.StorageSize];
   Tv *We = new Tv[e.WorkSize];
@@ -124,9 +125,9 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
     tmp2 = new Matrix<Tv>(new Tv[k], k); // k
 
   for (Ti i = std::max(p, q); i < count; i++) {
-    e.pSample->GetColumn0(i, tmp);
+    e.Sample.GetColumn0(i, tmp);
     for (Ti j = 1; j <= q; j++) {
-      e.pSample->GetColumn0(i - j, tmp1);
+      e.Sample.GetColumn0(i - j, tmp1);
       ma->at(j - 1)->Dot0(tmp1, tmp0);
       tmp.Add_in0(tmp0);
     }
@@ -274,11 +275,11 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         sxxx.Restructure0(T, Sizes.MaStart);
         Result.gamma.Restructure0(g, Sizes.MaStart);
 
-        Result.Xt.TrDot0(Result.Xt, sxx);
+        Result.Xt.Dot_AtA0(sxx);
         Result.cn = sxx.Norm('1');
         info = sxx.Inv0();
         if (info != 0) {
-          throw exp_mat_sin; // Matrix<Tv> singularity
+          throw std::logic_error("matrix singularity");
           return;
         }
         Result.cn *= sxx.Norm('1');
@@ -292,7 +293,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
 
         // variance of gamma
         if (Sizes.HasMa == false && !R) {
-          Result.resid.DotTr0(Result.resid, Result.sigma2);
+          Result.resid.Dot_AAt(Result.sigma2);
           Result.sigma2.Multiply_in(
               (Tv)1 / (Tv)T); // dof adjustment: (T- Result.gamma.ColsCount)
           sxx.Kron(Result.sigma2, Result.gammavar);
@@ -324,7 +325,8 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.cn = sxx.Norm('1');
           info = sxx.Inv0();
           if (info != 0) {
-            throw exp_mat_sin; // Matrix<Tv> singularity
+            throw std::logic_error("matrix singularity");
+            ; // Matrix<Tv> singularity
             return;
           }
           Result.cn *= sxx.Norm('1');
@@ -337,7 +339,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.y.Subtract0(Result.resid, Result.resid);
 
           // variance of gamma
-          Result.resid.DotTr0(Result.resid, Result.sigma2);
+          Result.resid.Dot_AAt(Result.sigma2);
           Result.sigma2.Multiply_in((Tv)1 / (Tv)T);
           sxx.Kron(Result.sigma2, Result.gammavar);
         }
@@ -354,7 +356,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         info = Result.gammavar.Inv0();
 
         if (info != 0) {
-          throw exp_mat_sin; // Matrix<Tv> singularity
+          throw std::logic_error("matrix singularity");
           return;
         }
         Result.cn *= Result.gammavar.Norm('1'); // TODO: is it valid?!
@@ -382,7 +384,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         vecY.Subtract0(Result.resid, Result.resid); // vec.resid
 
         // variance of regression
-        Result.resid.DotTr0(Result.resid, Result.sigma2);
+        Result.resid.Dot_AAt(Result.sigma2);
         Result.sigma2.Multiply_in((Tv)1 / (Tv)T);
       }
     }
@@ -435,7 +437,7 @@ void MlUpdateResid(const Matrix<Tv> &gamma, Varma &model, const Matrix<Tv> *R,
         l = model.Sizes.MaLags.at(c);
         if (i + l >= n)
           break;
-        model.Result.Xt.Set(i + l, row, rr);
+        model.Result.Xt.Set0(i + l, row, rr);
         row++;
       }
     }
@@ -518,8 +520,8 @@ void SetDetails(Varma &varma, const Matrix<Tv> *R) {
 
 void CalculateGoodness(Varma &varma, Ti T, Ti g, Ti f, Tv max_vf) {
   auto ll = (-(T * g * c_ln_2Pi_plus_one) - max_vf) / (Tv)2;
-  auto aic = ((Tv)2 * g * f - (Tv)2 * ll) / (Tv)T;
-  auto sic = (std::log(T) * g * f - (Tv)2 * ll) / (Tv)T;
+  auto aic = ((Tv)2 * g * f - (Tv)2 * ll);
+  auto sic = (std::log(T) * g * f - (Tv)2 * ll);
 
   varma.Result.LogLikelihood = ll;
   varma.Result.Aic = aic;
@@ -560,19 +562,18 @@ void Varma::EstimateMl(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   auto g = Sizes.EqsCount;
   auto f = Sizes.NumParamsEq;
   auto T = Sizes.T;
-  if (R)
+  if (R && R->length() > 0)
     q = R->ColsCount;
 
   if (Sizes.HasMa == false && !R) {
     if (mDoDetails) {
       SetDetails(*this, R);
       // logarithm Likelihood
-      auto copsigma2 = new Tv[Result.sigma2.length()];
-      auto mcopsigma2 = Matrix<Tv>(copsigma2, g, g);
+      auto copsigma2 = std::unique_ptr<Tv[]>(new Tv[Result.sigma2.length()]);
+      auto mcopsigma2 = Matrix<Tv>(copsigma2.get(), g, g);
       Result.sigma2.CopyTo(mcopsigma2);
       CalculateGoodness(*this, T, g, f,
                         std::log(mcopsigma2.Det_pd0()) * Result.y.ColsCount);
-      delete[] copsigma2;
     }
     return;
   }

@@ -1,0 +1,270 @@
+---
+title: "Vector Autoregressive Regression"
+author: "Ramin Mojab"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vector Autoregressive Regression}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "  >",
+  warning = FALSE
+)
+```
+
+```{r}
+library(ldt) 
+library(tdata)
+
+seed <- 123
+set.seed(seed)
+```
+
+
+## Introduction
+In this vignette, I will introduce you to the main features of the `ldt` package for dealing with Vector Autoregressive Regression models. I will demonstrate how to perform common tasks such as estimating a VARMA model and making predictions with it. I will also discuss model uncertainty and how to define a VARMA model set and automatically search for the best models within this set. Additionally, we will explore the use of Principal Component Analysis as an alternative approach when dealing with a large number of potential endogenous or exogenous variables.
+
+One of the main ideas behind `ldt` is to minimize user discretion. An analysis in `ldt` is generally based on a dataset and a set of rules that convert this dataset into a list of potential regressors and/or predictors. This rule-based approach to selecting data not only avoids discretion but is also expected due to the word “automatically” used in the previous paragraph.
+
+In this example, I will create an artificial dataset with relevant and irrelevant endogenous variables and some exogenous variables. The data is a sample from a known VARMA model. While we can discuss how well the estimation process can find the true parameters, this is not the main goal here. Instead, I will focus on explaining how to estimate, search, predict, and report results.
+
+Let’s get started!
+
+
+## A simple example
+
+Let’s assume that we know the structure of the system and simulate data from a known VARMA model. The following command generates a sample from such a system of equations:
+
+```{r}
+numObs <- 100
+numHorizon <- 10
+startDate <- f.yearly(1900)
+
+numEndo <- 2L
+numExo <- 3L
+numAr <- 2L
+numMa <- 1L 
+d <- 1
+
+sample <- sim.varma(numEndo, numAr, numMa, 
+                    numExo, numObs, 10, TRUE, d, 
+                    startFrequency = startDate)
+```
+
+The parameters of the system are included in the output of the `sim.varma` function. This system has ` numEndo` endogenous variables determined by an intercept, `r numExo-1` exogenous variable(s), and the dynamics of the system. The sample size is `r numObs`. All coefficients of the model are generated randomly and are listed in the output `sample`. The MA coefficients are diagonal and this is related to identification issues in VARMA models. The parameter `d` shows that data is integrated. There is a `numHorizon` value that determines the prediction horizon. We use the `f.yearly` function from the `tdata` package and assume that our data is yearly.
+
+The LaTeX code for the equations of the system is in the `eqsLatex` element:
+
+\begin{gather} `r sample$eqsLatex` \end{gather}
+
+The matrix representation is in the `eqsLatexSys` element:
+
+\begin{gather} `r sample$eqsLatexSys` \end{gather}
+
+We can use the `ldt` package to estimate them:
+
+```{r}
+y <- structure(sample$y[1:(numObs-numHorizon), , drop = FALSE], 
+                                 ldtf = attr(sample$y, "ldtf"))
+x <- sample$x[1:(numObs-numHorizon), , drop = FALSE]
+
+fit <- estim.varma(y = y, x = x, 
+                   params = c(numAr, d, numMa, 0, 0, 0))
+
+params <- get.varma.params(fit$estimations$coefs, numAr, numMa, numExo, TRUE)
+s0 <- sim.varma(fit$estimations$sigma, params$arList, params$maList,
+                params$exoCoef, 10, 0, params$integer)
+```
+
+In the first two lines we exclude `numHorizon` observations from the end of the sample in the estimation process. We will use the excluded part for prediction in the next subsection. The argument `params` determines the lags of the model. The second part of the code is for presentation. It converts the coefficient matrix into AR, MA and other coefficient matrices and generates a LaTeX formula. Here is the result in matrix form:
+
+\begin{gather} `r s0$eqsLatexSys` \end{gather}
+
+We can compare estimated parameters to actual ones. Keep in mind that we can get more satisfactory results by increasing sample size (`numObs`) or decreasing variance of disturbances.
+
+
+## Prediction
+One of the main goals in estimating and using a VARMA model is prediction. In the following code, I estimate the model and set the value of `maxHorizon` and `newX` arguments to tell `estim.varma` function to return the predictions:
+
+```{r}
+fit <- estim.varma(y = y, x = x,
+                   params = c(numAr, 1, numMa, 0, 0, 0),
+                   newX = sample$x[(numObs-numHorizon+1):numObs, , drop = FALSE],
+                   maxHorizon = numHorizon)
+
+y_actual <- sample$y[(numObs-numHorizon+1):numObs, , drop = FALSE]
+```
+
+The variable `y_actual` shows the actual observations at the prediction horizon. There are several ways to compare the predictions with the actual values. In this section, we plot them against each other using the `ldt::fan.plot` function. Note that predictions are in rows of `means` and `vars` matrices in `fit$prediction` element. The following plot shows the predictions and actual data:
+
+```{r, echo=FALSE, fig.width=6, fig.height=4, fig.show='hold', fig.cap="Plotting prediction bounds (0.95 percent) for the two endogenous variables of the system."}
+x_labels <- colnames(fit$prediction$means)[fit$prediction$startIndex:ncol(fit$prediction$means)]
+
+par(mfrow = c(1, 2))
+
+fan.plot(data.frame(fit$prediction$means[1,fit$prediction$startIndex:ncol(fit$prediction$means)],
+                    fit$prediction$vars[1,fit$prediction$startIndex:ncol(fit$prediction$vars)]), 
+         quantiles = c(0.05,0.95),
+         boundColor = "red", midColor = "green", pch = 19,
+         type = "l", xaxt = "n", xlab = "Period", ylab = "Y1", gradient = TRUE)
+lines(y_actual[,1], col = "black")
+axis(side = 1, at = 1:length(x_labels), labels = x_labels)
+
+legend("topleft", legend = c("Actuals", "Preds. ", "Preds. Mean"), fill = c("NA", "red", NA),
+       lty = c(1, NA, NA) , pch = c(NA, NA, 19), bg="transparent", bty = "n",
+       col=c("black", "red", "green"), border=c(NA, NA, NA)) 
+
+
+fan.plot(data.frame(fit$prediction$means[2,fit$prediction$startIndex:ncol(fit$prediction$means)],
+                    fit$prediction$vars[2,fit$prediction$startIndex:ncol(fit$prediction$vars)]), 
+         boundColor = "red", midColor = "green", pch = 19,
+         type = "l", xaxt = "n", xlab = "Period", ylab = "Y1", gradient = TRUE)
+lines(y_actual[,2], col = "black")
+axis(side = 1, at = 1:length(x_labels), labels = x_labels)
+
+legend("topleft", legend = c("Actuals", "Preds. ", "Preds. Mean"), fill = c("NA", "red", NA),
+       lty = c(1, NA, NA) , pch = c(NA, NA, 19), bg="transparent", bty = "n",
+       col=c("black", "red", "green"), border=c(NA, NA, NA))  
+```
+
+
+## Seasonality
+We are going to repeat the previous example’s procedure, but this time with seasonal data. The following code generates the required data:
+
+```{r}
+numObs_s <- 400
+numHorizon_s <- 40
+startDate_s <- f.quarterly(1900, 1)
+
+numAr_s <- 1L
+numMa_s <- 1L
+
+d_s <- 1
+D_s <- 1
+
+sample_s <- sim.varma(numEndo, numAr, numMa, 
+                    numExo, numObs_s, 10, TRUE, d_s, 
+                    startFrequency =startDate_s,
+                    seasonalCoefs = c(numAr_s,D_s,numMa_s,4))
+```
+
+The parameter `D_s` determines that the model is seasonally integrated. The two parameters `numAr_s` and `numMa_s` determine the seasonal dynamics of the system. The matrix representation is in the `eqsLatexSys` element:
+
+\begin{gather} `r sample_s$eqsLatexSys` \end{gather}
+
+The following code estimates these parameters using the `estim.varma` function:
+
+```{r}
+y <- structure(sample_s$y[1:(numObs_s-numHorizon_s), , drop = FALSE], 
+                                 ldtf = attr(sample_s$y, "ldtf"))
+x <- sample_s$x[1:(numObs_s-numHorizon_s), , drop = FALSE]
+
+fit <- estim.varma(y = y, x = x, 
+                   params = c(numAr_s, d_s, numMa_s, numAr_s, D_s, numMa_s),
+                   newX = sample_s$x[(numObs_s-numHorizon_s+1):numObs_s, , drop = FALSE],
+                   maxHorizon = numHorizon_s,
+                   seasonsCount = 4)
+
+params <- get.varma.params(fit$estimations$coefs, numAr_s, numMa_s, numExo, TRUE, numAr_s, numMa_s, 4)
+s0 <-  sim.varma(fit$estimations$sigma, params$arList, params$maList, 
+                 params$exoCoef, d = d_s, nObs =  10, intercept =  params$integer,
+                 seasonalCoefs = c(numAr_s, D_s, numMa_s, 4))
+```
+
+\begin{gather} r s0$eqsLatexSys \end{gather}
+
+Predicting with this model is similar to the previous subsection. I do not report the code but just the result.
+
+```{r, echo=FALSE, fig.width=6, fig.height=4, fig.show='hold', fig.cap="Plotting prediction bounds (0.95 percent) for the two endogenous variables of the seasonal system."}
+y_actual <- sample_s$y[(numObs_s-numHorizon_s+1):numObs_s, , drop = FALSE]
+x_labels <- colnames(fit$prediction$means)[fit$prediction$startIndex:ncol(fit$prediction$means)]
+
+par(mfrow = c(1, 2))
+
+fan.plot(data.frame(fit$prediction$means[1,fit$prediction$startIndex:ncol(fit$prediction$means)],
+                    fit$prediction$vars[1,fit$prediction$startIndex:ncol(fit$prediction$vars)]), 
+         quantiles = c(0.05,0.95),
+         boundColor = "red", midColor = "green", pch = 19,
+         type = "l", xaxt = "n", xlab = "Period", ylab = "Y1", gradient = TRUE)
+lines(y_actual[,1], col = "black")
+axis(side = 1, at = 1:length(x_labels), labels = x_labels)
+
+legend("topleft", legend = c("Actuals", "Preds. ", "Preds. Mean"), fill = c("NA", "red", NA),
+       lty = c(1, NA, NA) , pch = c(NA, NA, 19), bg="transparent", bty = "n",
+       col=c("black", "red", "green"), border=c(NA, NA, NA)) 
+
+
+fan.plot(data.frame(fit$prediction$means[2,fit$prediction$startIndex:ncol(fit$prediction$means)],
+                    fit$prediction$vars[2,fit$prediction$startIndex:ncol(fit$prediction$vars)]), 
+         boundColor = "red", midColor = "green", pch = 19,
+         type = "l", xaxt = "n", xlab = "Period", ylab = "Y1", gradient = TRUE)
+lines(y_actual[,2], col = "black")
+axis(side = 1, at = 1:length(x_labels), labels = x_labels)
+
+legend("topleft", legend = c("Actuals", "Preds. ", "Preds. Mean"), fill = c("NA", "red", NA),
+       lty = c(1, NA, NA) , pch = c(NA, NA, 19), bg="transparent", bty = "n",
+       col=c("black", "red", "green"), border=c(NA, NA, NA))  
+```
+
+## Model uncertainty
+Let’s consider a more realistic situation where model uncertainty exists. That’s where `ldt` can specifically help. In the previous subsections, we knew all relevant endogenous variables. Here, we continue the non-seasonal example and consider a situation where there are some irrelevant endogenous variables too. We limit the level of uncertainty and other practical issues by restricting the number of these variables. The following code reflects our assumptions:
+
+```{r}
+sample$y <- cbind(sample$y, matrix(rnorm(numObs * 50), ncol = 50, 
+                                   dimnames = list(NULL,paste0("w",1:50))))
+```
+
+There are `r ncol(sample$y)-numEndo` irrelevant and `r numEndo` relevant endogenous variables. The number of irrelevant data is relatively large and their names start with the `w` character.
+
+The following code uses the `search.varma` function to find the true model:
+
+```{r eval=FALSE, include=TRUE}
+search_res <- search.varma(sample$y, sample$x, numTargets = 1,
+                        ySizes = c(1:3), 
+                        maxParams = c(2,1,2,0,0,0),
+                        metricOptions = get.options.metric(typesIn = c("sic")),
+                        searchOptions = get.options.search(printMsg = TRUE, parallel = TRUE))
+```
+
+The `ySizes = c(1:3)` part assumes that we know the number of relevant dependent variables is less than 3. The `metric_options` part shows that we use SIC metrics to evaluate and compare models. Also, `numTargets = 1` shows that we are focusing on the first variable `Y1.` Finding the best model means finding `Y2` and correct lag structure automatically. Here, the value of `maxParams` determines our guess about the lag structure.
+
+This code is very time-consuming and is not evaluated here. However, on my system, the elapsed time is 27 minutes (the number of searched models is 21232). You can compare it with similar experiments in [binary regression](bin.html) or [SUR model](sur.html) and see that it is relatively much more time-consuming. Apart from other factors, VARMA models are relatively large (in sense of the number of parameters). Also, in the current implementation, `ldt` uses numerical first and second derivatives in L-BFGS optimization algorithm. Therefore, we really need to reduce the number of potential models.
+
+One might reduce the number of potential explanatory variables using theory or statistical testing. Since `ldt` avoids user discretion, it provides a more systematic approach. The idea behind it is simple: estimate smaller models, select variables, estimate larger models with fewer potential endogenous variables. Here is the code:
+
+```{r}
+y_size_steps = list(c(1,2), c(3))
+count_steps = c(NA, 10)
+
+search_step_res <-
+  search.varma.stepwise(y = sample$y, x = sample$x, numTargets = 1,
+                        maxParams = c(2,1,2,0,0,0),
+                        ySizeSteps = y_size_steps, countSteps = count_steps,
+                        metricOptions = get.options.metric(typesIn = c("aic","sic")),
+                        searchItems = get.items.search(bestK = 10),
+                        searchOptions = get.options.search(printMsg = FALSE, parallel = TRUE))
+search_step_res
+```
+
+The first two lines define the steps. We use all variables (`NA` in count_steps means all) to estimate models with sizes defined as the first element of `y_size_steps`. Then we select a number of variables from the information provided by the best models and estimate models with sizes determined by the second element of `y_size_steps`. And so on.
+
+The size of the model subset and running time are greatly reduced. We can talk about performance; however if the result is not satisfactory, note that the time-consuming part of the search is with “moving average” part of the VARMA model. Therefore one can find a smaller subset of potential variables by estimating VAR models and using the results to estimate VARMA models.
+
+To study or report results, we should use the `summary` function. The output of a search project in `ldt` does not contain estimation results but only the minimum level of information to replicate them. The `summary` function estimates the models. Here is the code:
+
+```{r}
+ssum <- summary(search_step_res, 
+                y = sample$y, x = sample$x, test = TRUE)
+```
+
+Usually, there is more than one model in the summary output. This is because the output is first “target-variable-specific” and second “evaluation-specific”. As before, we can use the estimated best models for prediction.
+
+
+
+
+

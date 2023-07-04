@@ -17,19 +17,17 @@ using namespace ldt;
 
 ModelSet::ModelSet(std::vector<Searcher *> &searchers,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
-                   const std::vector<Ti> &groupSizes,
                    const SearchOptions &searchOptions,
                    const SearchItems &searchItems,
-                   const SearchMeasureOptions &measures,
+                   const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks) {
   pSearchers = &searchers;
   pGroupIndexMap = &groupIndexMap;
-  pGroupSizes = &groupSizes;
 
   pOptions = &searchOptions;
   pItems = &searchItems;
   pChecks = &checks;
-  pMeasures = &measures;
+  pMetrics = &metrics;
 
   // calculate sizes
   WorkSize = 0;
@@ -95,17 +93,17 @@ void ModelSet::Start(Tv *work, Ti *workI) {
   }
 }
 
-Ti ModelSet::GetNumberOfEstimatedModels() {
+Ti ModelSet::GetNumberOfEstimatedModels() const {
   Ti c = 0;
-  for (auto a : *pSearchers) {
+  for (auto &a : *pSearchers) {
     c += a->Counter;
   }
   return c;
 }
 
-Ti ModelSet::GetExpectedNumberOfModels() {
+Ti ModelSet::GetExpectedNumberOfModels() const {
   Ti c = 0;
-  for (auto a : *pSearchers) {
+  for (auto &a : *pSearchers) {
     c += a->GetCount();
   }
   return c;
@@ -117,9 +115,11 @@ void ModelSet::CombineInfo(SearcherModelingInfo &result,
                            std::vector<SearcherSummary *> &list0,
                            std::vector<SearcherSummary *> &list1,
                            std::vector<SearcherSummary *> &list2) {
+
+  result.ExpectedCount = GetExpectedNumberOfModels();
+  result.SearchedCount = GetNumberOfEstimatedModels();
+
   for (auto &srchr : *pSearchers) {
-    result.ExpectedCount += srchr->GetCount(false);
-    result.SearchedCount += srchr->Counter;
     for (auto &a : srchr->States) {
       if (result.FailsCount.find(a.first) != result.FailsCount.end())
         result.FailsCount.at(a.first) += a.second;

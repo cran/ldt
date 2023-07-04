@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Ramin Mojab" />
+
+<meta name="date" content="2023-07-04" />
+
+<title>Seemingly Unrelated Regression</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Seemingly Unrelated Regression</h1>
+<h4 class="author">Ramin Mojab</h4>
+<h4 class="date">2023-07-04</h4>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(ldt)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>seed <span class="ot">&lt;-</span> <span class="dv">123</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">set.seed</span>(seed)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this vignette, I will introduce you to the main features of the
+<code>ldt</code> package for dealing with Seemingly Unrelated Regression
+models. I will demonstrate how to perform common tasks such as
+estimating an SUR model and automatically finding significant
+coefficients. I will also discuss model uncertainty and how to define an
+SUR model set and automatically search for the best models within this
+set. Additionally, we will explore the use of Principal Component
+Analysis as an alternative approach when dealing with a large number of
+potential explanatory variables.</p>
+<p>One of the main ideas behind <code>ldt</code> is to minimize user
+discretion. As such, an analysis in <code>ldt</code> is generally based
+on a dataset and a set of rules that convert this dataset into a list of
+potential regressors and/or predictors. This rule-based approach to
+selecting data not only avoids discretion but is also expected due to
+the word “automatically” used in the previous paragraph.</p>
+<p>In this example, I will create an artificial dataset with dependent
+variables and both relevant and irrelevant explanatory variables. The
+dependent and relevant explanatory variables are a sample from a known
+SUR model. While we can discuss how well the estimation process can find
+the true parameters, this is not the main goal, here. Instead, I will
+focus on how to estimate, search, project, and report the results.</p>
+<p>Let’s get started!</p>
+</div>
+<div id="a-simple-experiment" class="section level2">
+<h2>A simple experiment</h2>
+<p>Let’s start by assuming that we know the structure of the system. We
+can do this by simulating data from a known SUR model. The following
+command generates a sample from such a system of equations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>num_obs <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>num_eq <span class="ot">&lt;-</span> 2L</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>num_exo <span class="ot">&lt;-</span> 3L</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>sample <span class="ot">&lt;-</span> <span class="fu">sim.sur</span>(num_eq, num_exo, num_obs, <span class="cn">TRUE</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">print</span>(sample<span class="sc">$</span>coef)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="sc">&gt;</span>                   Y1         Y2</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="sc">&gt;</span> Intercept <span class="sc">-</span><span class="fl">0.5604756</span> <span class="fl">0.07050839</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="sc">&gt;</span> X1        <span class="sc">-</span><span class="fl">0.2301775</span> <span class="fl">0.12928774</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="sc">&gt;</span> X2         <span class="fl">1.5587083</span> <span class="fl">1.71506499</span></span></code></pre></div>
+<p>We know the parameters of the system because they are included in the
+output of the <code>sim.sur</code> function. This system has 2 equations
+or dependent variables. Each equation has an intercept and 2 exogenous
+variables. There are no restrictions imposed on the system. The sample
+size is 100. All coefficients of the model are generated randomly and
+are listed in the output <code>sample</code>. This includes a positive
+definite matrix of regression covariance and a matrix of coefficients
+(where the first row includes the intercept coefficients). The LaTeX
+code for the equations of the system is in the <code>eqsLatex</code>
+element. It results in the following representation:</p>
+<span class="math display">\[\begin{aligned} Y_1 = -0.56 + -0.23 X_1 +
+1.56 X_2 + E_1, \sigma_1^2 = 1.81 \\ Y_2 = 0.07 + 0.13 X_1 + 1.72 X_2 +
+E_2, \sigma_2^2 = 0.67 \end{aligned}\]</span>
+<p>Furthermore, the matrix representation is in the
+<code>eqsLatexSys</code> element and it results in the following
+formula:</p>
+<span class="math display">\[\begin{aligned} \begin{pmatrix} Y_1 \\ Y_2
+\end{pmatrix} = \begin{bmatrix} -0.56 &amp; -0.23 &amp; 1.56 \\ 0.07
+&amp; 0.13 &amp; 1.72 \end{bmatrix} \begin{pmatrix} 1 \\ X_1 \\ X_2
+\end{pmatrix} + \begin{pmatrix} E_1 \\ E_2 \end{pmatrix}, \Sigma =
+\begin{bmatrix} 1.81 &amp; 0.25 \\ 0.25 &amp; 0.67 \end{bmatrix}
+\end{aligned}\]</span>
+<p>Remember that these are the parameters of the system.</p>
+<p>We can use the <code>systemfit</code> package to estimate the model.
+This includes preparing the equations of the system (the first two lines
+of the following code) and estimating (the third line):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>exp_names <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">colnames</span>(sample<span class="sc">$</span>x), <span class="at">collapse =</span> <span class="st">&quot; + &quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>fmla <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(sample<span class="sc">$</span>y), </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>               <span class="cf">function</span>(i) <span class="fu">as.formula</span>(<span class="fu">paste0</span>(<span class="st">&quot;Y&quot;</span>, i, <span class="st">&quot; ~ -1 +&quot;</span>, exp_names)))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>fit_sf <span class="ot">&lt;-</span> systemfit<span class="sc">::</span><span class="fu">systemfit</span>(fmla, <span class="at">data =</span> <span class="fu">data.frame</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x), </span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>                               <span class="at">method =</span> <span class="st">&quot;SUR&quot;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>fit_sf_sys <span class="ot">&lt;-</span> <span class="fu">sim.sur</span>(fit_sf<span class="sc">$</span>residCov, </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                      <span class="fu">matrix</span>(fit_sf<span class="sc">$</span>coefficients, <span class="at">ncol =</span> <span class="dv">2</span>), <span class="dv">10</span>, <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>The last line is used for reporting purposes. Like before, I report
+the LaTeX formula:</p>
+<span class="math display">\[\begin{aligned} \begin{pmatrix} Y_1 \\ Y_2
+\end{pmatrix} = \begin{bmatrix} -0.47 &amp; -0.28 &amp; 1.59 \\ 0.05
+&amp; 0.10 &amp; 1.71 \end{bmatrix} \begin{pmatrix} 1 \\ X_1 \\ X_2
+\end{pmatrix} + \begin{pmatrix} E_1 \\ E_2 \end{pmatrix}, \Sigma =
+\begin{bmatrix} 1.72 &amp; 0.19 \\ 0.19 &amp; 0.67 \end{bmatrix}
+\end{aligned}\]</span>
+<p>Note that this representation is not very appropriate for the
+estimated model because it does not report the estimated standard errors
+and there are better ways to do so. However, it suits our purpose here.
+Also, note that you can get better results (in terms of lower difference
+between actual and estimated coefficients) by increasing the sample
+size.</p>
+<p>The following code does the same by using the <code>estim.sur</code>
+function in the <code>ldt</code> package:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.sur</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x[,<span class="sc">-</span><span class="dv">1</span>], <span class="at">addIntercept =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(fit, <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;sigma2&quot;</span>), </span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>                             <span class="at">formatLatex =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The second line converts the estimated result into a table for
+presentation. It has some other arguments that can be used to control
+the format or level of information in the table. Here is the result of
+reporting the contents of the table with <code>kable</code>
+function:</p>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Results of estimation using <code>ldt::estim.sur</code> function.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Y1
+</th>
+<th style="text-align:left;">
+Y2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-0.47<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.05<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+-0.28<sup>*</sup>
+</td>
+<td style="text-align:left;">
+0.10<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X2
+</td>
+<td style="text-align:left;">
+1.59<sup>***</sup>
+</td>
+<td style="text-align:left;">
+1.71<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+1.67
+</td>
+<td style="text-align:left;">
+0.65
+</td>
+</tr>
+</tbody>
+</table>
+<p>Difference between the results of <code>systemfit</code> and
+<code>estim.sur</code> functions (apart from other factors such as
+difference in the estimator or the initialization of covariance matrix
+in FGLS estimation) here is probably due to the adjustment of degrees of
+freedom.</p>
+<p>Before we move on from this section, let me introduce the coefs.plot
+function in the ldt package. This function can be used to graphically
+plot the estimated coefficients or to compare them with the actual
+parameters. In this example, we will focus on the coefficient of X2 in
+the first equation. The following code can be used to plot it:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>coefs <span class="ot">&lt;-</span> fit<span class="sc">$</span>estimations<span class="sc">$</span>coefs</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>stds <span class="ot">&lt;-</span> fit<span class="sc">$</span>estimations<span class="sc">$</span>stds</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">coefs.plot</span>(<span class="at">intervals =</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">value =</span> coefs[<span class="dv">3</span>,<span class="dv">1</span>], <span class="at">label =</span> <span class="st">&quot;X2-&gt;Y1&quot;</span>, <span class="at">col =</span> <span class="st">&quot;red&quot;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                 <span class="at">xmin =</span> coefs[<span class="dv">3</span>,<span class="dv">1</span>] <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> stds[<span class="dv">3</span>,<span class="dv">1</span>],</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                                 <span class="at">xmax =</span> coefs[<span class="dv">3</span>,<span class="dv">1</span>] <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> stds[<span class="dv">3</span>,<span class="dv">1</span>])),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>           <span class="at">points =</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">value =</span> sample<span class="sc">$</span>coef[<span class="dv">3</span>,<span class="dv">1</span>], <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                              <span class="at">label =</span> <span class="st">&quot;Actual&quot;</span>)),</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>           <span class="at">xlab =</span> <span class="st">&quot;Value&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Plot of an estimated coefficient, its confidence interval, and the actual value." />
+<div class="figcaption">Plot of an estimated coefficient, its confidence
+interval, and the actual value.</div>
+</div>
+</div>
+<div id="significance-search" class="section level2">
+<h2>Significance search</h2>
+<p>In the previous subsection, we knew the exact structure of the
+system’s equations. Apart from common assumptions such as linearity and
+normality, we also knew the explanatory variables in the equations.
+Unless you have selected a very low number of observations
+(<code>num_obs</code> parameter), the estimated parameters are
+significant and relatively close to the actual values.</p>
+<p>However, this may not be realistic enough. Let’s consider a situation
+where we do not know the explanatory variables of the equations. We
+assume that there are some irrelevant variables in the system. Of
+course, we limit the level of uncertainty and other practical issues by
+restricting the number of these variables. The following code reflects
+our assumptions:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>num_obs <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>exo <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="sc">-</span><span class="fl">0.5</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="fl">0.5</span>), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>sample <span class="ot">&lt;-</span> <span class="fu">sim.sur</span>(<span class="fu">ncol</span>(exo), exo, num_obs, <span class="cn">TRUE</span>)</span></code></pre></div>
+Here is the system of equations:
+<span class="math display">\[\begin{aligned} \begin{pmatrix} Y_1 \\ Y_2
+\end{pmatrix} = \begin{bmatrix} -1.00 &amp; 1.00 &amp; -0.50 &amp; 0
+&amp; 0 \\ 0 &amp; 0 &amp; 1.00 &amp; -1.00 &amp; 0.50 \end{bmatrix}
+\begin{pmatrix}1 \\ X_1 \\ \vdots \\ X_4\end{pmatrix} + \begin{pmatrix}
+E_1 \\ E_2 \end{pmatrix}, \Sigma = \begin{bmatrix} 3.14 &amp; 1.37 \\
+1.37 &amp; 0.70 \end{bmatrix} \end{aligned}\]</span>
+<p>As you can see, there are 4 zero restrictions on the system’s
+parameters. The first dependent variable is not a function of the last
+two exogenous variables and the second dependent variable is not a
+function of the first two exogenous variables.</p>
+<p>Similar to the previous section, we can estimate this model using
+<code>systemfit</code>. However, I will focus on <code>ldt</code>. In
+this section, I ask <code>ldt</code> to search for significant
+coefficients in the system. See the following code:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.sur</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x[,<span class="sc">-</span><span class="dv">1</span>], <span class="at">addIntercept =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>                 <span class="at">searchSigMaxIter =</span> <span class="dv">10</span>, <span class="at">searchSigMaxProb =</span> <span class="fl">0.05</span>) </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(fit, <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;sigma2&quot;</span>), </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>                             <span class="at">formatLatex =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>There are two new arguments in the estimation function:
+<code>searchSigMaxIter</code> and <code>searchSigMaxProb</code>. This
+means that a significant coefficient is one with t-statistics larger
+than , and we are omitting insignificant variables and re-estimating the
+regression at most times. As before, the second line converts the
+estimated result into a table for presentation. The result is reported
+in the following table:</p>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Results of estimation using <code>ldt::estim.sur</code> function with
+significance search.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Y1
+</th>
+<th style="text-align:left;">
+Y2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-0.95<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+1.02<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X2
+</td>
+<td style="text-align:left;">
+-0.45<sup>**</sup>
+</td>
+<td style="text-align:left;">
+1.00<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X3
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+-0.94<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X4
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+0.48<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+3.43
+</td>
+<td style="text-align:left;">
+0.85
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="variable-selection" class="section level2">
+<h2>Variable selection</h2>
+<p>In the previous subsection, we had all the relevant information about
+the system, except for the error term generated in <code>sim.sur</code>.
+Unless you have selected a very low number of observations
+(<code>num_obs</code> parameter) or the system is relatively large or
+complex, you should be able to find the structure or actual parameters.
+Note that we are not discussing the power of t-test or identification
+issues.</p>
+<p>However, this setup may not be realistic enough. In reality, there is
+much uncertainty about the choice of variables and theory might not be
+enough to reduce it significantly. As mentioned in the introduction,
+<code>ldt</code> tries to minimize user discretion and automate things.
+This might include defining rules over an external dataset. Although I
+used external datasets in previous versions of <code>ldt</code>
+vignettes, I decided to rely on simulated data to reduce confusion. To
+simulate a dataset, I will add some irrelevant data to the analysis in
+this section. Let’s use the data from the previous subsection, but with
+an additional line that overrides the matrix of explanatory data in the
+sample and adds many irrelevant data:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>sample<span class="sc">$</span>x <span class="ot">&lt;-</span> <span class="fu">cbind</span>(sample<span class="sc">$</span>x, <span class="fu">matrix</span>(<span class="fu">rnorm</span>(num_obs <span class="sc">*</span> <span class="dv">50</span>), <span class="at">ncol =</span> <span class="dv">50</span>, </span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                                   <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>,<span class="fu">paste0</span>(<span class="st">&quot;z&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>))))</span></code></pre></div>
+<p>Therefore, there are 53 irrelevant and 2 relevant variables in the
+sample. Note that the number of irrelevant data is relatively large.</p>
+<p>First, let’s see how significance search works in this situation. As
+before, we use:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.sur</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x[,<span class="sc">-</span><span class="dv">1</span>], <span class="at">addIntercept =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                 <span class="at">searchSigMaxIter =</span> <span class="dv">10</span>, <span class="at">searchSigMaxProb =</span> <span class="fl">0.05</span>) </span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(fit, <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;sigma2&quot;</span>), <span class="at">formatLatex =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                             <span class="at">expList =</span> <span class="fu">c</span>(<span class="st">&quot;Intercept&quot;</span>, <span class="st">&quot;X1&quot;</span>, <span class="st">&quot;X2&quot;</span>, <span class="st">&quot;X3&quot;</span>, <span class="st">&quot;X4&quot;</span>, </span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                                         <span class="st">&quot;z3&quot;</span>, <span class="st">&quot;z6&quot;</span>, <span class="st">&quot;z14&quot;</span>, <span class="st">&quot;z32&quot;</span>, <span class="st">&quot;z42&quot;</span>, <span class="st">&quot;z47&quot;</span>))</span></code></pre></div>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Results of estimation using <code>ldt::estim.sur</code> function with
+significance search and variable selection uncertainty.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Y1
+</th>
+<th style="text-align:left;">
+Y2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-0.59<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.18<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+1.05<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X2
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+1.18<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X3
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+-0.94<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X4
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+0.49<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z3
+</td>
+<td style="text-align:left;">
+0.46<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.24<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z6
+</td>
+<td style="text-align:left;">
+-0.20<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z14
+</td>
+<td style="text-align:left;">
+-0.35<sup>**</sup>
+</td>
+<td style="text-align:left;">
+-0.21<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z32
+</td>
+<td style="text-align:left;">
+0<sup>(r)</sup>
+</td>
+<td style="text-align:left;">
+0.09<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z42
+</td>
+<td style="text-align:left;">
+-0.50<sup>***</sup>
+</td>
+<td style="text-align:left;">
+-0.25<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z47
+</td>
+<td style="text-align:left;">
+-0.38<sup>**</sup>
+</td>
+<td style="text-align:left;">
+-0.18<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+2.70
+</td>
+<td style="text-align:left;">
+0.64
+</td>
+</tr>
+</tbody>
+</table>
+<p>To reduce the length of the table, I ran <code>coefs.table</code>
+command twice: first without specifying <code>expList</code>, and after
+finding the name of unrestricted coefficients, with
+<code>expList</code>. With this top-to-bottom approach, we can get a
+more parsimonious model. However, you can see the effect of variable
+selection uncertainty in the table: a relevant variable is omitted and
+some irrelevant variables’ coefficients are significant.</p>
+<p>Given a specific goodness-of-fit criterion or performance metric,
+there is a function in <code>ldt</code> that can do brute-force search
+to find the best model. It systematically and efficiently tries to
+estimate and evaluate all possible combinations of variables and selects
+the best one. We can discuss whether this best model is the true model
+or not. A more important issue is that while theoretically attractive,
+for large datasets this approach is not computationally feasible due to
+the large number of possible combinations of variables and therefore the
+relatively large size of the theoretical model set.</p>
+<p>Assuming that we know the maximum number of relevant variables, the
+code to search the theoretical model set is as follows:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.sur</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="fu">ncol</span>(sample<span class="sc">$</span>y),</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                         <span class="at">xSizes =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>), </span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>                         <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;sic&quot;</span>)))</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>search_res</span></code></pre></div>
+<p>This code is time-consuming and is not evaluated here. However, on my
+system, the elapsed time is 17 seconds and the number of searched models
+is 368830. Note that if we change our previous guess and assume that the
+maximum number of relevant variables is larger, for example 5, the size
+of the practical model set becomes 3847591 (10 times larger) and this is
+estimated in 210 seconds (12 times larger). We are using SIC as the
+performance metric and these elapsed times increase if we rely on
+out-of-sample simulation and their corresponding metrics. Therefore, we
+need to focus on some subsets of the model set. But how should we
+prioritize one part of the model set over another before the estimation
+and evaluation stage?</p>
+<p>One might reduce the number of potential explanatory variables by
+using theory or statistical testing, similar to the top-to-bottom
+approach we talked about before. Since <code>ldt</code> dislikes user
+discretion, it provides a more systematic approach. The idea behind it
+is simple: smaller models are estimated, variables are selected, larger
+models are estimated with a lower number of potential explanatory
+variables. Here is the code:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>x_size_steps <span class="ot">=</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">5</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>count_steps <span class="ot">=</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">9</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>search_step_res <span class="ot">&lt;-</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="fu">search.sur.stepwise</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="fu">ncol</span>(sample<span class="sc">$</span>y),</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>                      <span class="at">xSizeSteps =</span> x_size_steps, <span class="at">countSteps =</span> count_steps,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>                      <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;sic&quot;</span>, <span class="st">&quot;aic&quot;</span>)),</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>                      <span class="at">searchItems =</span> <span class="fu">get.items.search</span>(<span class="at">bestK =</span> <span class="dv">10</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>search_step_res</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> sur </span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">1</span>,<span class="dv">876</span>, searched<span class="sc">:</span> <span class="dv">1</span>,<span class="dv">876</span> (<span class="dv">100</span><span class="sc">%), failed: 0 (0%</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06750046</span> minutes </span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> sic<span class="sc">:</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">514.36</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>  <span class="sc">&gt;</span>  <span class="fu">Y2</span> (<span class="at">best=</span><span class="fl">514.36</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">2.</span> aic<span class="sc">:</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">488.308</span>)</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>  <span class="sc">&gt;</span>  <span class="fu">Y2</span> (<span class="at">best=</span><span class="fl">488.308</span>)</span></code></pre></div>
+<p>The first two lines define the steps. We use all variables
+(<code>NA</code> in <code>count_steps</code> means all) to estimate
+models with sizes defined as the first element of
+<code>x_size_steps</code> (1, 2). Then we select 20 number of variables
+(2nd element in count_steps) from the information provided by the best
+models and estimate models with sizes determined by the second element
+of <code>x_size_steps</code> (3). And so on.</p>
+<p>The size of the model subset and running time are greatly reduced.
+However, let’s see its performance.</p>
+<p>To study or report results, we should use the <code>summary</code>
+function. The output of a search project in <code>ldt</code> does not
+contain estimation results but only the minimum level of information to
+replicate them. The <code>summary</code> function does the job and
+estimates the models. Here is the code:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>ssum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_step_res, <span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>x)</span></code></pre></div>
+<p>Usually, there is more than one model in the summary. This is because
+the output is first “target-variable-specific” and second
+“evaluation-specific”. I report some of them by creating a list of
+estimated models and like before by using <code>coefs.table</code>
+function:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>mod_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;SIC&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>sic<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>                 <span class="st">&quot;AIC&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(mod_list, <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;sigma2&quot;</span>), <span class="at">formatLatex =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>Like before, the second line gets the coefficient table for
+presentation.</p>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Estimation result of best models found using
+<code>ldt::search.sur.stepwise</code> function.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+SIC
+</th>
+<th style="text-align:left;">
+SIC
+</th>
+<th style="text-align:left;">
+AIC
+</th>
+<th style="text-align:left;">
+AIC
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+dep.
+</td>
+<td style="text-align:left;">
+Y1
+</td>
+<td style="text-align:left;">
+Y2
+</td>
+<td style="text-align:left;">
+Y1
+</td>
+<td style="text-align:left;">
+Y2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-0.74<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.11<sup></sup>
+</td>
+<td style="text-align:left;">
+-0.74<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.11<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+1.11<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.04<sup></sup>
+</td>
+<td style="text-align:left;">
+1.11<sup>***</sup>
+</td>
+<td style="text-align:left;">
+0.04<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X2
+</td>
+<td style="text-align:left;">
+-0.45<sup>**</sup>
+</td>
+<td style="text-align:left;">
+1.01<sup>***</sup>
+</td>
+<td style="text-align:left;">
+-0.45<sup>**</sup>
+</td>
+<td style="text-align:left;">
+1.01<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X3
+</td>
+<td style="text-align:left;">
+-0.31<sup>*</sup>
+</td>
+<td style="text-align:left;">
+-1.09<sup>***</sup>
+</td>
+<td style="text-align:left;">
+-0.31<sup>*</sup>
+</td>
+<td style="text-align:left;">
+-1.09<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X4
+</td>
+<td style="text-align:left;">
+-0.06<sup></sup>
+</td>
+<td style="text-align:left;">
+0.45<sup>***</sup>
+</td>
+<td style="text-align:left;">
+-0.06<sup></sup>
+</td>
+<td style="text-align:left;">
+0.45<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+3.28
+</td>
+<td style="text-align:left;">
+0.82
+</td>
+<td style="text-align:left;">
+3.28
+</td>
+<td style="text-align:left;">
+0.82
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the headers indicate the metric used to compare the models.
+The first row shows the name of the target variable in the search.</p>
+<p>The algorithm has omitted all irrelevant variables and found the
+restrictions on the second equation. However, for the first equation, X3
+is significant at the 90% confidence level, even though it should be
+insignificant.</p>
+<p>It’s important to note that the results are specific to the selected
+seed. Drawing general conclusions is beyond the scope of this text.</p>
+</div>
+<div id="out-of-sample-evaluations" class="section level2">
+<h2>Out-of-sample evaluations</h2>
+<p>In this section, we will discuss another aspect of <code>ldt</code>:
+out-of-sample evaluation. Since <code>ldt</code> is rather atheoretical,
+it tries to compare models based on their predictive power. Of course,
+we are not generally talking about time and future in SUR models, and by
+out-of-sample evaluation, we are referring to the cross-validation
+practice.</p>
+<p>The following code is similar to the code in the previous section,
+but we define a out-of-sample process:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>metric_options <span class="ot">&lt;-</span> <span class="fu">get.options.metric</span>(<span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;rmse&quot;</span>, <span class="st">&quot;crps&quot;</span>), </span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>                                     <span class="at">seed =</span> <span class="sc">-</span>seed, <span class="at">simFixSize =</span> <span class="dv">5</span>, <span class="at">trainRatio =</span> <span class="fl">0.75</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>search_step_res <span class="ot">&lt;-</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fu">search.sur.stepwise</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="fu">ncol</span>(sample<span class="sc">$</span>y),</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>                      <span class="at">xSizeSteps =</span> x_size_steps, <span class="at">countSteps =</span> count_steps,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>                      <span class="at">metricOptions =</span> metric_options,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>                      <span class="at">searchItems =</span> <span class="fu">get.items.search</span>(<span class="at">bestK =</span> <span class="dv">10</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  )</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>search_step_res</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> sur </span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">1</span>,<span class="dv">926</span>, searched<span class="sc">:</span> <span class="dv">1</span>,<span class="dv">926</span> (<span class="dv">100</span><span class="sc">%), failed: 0 (0%</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06754637</span> minutes </span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> rmse<span class="sc">:</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">1.704</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="sc">&gt;</span>  <span class="fu">Y2</span> (<span class="at">best=</span><span class="fl">0.966</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="fl">2.</span> crps<span class="sc">:</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y1</span> (<span class="at">best=</span><span class="fl">0.969</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="sc">&gt;</span>  <span class="fu">Y2</span> (<span class="at">best=</span><span class="fl">0.551</span>)</span></code></pre></div>
+<p>We use 0.75 ratio of the observations (determined by
+<code>trainRatio</code>) for estimating and the rest for testing, and we
+repeat this experiment 5 times (determined by <code>simFixSize</code>).
+I report the result similar to the previous discussion:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>ssum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_step_res, <span class="at">y =</span> sample<span class="sc">$</span>y, <span class="at">x =</span> sample<span class="sc">$</span>x)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a> </span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>mod_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;RMSE_T1&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>rmse<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                 <span class="st">&quot;RMSE_T2&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>rmse<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>                 <span class="st">&quot;CRPS_T1&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>crps<span class="sc">$</span>target1<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>                 <span class="st">&quot;CRPS_T2&quot;</span> <span class="ot">=</span> ssum<span class="sc">$</span>crps<span class="sc">$</span>target2<span class="sc">$</span>model<span class="sc">$</span>bests<span class="sc">$</span>best1)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(mod_list, <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;sigma2&quot;</span>), <span class="at">formatLatex =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>res_table <span class="ot">&lt;-</span> res_table[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">8</span>)]</span></code></pre></div>
+<p>Please note that a column name such as <code>RMSE_T1</code> indicates
+that the column belongs to a model selected based on the “RMSE”
+criteria, and the evaluation pertains to the first target variable. The
+last line is included for presentation purposes and serves to remove any
+unimportant columns. Below is the table of results:</p>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Estimation result of best models found using
+<code>ldt::search.sur.stepwise</code> function and out-of-sample
+evaluation.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+RMSE_T1
+</th>
+<th style="text-align:left;">
+RMSE_T2
+</th>
+<th style="text-align:left;">
+CRPS_T1
+</th>
+<th style="text-align:left;">
+CRPS_T2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+dep.
+</td>
+<td style="text-align:left;">
+Y1
+</td>
+<td style="text-align:left;">
+Y2
+</td>
+<td style="text-align:left;">
+Y1
+</td>
+<td style="text-align:left;">
+Y2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-0.61<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-0.61<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+1.16<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+1.16<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z35
+</td>
+<td style="text-align:left;">
+-0.35<sup>*</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-0.35<sup>*</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z42
+</td>
+<td style="text-align:left;">
+-0.49<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-0.49<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z47
+</td>
+<td style="text-align:left;">
+-0.55<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-0.55<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X2
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+1.00<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+1.00<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X3
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-1.05<sup>***</sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+-1.05<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+3.00
+</td>
+<td style="text-align:left;">
+1.02
+</td>
+<td style="text-align:left;">
+3.00
+</td>
+<td style="text-align:left;">
+1.02
+</td>
+</tr>
+</tbody>
+</table>
+<p>You may achieve better results by modifying the arguments of the
+get.options.metric function and using the
+<code>get.items.modelcheck</code> function to change the default value
+of <code>searchItems</code> (Recall that our goal is to exclude
+irrelevant <code>z?</code> variables and find zero restrictions). One
+important parameter to consider is the number of simulations,
+<code>simFixSize</code>. Its current value is 5. By increasing this
+value, you can allow the models to demonstrate their capabilities more
+effectively during the search process. Of course, increasing the
+<code>simFixSize</code> is expensive!</p>
+</div>
+<div id="a-closer-look-at-the-coefficients" class="section level2">
+<h2>A Closer Look at the Coefficients</h2>
+<p>When searching and estimating a model set, <code>ldt</code> gathers
+various types of information, including the coefficients in the context
+of seemingly unrelated systems. You can adjust the arguments of the
+<code>search.sur</code> function to report the evaluation metric of all
+estimations or to summarize the estimation information for a
+coefficient. For example, you might want to know the combined
+distribution of a coefficient in all estimated models or perform an
+extreme bound analysis.</p>
+<p>Let’s use the sample from the previous example for this purpose. We
+can use the get.items.search function to request other types of
+information:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>search_items <span class="ot">&lt;-</span> <span class="fu">get.items.search</span>(<span class="at">type1 =</span> <span class="cn">TRUE</span>, <span class="at">bestK =</span> <span class="dv">10</span>,</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                                 <span class="at">inclusion =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>                                 <span class="at">cdfs =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="fl">0.8</span>, <span class="fl">0.3</span>, <span class="fl">0.01</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>                                 <span class="at">extremeMultiplier =</span> <span class="fl">1.95</span>, </span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>                                 <span class="at">mixture4 =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Apart from the bestK parameter, which is set to a high value to meet
+step-wise search requirements, we changed the default value of five
+parameters. We set <code>type1</code> to <code>TRUE</code>, meaning we
+need the first type of information (coefficients in SUR).
+<code>inclusion = TRUE</code> means inclusion weights are saved and
+returned. <code>cdfs = seq(...)</code> means we want the weighted
+average of CDFs in all estimated models at the given points. The
+sequence value helps us get the correct shape of the combined
+distribution. Also note that this sequence is selected after running the
+code a second time when we have information about extreme bounds.
+<code>extremeMultiplier = 1.95</code> calculates and returns the
+combined confidence interval of a coefficient in all models.
+<code>mixture4 = TRUE</code> returns the first four moments of the
+combined distribution, which we will use to estimate a GLD
+distribution.</p>
+<p>Let’s repeat the estimation with these new options:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>search_step_res <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="fu">search.sur.stepwise</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">numTargets =</span> <span class="fu">ncol</span>(sample<span class="sc">$</span>y),</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                      <span class="at">xSizeSteps =</span> x_size_steps, <span class="at">countSteps =</span> count_steps,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                      <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>)),</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                      <span class="at">searchItems =</span> search_items)</span></code></pre></div>
+For convenience, let’s print the true model here:
+<span class="math display">\[\begin{aligned} r sample$eqsLatexSys
+\end{aligned}\]</span>
+<div id="inclusion-weights" class="section level3">
+<h3>Inclusion Weights</h3>
+<p>Inclusion weight is a simple concept: it is the average weight of
+models that contain a specific variable. Therefore, if a variable has a
+higher inclusion weight, it contributes more information to explain the
+dependent variable.</p>
+<p>Focusing on the second target variable, <code>Y2</code>, we can see
+from <code>search_step_res$aic$target2$model$inclusion</code> matrix
+that the average inclusion weight in all models is 4.9210088^{-110}.
+Let’s plot some of the highest inclusion weights:</p>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Sorted Inclusion weights." />
+<div class="figcaption">Sorted Inclusion weights.</div>
+</div>
+<p>Recall that the second dependent variable is not a function of
+<code>z?</code> variables (i.e., irrelevant ones), intercept and
+<code>X1</code>.</p>
+</div>
+</div>
+<div id="combined-distribution" class="section level2">
+<h2>Combined Distribution</h2>
+<p>The CDF, extreme bounds, and mixture4 convey different levels of
+information about the combined density of a coefficient across all
+estimated models. Let’s focus on the effect of <code>X2</code> on
+<code>Y1</code>.</p>
+<p>First, we extract the actual and interval estimation:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>actual <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">value =</span> sample<span class="sc">$</span>coef[<span class="dv">3</span>,<span class="dv">1</span>], <span class="at">label =</span> <span class="st">&quot;Actual&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>b <span class="ot">&lt;-</span> search_step_res<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>coefs<span class="sc">$</span>bests<span class="sc">$</span>item3<span class="sc">$</span>best1</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>interval <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">value =</span> b<span class="sc">$</span>mean, <span class="at">label =</span> <span class="st">&quot;X2 -&gt; Y1&quot;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>                 <span class="at">xmin =</span> b<span class="sc">$</span>mean <span class="sc">-</span> <span class="fl">1.95</span> <span class="sc">*</span> <span class="fu">sqrt</span>(b<span class="sc">$</span>var),</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>                 <span class="at">xmax =</span> b<span class="sc">$</span>mean <span class="sc">+</span> <span class="fl">1.95</span> <span class="sc">*</span> <span class="fu">sqrt</span>(b<span class="sc">$</span>var))</span></code></pre></div>
+<p>Since we will use the <code>coefs.plot</code> function discussed
+earlier, we set the values as elements of a list. Next, we get the
+extreme bounds:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>e <span class="ot">&lt;-</span> search_step_res<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>coefs<span class="sc">$</span>extremeBounds</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>bound <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">xmin =</span> e[<span class="dv">3</span>,<span class="dv">1</span>], <span class="at">xmax =</span> e[<span class="dv">3</span>,<span class="dv">2</span>], <span class="at">label=</span> <span class="st">&quot;E.B.&quot;</span>)</span></code></pre></div>
+<p>Next, we use the CDFs to plot the true density function:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>cdfs <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">type =</span> <span class="st">&quot;cdfs&quot;</span>, </span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>             <span class="at">cdfs =</span> <span class="fu">sapply</span>(search_step_res<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>coefs<span class="sc">$</span>cdfs, <span class="cf">function</span>(c)c[<span class="dv">3</span>,<span class="dv">1</span>]),</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>             <span class="at">xs =</span> search_items<span class="sc">$</span>cdfs, </span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>             <span class="at">label =</span> <span class="st">&quot;CDFs&quot;</span>, <span class="at">smoothFun =</span> <span class="cf">function</span>(y) <span class="fu">smooth</span>(y), <span class="at">col =</span> <span class="st">&quot;brown&quot;</span>, <span class="at">lty =</span> <span class="dv">1</span>)</span></code></pre></div>
+<p>Then we get the GLD distribution using the <code>gld</code>
+package:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>g <span class="ot">&lt;-</span> search_step_res<span class="sc">$</span>aic<span class="sc">$</span>target1<span class="sc">$</span>coefs<span class="sc">$</span>mixture[<span class="dv">3</span>,]</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">s.gld.from.moments</span>(g[<span class="dv">1</span>], g[<span class="dv">2</span>], g[<span class="dv">3</span>], g[<span class="dv">4</span>], <span class="at">type =</span> <span class="dv">3</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>glds <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">type =</span> <span class="st">&quot;gld&quot;</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>                      <span class="at">p1 =</span> g[<span class="dv">1</span>], <span class="at">p2 =</span> g[<span class="dv">2</span>], <span class="at">p3 =</span> g[<span class="dv">3</span>], <span class="at">p4 =</span> g[<span class="dv">4</span>],</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>                      <span class="at">label =</span> <span class="st">&quot;GLD&quot;</span>, <span class="at">quantiles =</span> <span class="fu">seq</span>(<span class="fl">0.001</span>, <span class="fl">0.999</span>, <span class="fl">0.001</span>), <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">&quot;black&quot;</span>)</span></code></pre></div>
+<p>Plotting is done using the <code>coefs.plot</code> function, similar
+to the previous example.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">coefs.plot</span>(<span class="at">intervals =</span> <span class="fu">list</span>(interval), <span class="at">bounds =</span> <span class="fu">list</span>(bound),</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>           <span class="at">points =</span> <span class="fu">list</span>(actual), <span class="at">distributions =</span> <span class="fu">list</span>(cdfs, glds),</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>           <span class="at">xlab =</span> <span class="st">&quot;Value&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">min</span>(p<span class="sc">$</span>x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">:</span> no non<span class="sc">-</span>missing arguments to min; returning</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="cn">Inf</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">max</span>(p<span class="sc">$</span>x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">:</span> no non<span class="sc">-</span>missing arguments to max; returning</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">-</span><span class="cn">Inf</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">min</span>(p<span class="sc">$</span>y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">:</span> no non<span class="sc">-</span>missing arguments to min; returning</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="cn">Inf</span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">max</span>(p<span class="sc">$</span>y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">:</span> no non<span class="sc">-</span>missing arguments to max; returning</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">-</span><span class="cn">Inf</span></span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Plot of an estimated coefficient in the search process." />
+<div class="figcaption">Plot of an estimated coefficient in the search
+process.</div>
+</div>
+</div>
+<div id="role-of-principle-components" class="section level2">
+<h2>Role of principle components</h2>
+<p>Consider a system of equations where there are many relevant
+variables, meaning that we cannot divide the data into relevant and
+irrelevant and each variable has something to offer. Estimating a large
+model might not be wise due to low degrees of freedom or other problems
+such as multicollinearity. In such a system, we might still want to
+search for the most significant variables or select a subset of the most
+important variables. However, we can also use principal component
+analysis (PCA).</p>
+<p>As before, let’s start by defining our system:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>num_exo <span class="ot">&lt;-</span> 60L</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>sample <span class="ot">&lt;-</span> <span class="fu">sim.sur</span>(num_eq, num_exo, num_obs, <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>As you can see, we assume that there are 60 relevant exogenous
+variables in the system. The following code shows the estimation with
+PCA:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">estim.sur</span>(sample<span class="sc">$</span>y, sample<span class="sc">$</span>x, <span class="at">addIntercept =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>                  <span class="at">pcaOptionsX =</span> <span class="fu">get.options.pca</span>(<span class="dv">2</span>,<span class="dv">4</span>))</span></code></pre></div>
+<p>By using <code>get.options.pca</code>, I am asking <code>ldt</code>
+not to include the first 2 variables in the PCA analysis. Also, I want
+it to include 4 principal components in the regression. The following
+table shows the result:</p>
+<table style="width:50%;border-bottom: 1px solid;">
+<caption>
+Results of estimation using <code>ldt::estim.sur</code> function with
+significance search and variable selection uncertainty.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Y1
+</th>
+<th style="text-align:left;">
+Y2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Intercept
+</td>
+<td style="text-align:left;">
+-1.09<sup></sup>
+</td>
+<td style="text-align:left;">
+-0.06<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X1
+</td>
+<td style="text-align:left;">
+-0.27<sup></sup>
+</td>
+<td style="text-align:left;">
+3.51<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X_PC1
+</td>
+<td style="text-align:left;">
+-0.91<sup>**</sup>
+</td>
+<td style="text-align:left;">
+1.97<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X_PC2
+</td>
+<td style="text-align:left;">
+-1.44<sup>***</sup>
+</td>
+<td style="text-align:left;">
+1.64<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X_PC3
+</td>
+<td style="text-align:left;">
+1.05<sup>**</sup>
+</td>
+<td style="text-align:left;">
+0.77<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+X_PC4
+</td>
+<td style="text-align:left;">
+0.02<sup></sup>
+</td>
+<td style="text-align:left;">
+0.60<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sigma2
+</td>
+<td style="text-align:left;">
+53.38
+</td>
+<td style="text-align:left;">
+81.09
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

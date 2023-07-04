@@ -61,17 +61,20 @@ void SurProjection::Calculate(const Sur &model, const Matrix<Tv> &x,
   for (Ti i = 0; i < n; i++) {
     x.GetRow0(i, row);
     model.beta.tDotVector(row, t);
-    Means.SetRow0(i, t);
+    Means.SetRow0(i, t); // B'x (mxk  *  kx1 -> mx1)
 
     if (mDoVariance) {
 
       if (mIsRestricted) {
-        row.IdenKron(m, Iox);                 // km x m
-        model.pR->TrDot(Iox, RIox);           // qStar x m
-        RIox.TrDot(model.gamma_var, RIox_gv); // m x qStar
-        RIox_gv.Dot(RIox, Covariance);        // m x m
-        Covariance.Add_in(
-            model.resid_var); // you don't need it if this is for fitted
+        row.IdenKron(m, Iox);       // [x o I_m]: km x m
+        model.pR->TrDot(Iox, RIox); // R'[x o I_m]: qStar x m
+        RIox.TrDot(model.gamma_var,
+                   RIox_gv); // [x' o I_m]R [R'[S^-1 o X'X]R]^{-1}:  m x qStar
+        RIox_gv.Dot(RIox, Covariance); // [x' o I_m]R [R'[S^-1 o X'X]R]^{-1}R'[x
+                                       // o I_m] : m x m
+        Covariance.Add_in(model.resid_var); // S^ + [x' o I_m]R [R'[S^-1 o
+                                            // X'X]R]^{-1}R'[x o I_m]
+        // you don't need the last line if this is for fitted
 
       } else {
         row.IdenKron(m, Iox);                // km x m

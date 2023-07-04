@@ -78,11 +78,11 @@ void Correlation<checkNaN, type, method>::pearson(const Matrix<Tv> &mat,
                                                             // variance
         Tv mea = 0;
         Ti count = 0;
-        this->Result.Set(i, i,
-                         mat.VarianceColumn(i, mea, count, adjustDoF, true));
-        this->ResultCounts.Set(i, i, (Tv)count);
+        this->Result.Set0(i, i,
+                          mat.VarianceColumn(i, mea, count, adjustDoF, true));
+        this->ResultCounts.Set0(i, i, (Tv)count);
       } else if constexpr (type == CorrelationType::kCorrelation) {
-        this->Result.Set(i, i, 1);
+        this->Result.Set0(i, i, 1);
       }
 
       // set off diagonals
@@ -99,10 +99,10 @@ void Correlation<checkNaN, type, method>::pearson(const Matrix<Tv> &mat,
                                       adjustDoF, true);
           }
 
-          this->Result.Set(i, j, s);
-          this->ResultCounts.Set(i, j, (Tv)count);
+          this->Result.Set0(i, j, s);
+          this->ResultCounts.Set0(i, j, (Tv)count);
           if (setLower)
-            this->Result.Set(j, i, s);
+            this->Result.Set0(j, i, s);
         }
       }
     }
@@ -168,10 +168,10 @@ void Correlation<checkNaN, type, method>::spearman(const Matrix<Tv> &mat,
           corr.Calculate(rankm.Result, rankcorrwork, corrstorage, adjustDoF,
                          false);
           s = corr.Result.Data[2];
-          this->Result.Set(i, j, s);
-          this->ResultCounts.Set(i, j, (Tv)twoCols.Result.RowsCount);
+          this->Result.Set0(i, j, s);
+          this->ResultCounts.Set0(i, j, (Tv)twoCols.Result.RowsCount);
           if (setLower)
-            this->Result.Set(j, i, s);
+            this->Result.Set0(j, i, s);
         }
       }
     }
@@ -235,20 +235,20 @@ void Correlation<checkNaN, type, method>::Calculate(const Matrix<Tv> &mat,
 
 // Pearson
 template class ldt::Correlation<false, CorrelationType::kCorrelation,
-                                           CorrelationMethod::kPearson>;
+                                CorrelationMethod::kPearson>;
 template class ldt::Correlation<false, CorrelationType::kCovariance,
-                                           CorrelationMethod::kPearson>;
+                                CorrelationMethod::kPearson>;
 template class ldt::Correlation<true, CorrelationType::kCorrelation,
-                                           CorrelationMethod::kPearson>;
+                                CorrelationMethod::kPearson>;
 template class ldt::Correlation<true, CorrelationType::kCovariance,
-                                           CorrelationMethod::kPearson>;
+                                CorrelationMethod::kPearson>;
 
 // Spearman:
 template class ldt::Correlation<false, CorrelationType::kCorrelation,
-                                           CorrelationMethod::kSpearman>;
+                                CorrelationMethod::kSpearman>;
 template class ldt::Correlation<false, CorrelationType::kCovariance,
-                                           CorrelationMethod::kSpearman>;
+                                CorrelationMethod::kSpearman>;
 template class ldt::Correlation<true, CorrelationType::kCorrelation,
-                                           CorrelationMethod::kSpearman>;
+                                CorrelationMethod::kSpearman>;
 template class ldt::Correlation<true, CorrelationType::kCovariance,
-                                           CorrelationMethod::kSpearman>;
+                                CorrelationMethod::kSpearman>;
