@@ -95,16 +95,16 @@ combineSearch <- function(list, type1Name = "coefs") {
       ind <- which(n == firstNames)
       if (length(ind) > 0) {
         ind <- ind[[1]]
-        mix <- s.combine.by.moments4(
+        mix <- s.combine.stats4(
           list(
             mean = first[[ind, 1]], variance = first[[ind, 2]],
             skewness = first[[ind, 3]], kurtosis = first[[ind, 4]],
-            count = first[[ind, 5]], sumWeights = first[[ind, 6]]
+            count = first[[ind, 5]], weight = first[[ind, 6]]
           ),
           list(
             mean = second[[j, 1]], variance = second[[j, 2]],
             skewness = second[[j, 3]], kurtosis = second[[j, 4]],
-            count = second[[j, 5]], sumWeights = second[[j, 6]]
+            count = second[[j, 5]], weight = second[[j, 6]]
           )
         )
         first[ind, 1] <- mix$mean
@@ -112,7 +112,7 @@ combineSearch <- function(list, type1Name = "coefs") {
         first[ind, 3] <- mix$skewness
         first[ind, 4] <- mix$kurtosis
         first[ind, 5] <- mix$count
-        first[ind, 6] <- mix$sumWeights
+        first[ind, 6] <- mix$weight
       }
     }
 

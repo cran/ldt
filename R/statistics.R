@@ -259,21 +259,18 @@ s.gld.density.quantile <- function(probs, p1, p2, p3, p4)
   res
 }
 
-#' Combine Two Distributions Given their First 4 Moments
-#'
-#' This function combines two distributions and calculates the first 4 moments of the combined distribution.
-#'
-#' @param mix1 A list representing the first distribution with elements \code{mean}, \code{variance}, \code{skewness}, \code{kurtosis}, \code{sumWeights}, and \code{count}.
-#' @param mix2 A list representing the second distribution (similar to \code{mix1}).
-#'
+#' Combine Mean, Variance, Skewness, and Kurtosis
+#' This function combines two sets of mean, variance, skewness, and kurtosis and generates the combined statistics.
+#' @param list1 A list representing the first \code{mean}, \code{variance}, \code{skewness}, \code{kurtosis}, \code{weight}, and \code{count}.
+#' @param list2 A list representing the second distribution (similar to \code{list1}).
 #' @details
-#' Let \code{A} and \code{B} be two distributions. By combining these two distributions we mean
-#' if we get a sample of size \code{n} from both distributions and the combined distribution,
-#' the first four moments of the combined samples equals the first four moments of the
-#' sample from the combined distribution, as \code{n} goes to infinity.
+#' Assume there are two samples with \eqn{mean_i}, \eqn{variance_i}, \eqn{skewness_i}, and \eqn{kurtosis_i} for \eqn{i=1,2},
+#' this function calculates the mean, variance, skewness, and kurtosis of the combined sample.
+#' It does not need the data itself.
+#' It is based on population variance, skewness, and kurtosis and calculates the population statistics.
+#' Note that the kurtosis is not excess kurtosis.
 #'
-#'
-#' @return A list similar to \code{mix1}.
+#' @return A list similar to \code{list1}.
 #' @export
 #' @importFrom stats rchisq
 #'
@@ -287,14 +284,14 @@ s.gld.density.quantile <- function(probs, p1, p2, p3, p4)
 #'            skewness = moments::skewness(sample1),
 #'            kurtosis = moments::kurtosis(sample1),
 #'            count=length(sample1),
-#'            sumWeights = length(sample1))
+#'            weight = length(sample1))
 #' d2 <- list(mean = mean(sample2),
 #'            variance = var(sample2),
 #'            skewness = moments::skewness(sample2),
 #'            kurtosis = moments::kurtosis(sample2),
 #'            count=length(sample2),
-#'            sumWeights = length(sample2))
-#' c <- s.combine.by.moments4(d1,d2)
+#'            weight = length(sample2))
+#' c <- s.combine.stats4(d1,d2)
 #'
 #' # we can compare the results:
 #' combined <- c(sample1,sample2)
@@ -303,12 +300,12 @@ s.gld.density.quantile <- function(probs, p1, p2, p3, p4)
 #' skewness_c = moments::skewness(combined)
 #' kurtosis_c = moments::kurtosis(combined)
 #'
-s.combine.by.moments4 <- function(mix1, mix2)
+s.combine.stats4 <- function(list1, list2)
 {
-  mix1 <- as.list(mix1)
-  mix2 <- as.list(mix2)
+  list1 <- as.list(list1)
+  list2 <- as.list(list2)
 
-  res <- .CombineByMoments4(mix1, mix2)
+  res <- .CombineStats4(list1, list2)
   res
 }
 

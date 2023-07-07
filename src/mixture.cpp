@@ -96,7 +96,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance, Tv &skewness,
   }
 
   // first central moment (mean) is weighted average of means
-  RunningWeightedMean wmean = RunningWeightedMean();
+  auto wmean = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wmean.PushNew(means[i], w);
@@ -105,7 +105,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance, Tv &skewness,
   mean = wmean.GetMean();
 
   // eq. 1.21 for variance
-  RunningWeightedMean wvari = RunningWeightedMean();
+  auto wvari = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wvari.PushNew(std::pow(means[i], 2) + varis[i], w);
@@ -115,7 +115,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance, Tv &skewness,
 
   // skewness, 1.22
   Tv mdiff;
-  RunningWeightedMean wskew = RunningWeightedMean();
+  auto wskew = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     mdiff = means[i] - mean;
@@ -127,7 +127,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance, Tv &skewness,
   skewness = wskew.GetMean() / std::pow(variance, 1.5);
 
   // kurtosis, 1.22
-  RunningWeightedMean wkurt = RunningWeightedMean();
+  auto wkurt = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     mdiff = means[i] - mean;
@@ -161,7 +161,7 @@ void DistributionMixture::GetMomentsNormal(Tv &mean, Tv &variance, Tv &skewness,
   }
 
   // first central moment (mean) is weighted avarage of means
-  RunningWeightedMean wmean = RunningWeightedMean();
+  auto wmean = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wmean.PushNew(means[i], w);
@@ -170,7 +170,7 @@ void DistributionMixture::GetMomentsNormal(Tv &mean, Tv &variance, Tv &skewness,
   mean = wmean.GetMean();
 
   // eq. 1.21 for variance
-  RunningWeightedMean wvari = RunningWeightedMean();
+  auto wvari = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wvari.PushNew(std::pow(means[i], 2) + varis[i], w);
@@ -180,7 +180,7 @@ void DistributionMixture::GetMomentsNormal(Tv &mean, Tv &variance, Tv &skewness,
 
   // skewness, the formula after 1.22
   Tv mdiff;
-  RunningWeightedMean wskew = RunningWeightedMean();
+  auto wskew = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     mdiff = means[i] - mean;
@@ -190,7 +190,7 @@ void DistributionMixture::GetMomentsNormal(Tv &mean, Tv &variance, Tv &skewness,
   skewness = wskew.GetMean() / std::pow(variance, 1.5);
 
   // kurtosis, the formula after 1.22
-  RunningWeightedMean wkurt = RunningWeightedMean();
+  auto wkurt = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     mdiff = means[i] - mean;
@@ -218,7 +218,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance) {
   }
 
   // first central moment (mean) is weighted avarage of means
-  RunningWeightedMean wmean = RunningWeightedMean();
+  auto wmean = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wmean.PushNew(means[i], w);
@@ -227,7 +227,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance) {
   mean = wmean.GetMean();
 
   // eq. 1.21 for variance
-  RunningWeightedMean wvari = RunningWeightedMean();
+  auto wvari = RunningMoments<1, true, true, Tv>();
   i = 0;
   for (auto &w : *pWeights) {
     wvari.PushNew(std::pow(means[i], 2) + varis[i], w);
@@ -237,7 +237,7 @@ void DistributionMixture::GetMoments(Tv &mean, Tv &variance) {
 }
 
 Tv DistributionMixture::GetCdf(Tv x) {
-  RunningWeightedMean wm = RunningWeightedMean();
+  auto wm = RunningMoments<1, true, true, Tv>();
   Ti i = 0;
   if (pWeights) {
     for (auto &w : *pWeights) {
@@ -312,7 +312,7 @@ Tv DistributionMixture::GetPdfOrPmf(Tv x) {
         "PDF/PMF of a mixture of discrete and continuous distributions is "
         "not supported");
 
-  RunningWeightedMean wm = RunningWeightedMean();
+  auto wm = RunningMoments<1, true, true, Tv>();
   Ti i = 0;
   if (pWeights) {
     for (auto &w : *pWeights) {

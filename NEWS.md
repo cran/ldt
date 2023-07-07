@@ -1,6 +1,12 @@
 # *News*
 
-## ldt 0.3.0 (2023-06-22)
+## ldt 0.3.1 (2023-07-07)
+
+### Changes
+
+* Revised the running statistics part due to a reported error from CRAN
+
+## ldt 0.3.0 (2023-07-05)
 
 ### Changes
 

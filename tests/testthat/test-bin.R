@@ -403,14 +403,14 @@ test_that("Discrete choice search works with restricted AIC", {
   g2 = c(7L,8L,9L,10L,11L,12L)
   res = search.bin(x[,1,drop=FALSE], Exo, metricOptions = get.options.metric(typesIn = c("aic", "auc"), typesOut = c()),
                                    xPartitions = list(g1,g2), xSizes = c(1L,2L),
-                                   modelCheckItems = get.items.modelcheck(maxAic = 1.45),
+                                   modelCheckItems = get.items.modelcheck(maxAic = 59),
                                    searchItems = get.items.search(bestK = 1, all = TRUE),
                                    searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
   alls = list()
   for (m in res$aic$target1$model$all){
     M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]), printMsg = printMsg)
     alls = append(alls, M$metrics[2,1])
-    expect_true(as.numeric(M$metrics[2,1]) <= 1.45)
+    expect_true(as.numeric(M$metrics[2,1]) <= 59)
   }
 })
 

@@ -198,15 +198,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// CombineByMoments4
-List CombineByMoments4(SEXP mix1, SEXP mix2);
-RcppExport SEXP _ldt_CombineByMoments4(SEXP mix1SEXP, SEXP mix2SEXP) {
+// CombineStats4
+List CombineStats4(List list1, List list2);
+RcppExport SEXP _ldt_CombineStats4(SEXP list1SEXP, SEXP list2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type mix1(mix1SEXP);
-    Rcpp::traits::input_parameter< SEXP >::type mix2(mix2SEXP);
-    rcpp_result_gen = Rcpp::wrap(CombineByMoments4(mix1, mix2));
+    Rcpp::traits::input_parameter< List >::type list1(list1SEXP);
+    Rcpp::traits::input_parameter< List >::type list2(list2SEXP);
+    rcpp_result_gen = Rcpp::wrap(CombineStats4(list1, list2));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -339,7 +339,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 9},
     {"_ldt_GldQuantile", (DL_FUNC) &_ldt_GldQuantile, 5},
     {"_ldt_GldDensityQuantile", (DL_FUNC) &_ldt_GldDensityQuantile, 5},
-    {"_ldt_CombineByMoments4", (DL_FUNC) &_ldt_CombineByMoments4, 2},
+    {"_ldt_CombineStats4", (DL_FUNC) &_ldt_CombineStats4, 2},
     {"_ldt_GetPca", (DL_FUNC) &_ldt_GetPca, 4},
     {"_ldt_SearchSur", (DL_FUNC) &_ldt_SearchSur, 13},
     {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 15},

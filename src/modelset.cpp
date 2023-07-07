@@ -203,7 +203,7 @@ void ModelSet::CombineBests(Ti index1, Ti index2, Ti index3,
 void ModelSet::CombineInclusionWeights(
     Ti index1, Ti index2, Ti index3,
     const std::vector<SearcherSummary *> &summaries,
-    RunningWeightedMean &result) {
+    RunningMoments<1, true, false, Tv> &result) {
   if (summaries.size() == 0)
     throw std::logic_error("List of search summaries is empty!");
 
@@ -218,7 +218,7 @@ void ModelSet::CombineInclusionWeights(
 
 void ModelSet::CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
                             const std::vector<SearcherSummary *> &summaries,
-                            RunningWeightedMean &result) {
+                            RunningMoments<1, true, true, Tv> &result) {
   if (summaries.size() == 0)
     throw std::logic_error("List of search summaries is empty!");
 
@@ -252,7 +252,7 @@ void ModelSet::CombineExtremeBounds(
 
 void ModelSet::CombineMixture(Ti index1, Ti index2, Ti index3,
                               const std::vector<SearcherSummary *> &summaries,
-                              RunningWeighted4 &result) {
+                              RunningMoments<4, true, true, Tv> &result) {
   if (summaries.size() == 0)
     throw std::logic_error("List of search summaries is empty!");
 

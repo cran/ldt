@@ -123,15 +123,15 @@ IndexRange Array<Tw>::Interpolate(Tw *data, const Ti &length, Ti &count) {
 }
 
 template <typename Tw>
-void Array<Tw>::PartitionEqual(const std::vector<Tv> &data,
-                               std::vector<std::vector<Tv>> &result, Ti size,
+void Array<Tw>::PartitionEqual(const std::vector<Tw> &data,
+                               std::vector<std::vector<Tw>> &result, Ti size,
                                bool fromEnd) {
   result.clear();
   if (fromEnd) {
     for (Ti i = (Ti)data.size(); i >= 0; i -= size) {
       int start = std::max(i - size, 0);
       result.insert(result.begin(),
-                    std::vector<Tv>(data.begin() + start, data.begin() + i));
+                    std::vector<Tw>(data.begin() + start, data.begin() + i));
     }
   } else {
     for (Ti i = 0; i < (Ti)data.size(); i += size) {

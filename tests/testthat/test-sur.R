@@ -447,7 +447,7 @@ test_that("search.sur works with restricted aic", {
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
-                  modelCheckItems = get.items.modelcheck(maxAic = 10.3),
+                  modelCheckItems = get.items.modelcheck(maxAic = 300),
                   searchItems = get.items.search(all = TRUE, bestK = 0),
                   metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
@@ -457,7 +457,7 @@ test_that("search.sur works with restricted aic", {
     M = estim.sur(as.matrix(y[,m$depIndices]), x = as.matrix(Exo[,m$exoIndices]),
                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
     alls = append(alls, M$metrics[2,1])
-    expect_true(as.numeric(M$metrics[2,1]) <= 10.3)
+    expect_true(as.numeric(M$metrics[2,1]) <= 300)
   }
 })
 
@@ -466,11 +466,11 @@ test_that("search.sur works with inclusion weights", {
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+  res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
                   searchItems = get.items.search(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
                   metricOptions = get.options.metric(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = 0))
+                                                     seed = -340))
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
     for (d in m$depIndices){

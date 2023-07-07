@@ -487,7 +487,7 @@ CheckModelCheckItems <- function(O){
 #'
 #' \item **\code{crps}**: Continuous Ranked Probability Score which calculates the accuracy of probabilistic forecasts.
 #' It is calculated as the mean squared difference between the predicted CDF and the empirical CDF of the observation.
-#' Its formula is \eqn{\int_{-\infty}^{\infty}(F(y) - \mathbb{1}\{y \geq x\})^2dy} where \eqn{F(y)} is the predicted CDF and \eqn{\mathbb{1}\{y \geq x\}} is the empirical CDF.
+#' Its formula is \eqn{\int_{-\infty}^{\infty}(F(y) - 1\{y \geq x\})^2dy} where \eqn{F(y)} is the predicted CDF and \eqn{1\{y \geq x\}} is the empirical CDF.
 #' Under normality assumption (which is mainly the case in this package), the formula is \eqn{\frac{\sigma}{\sqrt{\pi}}\left(1 - 2\Phi\left(\frac{x - \mu}{\sigma}\right) + 2\frac{x - \mu}{\sigma}\phi\left(\frac{x - \mu}{\sigma}\right)\right)}.
 #' Unlike MAE, CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution.
 #'

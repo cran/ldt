@@ -652,15 +652,15 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
     std::vector<std::string> L_1_names;
 
     for (int k = 0; k < (int)searchItems.CdfsAt.size(); k++) {
-      auto cdf = RunningWeightedMean();
+      auto cdf = RunningMoments<1, true, true, Tv>();
       auto mat_d = std::unique_ptr<double[]>(new double[length1 * 3]);
       auto mat = ldt::Matrix<double>(mat_d.get(), length1, 3);
       auto colnames = std::vector<std::string>({"Mean", "Count", "SumWeights"});
       for (auto i = 0; i < length1; i++) {
         model.CombineCdfAt(eIndex, tIndex, i, k, list, cdf);
         mat.Set0(i, 0, cdf.GetMean());
-        mat.Set0(i, 1, (double)cdf.GetCount());
-        mat.Set0(i, 2, cdf.GetSumOfWeights());
+        mat.Set0(i, 1, (double)cdf.Count);
+        mat.Set0(i, 2, cdf.SumWeights);
       }
       L_1[k] = as_matrix(mat, &length1Names, &colnames);
       L_1_names.push_back(std::string("cdf") + std::to_string(k + 1));
@@ -686,7 +686,7 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
     L[2] = R_NilValue;
 
   if (searchItems.KeepMixture) {
-    auto mixture = RunningWeighted4();
+    auto mixture = RunningMoments<4, true, true, Tv>();
     auto mat_d = std::unique_ptr<double[]>(new double[length1 * 6]);
     auto mat = ldt::Matrix<double>(mat_d.get(), length1, 6);
     auto colnames = std::vector<std::string>(
@@ -694,11 +694,11 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
     for (auto i = 0; i < length1; i++) {
       model.CombineMixture(eIndex, tIndex, i, list, mixture);
       mat.Set0(i, 0, mixture.GetMean());
-      mat.Set0(i, 1, (double)mixture.GetVariancePopulation());
-      mat.Set0(i, 2, (double)mixture.GetSkewnessPopulation());
-      mat.Set0(i, 3, (double)mixture.GetKurtosisPopulation());
-      mat.Set0(i, 4, (double)mixture.GetCount());
-      mat.Set0(i, 5, (double)mixture.Sum());
+      mat.Set0(i, 1, (double)mixture.GetVariance());
+      mat.Set0(i, 2, (double)mixture.GetSkewness());
+      mat.Set0(i, 3, (double)mixture.GetKurtosis());
+      mat.Set0(i, 4, (double)mixture.Count);
+      mat.Set0(i, 5, (double)mixture.SumWeights);
     }
     L[3] = as_matrix(mat, &length1Names, &colnames);
   } else
@@ -794,14 +794,14 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
         if (searchItems.KeepInclusionWeights) {
           auto covars =
               searchItems.LengthDependents + searchItems.LengthExogenouses;
-          auto incweights = RunningWeightedMean();
+          auto incweights = RunningMoments<1, true, false, Tv>();
           auto mat_d = std::unique_ptr<double[]>(new double[covars * 2]);
           auto mat = ldt::Matrix<double>(mat_d.get(), covars, 2);
           auto colnames = std::vector<std::string>({"Mean", "Count"});
           for (auto i = 0; i < covars; i++) {
             model.CombineInclusionWeights(eIndex, tIndex, i, list0, incweights);
             mat.Set0(i, 0, incweights.GetMean());
-            mat.Set0(i, 1, (double)incweights.GetCount());
+            mat.Set0(i, 1, (double)incweights.Count);
           }
           L_i_t_m[2] = as_matrix(mat, &inclusionNames, &colnames);
 

@@ -49,8 +49,8 @@
     .Call('_ldt_GldDensityQuantile', PACKAGE = 'ldt', data, L1, L2, L3, L4)
 }
 
-.CombineByMoments4 <- function(mix1, mix2) {
-    .Call('_ldt_CombineByMoments4', PACKAGE = 'ldt', mix1, mix2)
+.CombineStats4 <- function(list1, list2) {
+    .Call('_ldt_CombineStats4', PACKAGE = 'ldt', list1, list2)
 }
 
 .GetPca <- function(x, center, scale, newX) {

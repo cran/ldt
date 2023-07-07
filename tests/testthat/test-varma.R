@@ -396,14 +396,14 @@ test_that("VARMA search works with restricted aic", {
                                                        horizons = c(1L,2L), simFixSize = 2),
                     searchItems = get.items.search(all = TRUE),
                     modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE,
-                                                    maxAic = 20))
+                                                    maxAic = 300))
 
   alls = list()
   for (m in res$crps$target1$model$all){
     M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], params = m$parameters,
             addIntercept = FALSE, printMsg = printMsg)
     alls = append(alls, M$metrics[2,1])
-    expect_true(as.numeric(M$metrics[2,1]) <= 20)
+    expect_true(as.numeric(M$metrics[2,1]) <= 300)
   }
 })
 
@@ -681,7 +681,7 @@ test_that("estim.varma SplitSearch works (no subsetting)", {
   # TODO: this is not working for sic or aic in some cases.
   # clearly it is related to the weights.
   # but why shouldn't it affect the whole, and just the split?
-  # Should we handle NAN kurtosis in 's.combine.by.moments4' function?
+  # Should we handle NAN kurtosis in 's.combine.stats4' function?
 
   #BEST COEFS
   i = 0

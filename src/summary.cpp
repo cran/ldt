@@ -160,10 +160,11 @@ SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
         {std::numeric_limits<Tv>::max(), std::numeric_limits<Tv>::min()});
   if (pItems->KeepInclusionWeights) {
     Ti max_inc = pItems->LengthDependents + pItems->LengthExogenouses;
-    InclusionsInfo = std::vector<RunningWeightedMean>(max_inc);
+    InclusionsInfo = std::vector<RunningMoments<1, true, false, Tv>>(max_inc);
   }
   if (pItems->CdfsAt.size() > 0)
-    Cdfs = std::vector<RunningWeightedMean>(pItems->CdfsAt.size());
+    Cdfs =
+        std::vector<RunningMoments<1, true, true, Tv>>(pItems->CdfsAt.size());
 }
 
 SearcherSummary::~SearcherSummary() {
@@ -207,18 +208,19 @@ void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
     if (pItems->KeepInclusionWeights) { // we keep the inclusion weights in
                                         // the model
       // Ti max_inc = pItems->LengthDependents + pItems->LengthExogenouses;
+      Tv w = 1;
       if (coef.Dependents.Data)
         for (Ti i = 0; i < coef.Dependents.length(); i++)
-          InclusionsInfo.at(coef.Dependents.Data[i]).PushNew(coef.Weight, 1);
+          InclusionsInfo.at(coef.Dependents.Data[i]).PushNew(coef.Weight, w);
       else // a univariate case
-        InclusionsInfo.at(0).PushNew(coef.Weight, 1);
+        InclusionsInfo.at(0).PushNew(coef.Weight, w);
       if (overrideInclusioExo)
         for (Ti i = 0; i < overrideInclusioExo->length(); i++)
           InclusionsInfo.at(overrideInclusioExo->Data[i])
-              .PushNew(coef.Weight, 1);
+              .PushNew(coef.Weight, w);
       else if (coef.Exogenouses.Data)
         for (Ti i = 0; i < coef.Exogenouses.length(); i++)
-          InclusionsInfo.at(coef.Exogenouses.Data[i]).PushNew(coef.Weight, 1);
+          InclusionsInfo.at(coef.Exogenouses.Data[i]).PushNew(coef.Weight, w);
     }
 
     return; // the rest is based on mean and variances which is not
@@ -237,7 +239,7 @@ void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
   }
 
   if (pItems->KeepMixture) {
-    Mixture4.PushNewDistribution(coef.Mean, coef.Variance, 0, 0, coef.Weight);
+    Mixture4.Combine(coef.Mean, coef.Variance, 0, 0, coef.Weight);
   }
 
   if (pItems->ExtremeBoundsMultiplier > 0) {

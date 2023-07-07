@@ -203,29 +203,19 @@ NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
   return result;
 }
 
-// [[Rcpp::export(.CombineByMoments4)]]
-List CombineByMoments4(SEXP mix1, SEXP mix2)
+// [[Rcpp::export(.CombineStats4)]]
+List CombineStats4(List list1, List list2)
 // clang-format on
 {
-
-  if (is<List>(mix1) == false)
-    throw std::logic_error("'mix1' must be a 'List'.");
-  List mix1_ = as<List>(mix1);
-
-  if (is<List>(mix2) == false)
-    throw std::logic_error("'mix2' must be a 'List'.");
-  List mix2_ = as<List>(mix2);
-
-  auto r = RunningWeighted4();
-  r.PushNewDistribution(mix1_["mean"], mix1_["variance"], mix1_["skewness"],
-                        mix1_["kurtosis"], mix1_["sumWeights"], mix1_["count"]);
-  r.PushNewDistribution(mix2_["mean"], mix2_["variance"], mix2_["skewness"],
-                        mix2_["kurtosis"], mix2_["sumWeights"], mix2_["count"]);
-  auto L = List::create(_["mean"] = r.GetMean(),
-                        _["variance"] = r.GetVariancePopulation(),
-                        _["skewness"] = r.GetSkewnessPopulation(),
-                        _["kurtosis"] = r.GetKurtosisPopulation(),
-                        _["sumWeights"] = r.Sum(), _["count"] = r.GetCount());
+  auto r = RunningMoments<4, true, true, Tv>();
+  r.Combine(list1["mean"], list1["variance"], list1["skewness"],
+            list1["kurtosis"], list1["weight"], list1["count"]);
+  r.Combine(list2["mean"], list2["variance"], list2["skewness"],
+            list2["kurtosis"], list2["weight"], list2["count"]);
+  auto L = List::create(
+      _["mean"] = r.GetMean(), _["variance"] = r.GetVariance(),
+      _["skewness"] = r.GetSkewness(), _["kurtosis"] = r.GetKurtosis(),
+      _["weight"] = r.SumWeights, _["count"] = r.Count);
   return L;
 }
 

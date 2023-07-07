@@ -1,196 +1,221 @@
 #pragma once
 
-#include "matrix.h"
+#include "array.h"
 #include <cmath>
 
 namespace ldt {
 
-/// @brief A class for calculating running weighted mean. Source: Math.NET
-/// source code
-class LDT_EXPORT RunningWeightedMean {
+template <Ti moments, bool skipNAN = true, bool isWeighted = true,
+          class Tw = Tv>
+class LDT_EXPORT RunningMoments {
 private:
-  Ti mCount = 0;
-  Tv mSumWeights = 0.0;
-  Tv mM1 = 0.0;
+  Tw mMean = 0, mM2 = 0, mM3 = 0, mM4 = 0;
+
+  Tw w = 0; //, delta = 0, R = 0, t1 = 0, t2 = 0, temp = 0;
 
 public:
-  /// @brief Initializes a new instance of the class
-  RunningWeightedMean();
+  /// @brief Determines the number of pushes. It is not related to the
+  /// statistical part, just the operational part.
+  Ti Count = 0;
+
+  /// @brief Sum of the weights
+  Tw SumWeights = 0;
 
   /// @brief Initializes a new instance of the class
-  /// @param data Initial data
-  /// @param weight Weight of the initial data
-  RunningWeightedMean(const Matrix<Tv> &data, Tv weight);
+  RunningMoments() {}
 
-  /// @brief Resets the class. Sets count and sum of weights to zero.
+  /// @brief Resets the calculations
   void Reset() {
-    mCount = 0;
-    mSumWeights = 0;
+    Count = 0;
+    SumWeights = 0;
+    mMean = 0;
+    mM2 = 0;
+    mM3 = 0;
+    mM4 = 0;
   }
 
-  /// @brief Gets the number of counted observations
-  /// @return count
-  Ti GetCount() { return mCount; }
+  /// @brief Use this function to get the mean
+  /// @return NAN if sum of weights is zero, otherwise mean
+  Tw GetMean() { return SumWeights == 0 ? NAN : mMean; }
 
-  /// @brief Gets summation of the weights
-  /// @return Sum of the weights
-  Tv GetSumOfWeights() { return mSumWeights; }
-
-  /// @brief Gets the mean
-  /// @return The mean. If count is 0, NAN
-  Tv GetMean() { return mCount == 0 ? NAN : mM1; }
-
-  /// @brief Add new data
-  /// @param value New data
-  /// @param weight Weight of the new data
-  void PushNew(Tv value, Tv weight);
-
-  /// @brief Add a range of new data
-  /// @param data New data
-  /// @param weight Weights of the new data
-  void PushNewRange(const Matrix<Tv> &data, Tv weight);
-
-  /// @brief Combines two classes
-  /// @param b The second class
-  void Combine(RunningWeightedMean &b);
-};
-
-/// @brief A class for calculating running weighted variance. Source: Math.NET
-/// source code
-class LDT_EXPORT RunningWeightedVariance {
-private:
-  Ti mCount = 0;
-  Tv mSumWeights = 0.0;
-  Tv mM1 = 0.0;
-  Tv mM2 = 0.0;
-
-public:
-  /// @brief Initializes a new instance of the class
-  RunningWeightedVariance();
-
-  /// @brief Initializes a new instance of the class
-  /// @param data Initial data
-  /// @param weight Weight of the initial data
-  RunningWeightedVariance(const Matrix<Tv> &data, Tv weight);
-
-  /// @brief Resets the class. Sets count and sum of weights to zero.
-  void Reset() {
-    mCount = 0;
-    mSumWeights = 0;
+  /// @brief Use this function to get the population variance
+  /// @return NAN if sum of weights is zero or \par moments is 1, otherwise
+  /// variance
+  Tw GetVariance() {
+    if constexpr (moments >= 2) {
+      return SumWeights == 0 ? NAN : mM2 / SumWeights;
+    } else if constexpr (true) {
+      return NAN;
+    }
   }
 
-  /// @brief Gets the number of counted observations
-  /// @return count
-  Ti GetCount() { return mCount; }
-
-  /// @brief Gets summation of the weights
-  /// @return Sum of the weights
-  Tv Sum() { return mSumWeights; }
-
-  /// @brief Gets the mean
-  /// @return The mean. If count is 0, NAN
-  Tv GetMean() { return mCount == 0 ? NAN : mM1; }
-
-  /// @brief Gets the variance (population)
-  /// @return The variance. If count is less than 1, NAN
-  Tv GetVariancePopulation() { return mCount <= 1 ? NAN : mM2 / mSumWeights; }
-
-  /// @brief Add new data
-  /// @param value New data
-  /// @param weight Weight of the new data
-  void PushNew(Tv value, Tv weight);
-
-  /// @brief Add a range of new data
-  /// @param data New data
-  /// @param weight Weights of the new data
-  void PushNewRange(const Matrix<Tv> &data, Tv weight);
-
-  /// @brief Combines two classes
-  /// @param b The second class
-  void Combine(RunningWeightedVariance b);
-};
-
-/// @brief /// @brief A class for calculating running weighted mean, variance,
-/// skewness and kurtosis. Source: Math.NET source code
-class LDT_EXPORT RunningWeighted4 {
-private:
-  Ti mCount = 0;
-  Tv mSumWeights = 0.0;
-  Tv mM1 = 0.0;
-  Tv mM2 = 0.0;
-  Tv mM3 = 0.0;
-  Tv mM4 = 0.0;
-
-public:
-  /// @brief Initializes a new instance of the class
-  RunningWeighted4();
-
-  /// @brief Initializes a new instance of the class
-  /// @param data Initial data
-  /// @param weight Weight of the initial data
-  RunningWeighted4(const Matrix<Tv> &data, Tv weight);
-
-  /// @brief Resets the class. Sets count and sum of weights to zero.
-  void Reset() {
-    mCount = 0;
-    mSumWeights = 0;
+  /// @brief Use this function to get the population skewness
+  /// @return NAN if sum of weights is zero or \par moments is less than 2,
+  /// otherwise skewness
+  Tw GetSkewness() {
+    if constexpr (moments >= 3) {
+      return SumWeights == 0 ? NAN : sqrt(SumWeights) * mM3 / pow(mM2, 1.5);
+    } else if constexpr (true) {
+      return NAN;
+    }
   }
 
-  /// @brief Gets the number of counted observations
-  /// @return count
-  Ti GetCount() { return mCount; }
-
-  /// @brief Gets summation of the weights
-  /// @return Sum of the weights
-  Tv Sum() { return mSumWeights; }
-
-  /// @brief Gets the mean
-  /// @return The mean. If count is 0, NAN
-  Tv GetMean() { return mCount == 0 ? NAN : mM1; }
-
-  /// @brief Gets the variance (population)
-  /// @return The variance. If count is less than 1, NAN
-  Tv GetVariancePopulation() { return mCount <= 1 ? NAN : mM2 / mSumWeights; }
-
-  /// @brief Gets the skewness (population)
-  /// @return The skewness. If count is less than 1, NAN
-  Tv GetSkewnessPopulation() {
-    return mCount <= 1 ? NAN
-                       : std::sqrt(mSumWeights) * mM3 / std::pow(mM2, (Tv)1.5);
+  /// @brief Use this function to get the population kurtosis
+  /// @return NAN if sum of weights is zero or \par moments is less than 3,
+  /// otherwise kurtosis. Note that it is not excess kurtosis
+  Tw GetKurtosis() {
+    if constexpr (moments == 4) {
+      return SumWeights == 0 ? NAN : SumWeights * mM4 / (mM2 * mM2) - 3;
+    } else if constexpr (true) {
+      return NAN;
+    }
   }
 
-  /// @brief Gets the kurtosis (population)
-  /// @return The kurtosis. If count is less than 2, NAN
-  Tv GetKurtosisPopulation() {
-    return mCount <= 2 ? NAN : mSumWeights * mM4 / (mM2 * mM2) - (Tv)3;
+  /// @brief Update the moments by adding a new observation
+  /// @param value The new observation
+  /// @param weight The weight of the observation
+  void PushNew(const Tw &value, const Tw &weight) {
+
+    if constexpr (skipNAN) {
+      if (std::isnan(value))
+        return;
+    }
+
+    Count++;
+    Tw ww = weight;
+    if constexpr (isWeighted == false) {
+      ww = 1;
+    }
+
+    Array<Tw>::template update_single_pass<isWeighted, moments>(
+        value, ww, SumWeights, mMean, mM2, mM3, mM4);
   }
 
-  /// @brief Add new data
-  /// @param value New data
-  /// @param weight Weight of the new data
-  void PushNew(Tv value, Tv weight);
+  /// @brief Combines another set of moments with current set
+  /// @param other The second set
+  void Combine(const RunningMoments<moments, skipNAN, isWeighted, Tw> &other) {
 
-  /// @brief Add a range of new data
-  /// @param data New data
-  /// @param weight Weights of the new data
-  void PushNewRange(const Matrix<Tv> &data, Tv weight);
+    if constexpr (skipNAN) { // don't let other destroy any moments
+      if (std::isnan(other.mMean))
+        return;
+      if constexpr (moments >= 2) {
+        if (std::isnan(other.mM2))
+          return;
+      }
+      if constexpr (moments >= 3) {
+        if (std::isnan(other.mM3))
+          return;
+      }
+      if constexpr (moments == 4) {
+        if (std::isnan(other.mM4))
+          return;
+      }
+    }
 
-  /// @brief Combines two classes
-  /// @param b The second class
-  void Combine(RunningWeighted4 &b);
+    Tw mean = 0, m2 = 0, m3 = 0, m4 = 0, sw = 0;
+    Array<Tw>::template update_single_pass_combine<moments>(
+        other.SumWeights, other.mMean, other.mM2, other.mM3, other.mM4,
+        SumWeights, mMean, mM2, mM3, mM4, sw, mean, m2, m3, m4);
 
-  /// @brief Add a distribution as a data
-  /// @param mean Mean of the distribution
-  /// @param variance Variance of the distribution
-  /// @param skewness Skewness of the distribution
-  /// @param kurtosis Kurtosis of the distribution
-  /// @param weight Weight of the distribution
-  /// @param count Sets the \ref mCount (Note that if two distributions
-  /// are merged and \ref mCount is 2, then kurtosis will be NAN. Therefore, it
-  /// is recommended to set it larger than 1. It generally does not affect the
-  /// calculations)
-  void PushNewDistribution(Tv mean, Tv variance, Tv skewness = 0,
-                           Tv kurtosis = 0, Tv weight = 1, Ti count = 1);
+    if constexpr (skipNAN) {
+      if (std::isnan(mean))
+        return;
+      if constexpr (moments >= 2) {
+        if (std::isnan(m2))
+          return;
+      }
+      if constexpr (moments >= 3) {
+        if (std::isnan(m3))
+          return;
+      }
+      if constexpr (moments == 4) {
+        if (std::isnan(m4))
+          return;
+      }
+    }
+
+    mMean = mean;
+    mM2 = m2;
+    mM3 = m3;
+    mM4 = m4;
+    SumWeights = sw;
+    Count += other.Count;
+  }
+
+  /// @brief Combines current moments with another set of moments
+  /// @param mean mean of the second set
+  /// @param var variance of the second set (population formula)
+  /// @param skew skewness of the second set (population formula)
+  /// @param kurt kurtosis of the second set (population formula). It should not
+  /// be excess kurtosis.
+  /// @param weight Relative weight of the second set.
+  /// @param count An operational value to update the value of \par Count
+  /// in the class.
+  void Combine(const Tw &mean, const Tw &var, const Tw &skew, const Tw &kurt,
+               const Tw &weight, Ti count = 1) {
+
+    if constexpr (skipNAN) { // don't let other destroy any moments
+      if (std::isnan(mean))
+        return;
+    }
+
+    Tw m2, m3, m4;
+
+    // convert to moments
+    if constexpr (moments >= 2) {
+      m2 = var * weight;
+      if constexpr (skipNAN) {
+        if (std::isnan(m2))
+          return;
+      }
+    }
+
+    if constexpr (moments >= 3) {
+      m3 = pow(m2, 1.5) * skew / sqrt(weight);
+      if constexpr (skipNAN) {
+        if (std::isnan(m3))
+          return;
+      }
+    }
+
+    if constexpr (moments == 4) {
+      m4 = (kurt + 3) * (m2 * m2) / weight;
+      if constexpr (skipNAN) {
+        if (std::isnan(m4))
+          return;
+      }
+    }
+
+    Tw mean_ = 0, m2_ = 0, m3_ = 0, m4_ = 0, sw_ = 0;
+    Array<Tw>::template update_single_pass_combine<moments>(
+        weight, mean, m2, m3, m4, SumWeights, mMean, mM2, mM3, mM4, sw_, mean_,
+        m2_, m3_, m4_);
+
+    if constexpr (skipNAN) {
+      if (std::isnan(mean_))
+        return;
+      if constexpr (moments >= 2) {
+        if (std::isnan(m2_))
+          return;
+      }
+      if constexpr (moments >= 3) {
+        if (std::isnan(m3_))
+          return;
+      }
+      if constexpr (moments == 4) {
+        if (std::isnan(m4_))
+          return;
+      }
+    }
+
+    mMean = mean_;
+    mM2 = m2_;
+    mM3 = m3_;
+    mM4 = m4_;
+    SumWeights = sw_;
+
+    Count += count;
+  }
 };
 
 } // namespace ldt

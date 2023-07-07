@@ -120,15 +120,15 @@ test_that("Combine4Moments works", {
 
   d1 <- list(mean = mean(x1), variance = var(x1),
              skewness = moments::skewness(x1), kurtosis = moments::kurtosis(x1),
-             count=length(x1), sumWeights = length(x1))
+             count=length(x1), weight = length(x1))
   d2 <- list(mean = mean(x2), variance = var(x2),
              skewness = moments::skewness(x2), kurtosis = moments::kurtosis(x2),
-             count=length(x2), sumWeights = length(x2))
+             weight = length(x2), count = length(x2))
   d <- list(mean = mean(x), variance = var(x),
             skewness = moments::skewness(x), kurtosis = moments::kurtosis(x),
-            count=length(x), sumWeights = length(x))
+            weight = length(x), count = length(x))
 
-  c <- s.combine.by.moments4(d1,d2)
+  c <- s.combine.stats4(d1,d2)
 
   expect_equal(as.numeric(c)[1:2],as.numeric(d)[1:2], tolerance = 1e-3)
   expect_equal(as.numeric(c)[3],as.numeric(d)[3], tolerance = 1e-3)
