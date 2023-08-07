@@ -11,16 +11,18 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
                List modelCheckItems, List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' is null.");
+    throw LdtException(ErrorType::kLogic, "R-sur", "invalid data: 'y' is null");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "'y' must be a 'numeric matrix'");
   y = as<NumericMatrix>(y);
 
   if (numTargets < 1)
-    throw std::logic_error("Number of targets must be positive.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "number of targets must be positive");
   if (numFixXPartitions < 0)
-    throw std::logic_error(
-        "Invalid 'numFixXPartitions'. It cannot be negative.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "'numFixXPartitions' cannot be negative");
 
   bool printMsg = false;
   auto options = SearchOptions();
@@ -29,7 +31,8 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
 
   if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
-      throw std::logic_error("'x' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "'x' must be a 'numeric matrix'");
     x = as<NumericMatrix>(x);
   }
 
@@ -45,8 +48,9 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
                              false /*append new x*/);
 
   if (numTargets > my.ColsCount)
-    throw std::logic_error("'numTargets' cannot be larger than the number of "
-                           "endogenous variables (i.e., columns of 'y').");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "'numTargets' cannot be larger than the number of "
+                       "endogenous variables (i.e., columns of 'y')");
   auto exoStart = my.ColsCount;
   int exoCount = mat.ColsCount - exoStart; // be careful with adding intercept
 
@@ -65,12 +69,15 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
   GetGroups(printMsg, yGroups_, yGroups, my.ColsCount, 0, false);
 
   if (searchSigMaxIter < 0)
-    throw std::logic_error("invalid 'searchSigMaxIter'.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "invalid 'searchSigMaxIter'");
   if (searchSigMaxProb < 0 || searchSigMaxProb >= 1)
-    throw std::logic_error("Invalid 'searchSigMaxProb'.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "invalid 'searchSigMaxProb'");
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
-    throw std::logic_error(
-        "'searchSigMaxProb' cannot be zero when search is enabled.");
+    throw LdtException(
+        ErrorType::kLogic, "R-sur",
+        "'searchSigMaxProb' cannot be zero when search is enabled");
   if (printMsg) {
     Rprintf("Search For Significant Coefficients:\n");
     if (searchSigMaxIter > 0) {
@@ -99,7 +106,8 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
   try {
     W = std::unique_ptr<double[]>(new double[model.Modelset.WorkSize]);
   } catch (...) {
-    throw std::logic_error("More memory is required for running the project.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "more memory is required for running the project");
   }
 
   auto alli = model.Modelset.GetExpectedNumberOfModels();
@@ -143,22 +151,26 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
               double searchSigMaxProb, SEXP restriction, SEXP newX,
               SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize,
               double simTrainRatio, int simTrainFixSize, int simSeed,
-              double simMaxConditionNumber, bool printMsg) {
+              double simMaxConditionNumber, SEXP simTransform, bool printMsg) {
 
   if (y == R_NilValue || x == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' or 'x' is null.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "invalid data: 'y' or 'x' is null");
 
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "'y' must be a 'numeric matrix'");
   if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "'x' must be a 'numeric matrix'");
 
   y = as<NumericMatrix>(y);
   x = as<NumericMatrix>(x);
 
   if (newX != R_NilValue && addIntercept) {
     if (is<NumericMatrix>(y) == false)
-      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "'newX' must be a 'numeric matrix'");
     NumericMatrix newX0 = as<NumericMatrix>(newX);
     newX = insert_intercept(
         newX0); // Combine function does not handle adding intercept to newX
@@ -183,7 +195,8 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   ldt::Matrix<double> restriction_;
   if (hasR) {
     if (is<NumericMatrix>(restriction) == false)
-      throw std::logic_error("'restriction' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "'restriction' must be a 'numeric matrix'");
     NumericMatrix rest0 = as<NumericMatrix>(restriction);
     restriction_.SetData(&rest0[0], rest0.nrow(), rest0.ncol());
     if (printMsg)
@@ -194,14 +207,17 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   // Significant Search
   searchSigMaxIter = std::max(searchSigMaxIter, 0);
   if (searchSigMaxIter > 0 && hasR)
-    throw std::logic_error("Invalid model. 'restriction' must be null when "
-                           "significant search is enabled. ");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "invalid model. 'restriction' must be null when "
+                       "significant search is enabled. ");
 
   if (searchSigMaxProb < 0 || searchSigMaxProb >= 1)
-    throw std::logic_error("Invalid 'searchSigMaxProb'. It must be in [0,1).");
+    throw LdtException(ErrorType::kLogic, "R-sur",
+                       "invalid 'searchSigMaxProb'. It must be in [0,1)");
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
-    throw std::logic_error(
-        "'searchSigMaxProb' cannot be zero when search is enabled.");
+    throw LdtException(
+        ErrorType::kLogic, "R-sur",
+        "'searchSigMaxProb' cannot be zero when search is enabled");
 
   std::unique_ptr<double[]> R_d;
   if (printMsg)
@@ -224,14 +240,19 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   }
 
   // Simulation
+  std::function<void(double &)> transform = nullptr;
   if (simFixSize > 0) {
+
+    // other options
     simTrainFixSize = std::max(0, simTrainFixSize);
     if (simTrainFixSize == 0) {
       if (simTrainRatio <= 0 || simTrainRatio >= 1)
-        throw std::logic_error("Invalid 'simTrainRatio'. It must be in (0,1).");
+        throw LdtException(ErrorType::kLogic, "R-sur",
+                           "invalid 'simTrainRatio'. It must be in (0,1)");
     }
     if (simSeed < 0)
-      throw std::logic_error("Invalid 'simSeed'. It cannot be negative.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "invalid 'simSeed'. It cannot be negative");
     if (printMsg)
       Rprintf("Number of Out-of-Sample Simulations=%i\n", simFixSize);
     if (printMsg) {
@@ -242,6 +263,47 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
       Rprintf("    - Maximum Condition Number=%.1e\n", simMaxConditionNumber);
       Rprintf("    - Seed=%i\n", simSeed);
     }
+
+    // transform
+    if (printMsg)
+      Rprintf("    - Metric Transform = ");
+
+    if (simTransform == R_NilValue) {
+      // do nothing
+      if (printMsg)
+        Rprintf("none");
+    } else if (is<Function>(simTransform)) {
+
+      auto F = as<Function>(simTransform);
+      transform = [&F](double &x) { x = as<double>(F(wrap(x))); };
+      if (printMsg)
+        Rprintf("Custom function");
+
+    } else if (TYPEOF(simTransform) == STRSXP) {
+
+      auto funcType = FromString_FunctionType(as<const char *>(simTransform));
+
+      if (printMsg)
+        Rprintf(ToString(funcType));
+
+      if (funcType == FunctionType::kId) { // for tests
+        transform = [](double &x) { };
+      } else if (funcType == FunctionType::kExp) {
+        transform = [](double &x) { x = std::exp(x); };
+      } else if (funcType == FunctionType::kPow2) {
+        transform = [](double &x) { x = x * x; };
+      } else {
+        throw LdtException(ErrorType::kLogic, "R-sur",
+                           "this type of transformation is not available");
+      }
+    } else {
+      throw LdtException(
+          ErrorType::kLogic, "R-sur",
+          "invalid 'transform'. It can be null, string or function");
+    }
+    if (printMsg)
+      Rprintf("\n");
+
   } else if (printMsg) {
     Rprintf("Simulation: (skipped).\n");
   }
@@ -251,7 +313,8 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
     if (is<List>(pcaOptionsX) == false)
-      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "'pcaOptionsX' must be a 'List'");
     List pcaOptionsX_ = as<List>(pcaOptionsX);
 
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptionsX0,
@@ -264,7 +327,8 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   bool hasPcaY = pcaOptionsY != R_NilValue;
   if (hasPcaY) {
     if (is<List>(pcaOptionsY) == false)
-      throw std::logic_error("'pcaOptionsY' must be a 'List'.");
+      throw LdtException(ErrorType::kLogic, "R-sur",
+                         "'pcaOptionsY' must be a 'List'");
     List pcaOptionsY_ = as<List>(pcaOptionsY);
     UpdatePcaOptions(printMsg, pcaOptionsY_, hasPcaY, pcaOptionsY0,
                      "Endogenous PCA options");
@@ -279,7 +343,7 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
   auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
   if (printMsg)
-    Rprintf("Starting Calculations ...");
+    Rprintf("Starting Calculations ..");
 
   model.Calculate(mat, m, S.get(), W.get(), hasR ? &restriction_ : nullptr,
                   searchSigMaxProb, hasNewX ? &mnewX : nullptr, nullptr);
@@ -329,11 +393,12 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
     auto W0 = std::unique_ptr<double[]>(new double[simModel.WorkSize]);
     S0 = std::unique_ptr<double[]>(new double[simModel.StorageSize]);
     if (printMsg)
-      Rprintf("Starting Simulation ...");
+      Rprintf("Starting Simulation ..");
     bool cancel = false; //??
     simModel.Calculate(mat, m, S0.get(), W0.get(),
                        hasR ? &restriction_ : nullptr, cancel, simFixSize,
-                       simSeed, searchSigMaxProb, simMaxConditionNumber);
+                       simSeed, searchSigMaxProb, simMaxConditionNumber,
+                       INT32_MAX, transform ? &transform : nullptr);
 
     if (printMsg)
       Rprintf("Simulation Finished.\n");
@@ -451,7 +516,10 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
               ? R_NilValue
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Projections.Means),
-                    _["vars"] = as_matrix(model.Projections.Variances)),
+                    _["vars"] =
+                        model.Projections.mDoVariance
+                            ? (SEXP)as_matrix(model.Projections.Variances)
+                            : (SEXP)R_NilValue),
       _["simulation"] =
           simFixSize == 0 ? R_NilValue
                           : (SEXP)List::create(

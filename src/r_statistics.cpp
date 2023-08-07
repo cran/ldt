@@ -27,11 +27,10 @@ SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
       auto type1 = FromString_ScoringType(metricName0.c_str());
       v = Scoring::ToWeight(type1, value0);
     } catch (...) {
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "R-statistics",
           std::string("An error occurred. Probably an invalid 'metricName': ") +
-          metricName0);
-
-      // Rethrow is not working ?!
+              metricName0);
     }
   }
   return wrap(v);
@@ -52,9 +51,10 @@ SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
       auto type1 = FromString_ScoringType(metricName0.c_str());
       v = Scoring::FromWeight(type1, value0);
     } catch (...) {
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "R-statistics",
           std::string("An error occurred. Probably an invalid 'metricName': ") +
-          metricName0);
+              metricName0);
     }
   }
   return wrap(v);
@@ -63,9 +63,11 @@ SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
 // [[Rcpp::export(.GetRoc)]]
 List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   if (y == R_NilValue || is<NumericVector>(y) == FALSE)
-    throw std::logic_error("'y' should be a numeric vector.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "'y' should be a numeric vector");
   if (scores == R_NilValue || is<NumericVector>(scores) == FALSE)
-    throw std::logic_error("'scores' should be a numeric vector.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "'scores' should be a numeric vector");
   NumericVector y0 = as<NumericVector>(y);
   auto N = y0.length();
   if (printMsg)
@@ -73,8 +75,8 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
 
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
-    throw std::logic_error(
-        "Unequal number of observations in 'y' and 'scores'.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "unequal number of observations in 'y' and 'scores'");
 
   auto my = ldt::Matrix<double>(&y0[0], N, 1);
   auto mscores = ldt::Matrix<double>(&scores0[0], N, 1);
@@ -84,11 +86,12 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   auto hasWeight = weights != R_NilValue;
   if (hasWeight) {
     if (is<NumericVector>(weights) == FALSE)
-      throw std::logic_error("'weights' should be a numeric vector.");
+      throw LdtException(ErrorType::kLogic, "R-statistics",
+                         "'weights' should be a numeric vector");
     weights0 = as<NumericVector>(weights);
     if (hasWeight && N != weights0.length())
-      throw std::logic_error(
-          "Unequal number of observations in 'y' and 'weights'.");
+      throw LdtException(ErrorType::kLogic, "R-statistics",
+                         "unequal number of observations in 'y' and 'weights'");
     mweights.SetData(&weights0[0]);
   }
   if (printMsg)
@@ -96,10 +99,12 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
 
   auto min_y = min(y0);
   if (min_y != 0)
-    throw std::logic_error("Invalid 'y' vector. Minimum must be 0.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "minimum in 'y' vector must be 0");
   auto max_y = max(y0);
   if (max_y != 1)
-    throw std::logic_error("Invalid 'y' vector. Maximum must be 1.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "maximum in 'y' vector must be 1");
 
   ldt::RocOptions options_;
   UpdateRocOptions(printMsg, options, options_, "Options: ");
@@ -161,7 +166,7 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
       mean, variance, skewness, excessKurtosis, type, optim, s1, s2);
 
   if (optim.Iter == optim.MaxIteration)
-    Rf_warning("Maximum number of iteration reached in GLD estimation.");
+    Rf_warning("Maximum number of iteration reached in GLD estimation");
 
   if (printMsg) {
     Rprintf("....\n");
@@ -182,7 +187,8 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
 NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
                           double L4) {
   if (is<NumericVector>(data) == false)
-    throw std::logic_error("'data' must be a 'numeric vector'.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "'data' must be a 'numeric vector'");
   NumericVector data0 = as<NumericVector>(data);
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
@@ -194,7 +200,8 @@ NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
 NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
                                  double L4) {
   if (is<NumericVector>(data) == false)
-    throw std::logic_error("'data' must be a 'numeric vector'.");
+    throw LdtException(ErrorType::kLogic, "R-statistics",
+                       "'data' must be a 'numeric vector'");
   NumericVector data0 = as<NumericVector>(data);
 
   NumericVector result(data0.length());
@@ -227,7 +234,8 @@ List GetPca(NumericMatrix x, bool center, bool scale, SEXP newX) {
   bool hasNewX = newX != R_NilValue;
   if (hasNewX) {
     if (is<NumericMatrix>(newX) == false)
-      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-statistics",
+                         "'newX' must be a 'numeric matrix'");
     NumericMatrix newX_ = as<NumericMatrix>(newX);
     mnewX.SetData(&newX_[0], newX_.nrow(), newX_.ncol());
   }

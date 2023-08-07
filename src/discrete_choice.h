@@ -54,7 +54,10 @@ inline DiscreteChoiceDistType FromString_DiscreteChoiceDistType(const char *v) {
     return DiscreteChoiceDistType::kLogit;
   else if (StartsWith("pro", v))
     return DiscreteChoiceDistType::kProbit;
-  throw std::logic_error("Invalid enum name: 'DiscreteChoiceDistType'.");
+
+  throw LdtException(
+      ErrorType::kLogic, "discrete choice",
+      format("invalid or not implemented link function (name={})", v));
 }
 
 /// @brief Model type in a discrete choice model
@@ -91,7 +94,9 @@ FromString_DiscreteChoiceModelType(const char *v) {
     return DiscreteChoiceModelType::kBinary;
   else if (StartsWith("ord", v))
     return DiscreteChoiceModelType::kOrdered;
-  throw std::logic_error("Invalid enum name: 'DiscreteChoiceModelType'.");
+
+  throw LdtException(ErrorType::kLogic, "discrete choice",
+                     format("invalid or not implemented model (name={})", v));
 }
 
 /// @brief A base class for discrete choice regression model

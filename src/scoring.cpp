@@ -36,91 +36,6 @@ Tv Scoring::GetScoreCrpsLogNormal(Tv y, Tv meanLog, Tv stdLog) {
           (dist2.GetCdf(y) + dist3.GetCdf(stdLog / c_sqrt2) - 1));
 }
 
-void Scoring::GetScore(ScoringType type, Matrix<Tv> &result, Matrix<Tv> &act,
-                       Matrix<Tv> &forc, Matrix<Tv> &err, Matrix<Tv> &std,
-                       Matrix<Tv> &last_m) {
-  Ti i, j;
-  switch (type) {
-  case ScoringType::kDirection:
-    Tv d, f, a, l;
-    for (i = 0; i < act.RowsCount; i++) {
-      for (j = 0; j < act.ColsCount; j++) {
-        d = 0;
-        f = forc.Get0(i, j);
-        a = act.Get0(i, j);
-        l = last_m.Data[i];
-
-        if (std::isnan(f))
-          d = NAN;
-        else if (a > l) {
-          if (f > l)
-            d = 1;
-        } else if (a < l) {
-          if (f < l)
-            d = 1;
-        } else if (a == l) {
-          if (f == l)
-            d = 1;
-        }
-        result.Set0(i, j, d);
-      }
-    }
-    break;
-
-  case ScoringType::kSign:
-
-    act.Apply0(
-        forc,
-        [](Tv a, Tv f) -> Tv {
-          if (std::isnan(f))
-            return NAN;
-          else if (a == 0 || f == 0)
-            return 0.5; // award of 0 is 0.5
-          else if ((a > 0 && f < 0) || (a < 0 && f > 0))
-            return 0.0;
-          return 1.0;
-        },
-        result);
-    break;
-
-  case ScoringType::kMae:
-    err.Apply0([](Tv x) -> Tv { return std::abs(x); }, result);
-    break;
-  case ScoringType::kMape:
-    for (i = 0; i < act.length(); i++) {
-      if (act.Data[i] == 0)
-        result.Data[i] = NAN; //??
-      else
-        result.Data[i] = std::abs(err.Data[i]) / std::abs(act.Data[i]);
-    }
-    break;
-
-  case ScoringType::kRmse:
-    err.Apply0([](Tv x) -> Tv { return x * x; },
-               result); // note that a sqrt is required for aggregating
-    break;
-  case ScoringType::kRmspe:
-    for (i = 0; i < act.length(); i++) {
-      if (act.Data[i] == 0)
-        result.Data[i] = NAN; //??
-      else
-        result.Data[i] =
-            err.Data[i] * err.Data[i] / (act.Data[i] * act.Data[i]);
-    }
-    break;
-
-  case ScoringType::kCrps:
-    err.Apply0(
-        std,
-        [](Tv e, Tv s) -> Tv { return Scoring::GetScoreCrpsNormal(e, 0, s); },
-        result);
-    break;
-
-  default:
-    throw std::logic_error("not implemented");
-  }
-}
-
 bool Scoring::RequiresVariance(const ScoringType &type) {
   switch (type) {
   case ScoringType::kMae:
@@ -149,7 +64,8 @@ Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric) {
     return 1 - metric;
 
   default:
-    throw std::logic_error("not implemented goodness-of-fit type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented goodness-of-fit type to weight");
   }
 }
 
@@ -165,7 +81,8 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
     return 1 - weight;
 
   default:
-    throw std::logic_error("not implemented goodness-of-fit type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented goodness-of-fit type to weight");
   }
 }
 
@@ -192,9 +109,10 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
     return 1 - metric;
 
   default:
-    throw std::logic_error(format("The given scoring type (value={}) is "
-                                  "whether invalid or not implemented.",
-                                  (int)type));
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       format("given scoring type (value={}) is "
+                              "whether invalid or not implemented.",
+                              (int)type));
   }
 }
 
@@ -221,6 +139,7 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
     return 1 - weight;
 
   default:
-    throw std::logic_error("not implemented scoring type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented scoring type to weight");
   }
 }

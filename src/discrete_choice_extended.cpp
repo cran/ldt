@@ -36,8 +36,9 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     Pca = PcaAnalysis(rows, numExo, numForecast, true, true, true, true);
     auto final_x_count = pPcaOptions->GetFinalCount(Pca);
     if (final_x_count >= numExo)
-      throw std::logic_error("Invalid PCA options. The requested number of PCs "
-                             "is larger than the number of variables.");
+      throw LdtException(ErrorType::kLogic, "dc-extended",
+                         "invalid PCA options. The requested number of PCs "
+                         "is larger than the number of variables");
     StorageSize += Pca.StorageSize;
     WorkSize = std::max(WorkSize, Pca.WorkSize);
 
@@ -93,7 +94,8 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
       mHasWeight, mCheckNan, mNumChoices, mDoDetails, numForecast, pPcaOptions,
       pCostMatrices, mWeightedEval);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent arguments.");
+    throw LdtException(ErrorType::kLogic, "dc-extended",
+                       "inconsistent arguments");
 
   Ti p = 0;
 
@@ -119,8 +121,9 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
   if (pPcaOptions) { // update useMat with PCs
     if (xForecast) {
       if (xForecast->ColsCount != X.ColsCount)
-        throw std::logic_error(
-            "Data and forecast data has different number of columns.");
+        throw LdtException(
+            ErrorType::kLogic, "dc-extended",
+            "data and forecast data has different number of columns");
       useForecast.SetData(&storage[p], numForecast, X.ColsCount);
       p += useForecast.length();
       useForecast.CopyFrom00(*xForecast);
@@ -180,7 +183,8 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
           auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(numObs));
       }
     } else {
-      throw std::logic_error("Not implemented discrete choice model type");
+      throw LdtException(ErrorType::kLogic, "dc-extended",
+                         "not implemented discrete choice model type");
     }
     auto auc = auc0.get();
     auc->Calculate(Y, Projections, mHasWeight && mWeightedEval ? &W : nullptr,

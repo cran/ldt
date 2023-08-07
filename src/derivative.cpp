@@ -51,9 +51,10 @@ void Derivative::CalculateFirst(const std::function<Tv(const Matrix<Tv> &)> &f,
 
   Ti n = x.length();
   if (n > mN)
-    throw std::logic_error("invalid size in 'first derivative'.");
+    throw LdtException(ErrorType::kLogic, "derivative",
+                       "invalid size in 'first derivative'");
   if (mDoFirstDerivative == false)
-    throw std::logic_error("invalid request");
+    throw LdtException(ErrorType::kLogic, "derivative", "invalid request");
 
   Result1.SetData(0, storage);
   Result1.Restructure(n, 1);
@@ -61,7 +62,7 @@ void Derivative::CalculateFirst(const std::function<Tv(const Matrix<Tv> &)> &f,
   // auto dir = _dir(x);
   // if (dir.empty() == false && dir.size() != n)
   //	throw std::invalid_argument("wrong number of directions. It must be
-  // equal to the size of x.");
+  // equal to the size of x");
 
   Ti pos = 0;
   auto x0 = Matrix<Tv>(&work[pos], x.RowsCount, x.ColsCount);
@@ -157,9 +158,10 @@ void Derivative::CalculateSecond(const std::function<Tv(const Matrix<Tv> &)> &f,
   Ti n = x.length();
 
   if (n > mN)
-    throw std::logic_error("invalid size in 'second derivative'.");
+    throw LdtException(ErrorType::kLogic, "derivative",
+                       "invalid size in 'second derivative'");
   if (mDoSecondDerivative == false)
-    throw std::logic_error("invalid request");
+    throw LdtException(ErrorType::kLogic, "derivative", "invalid request");
 
   Result2.SetData(0, storage);
   Result2.Restructure(n, n); // in case n is smaller
@@ -171,7 +173,7 @@ void Derivative::CalculateSecond(const std::function<Tv(const Matrix<Tv> &)> &f,
   // auto dir = _dir(x);
   // if (dir.empty() == false && dir.size() != n)
   //	throw std::invalid_argument("wrong number of directions. It must be
-  // equal to the size of x.");
+  // equal to the size of x");
 
   auto x0 = Matrix<Tv>(work, x.RowsCount, x.ColsCount);
   pos += n; // we should keep the dimensions

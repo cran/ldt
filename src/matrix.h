@@ -365,7 +365,7 @@ public:
   template <typename t_value1>
   static void Convert(std::vector<t_value1> &data, Matrix<Tw> &storage) {
     if (storage.length() != data->size())
-      throw std::logic_error("wrong size: storage");
+      throw LdtException(ErrorType::kLogic, "matrix.h", "invalid storage size");
     Ti i = 0;
     for (auto &d : *data) {
       storage.Data[i] = static_cast<Tw>(d);
@@ -378,7 +378,7 @@ public:
   /// @param storage a vector with equal size to save the results
   template <typename t_value1> void Convert(std::vector<t_value1> &storage) {
     if (storage.size() != length())
-      throw std::logic_error("wrong size: storage");
+      throw LdtException(ErrorType::kLogic, "matrix.h", "invalid storage size");
     for (Ti i = 0; i < length(); i++) {
       storage.at(i) = static_cast<Tw>(Data[i]);
     }
@@ -500,48 +500,48 @@ public:
 
   /// @brief Applies a function to each elements of the inner array
   /// @param func the function
-  void Apply_in(std::function<Tw(Tw)> func);
+  void Apply_in(std::function<Tw(Tw)> &func);
 
   /// @brief Applies a function the the elements the matrix, by using the
   /// element of another matrix
   /// @param B the second matrix
   /// @param func the function
-  void Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func);
+  void Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func);
 
   /// @brief Applies a function to the elements of a specific row
   /// @param i Row index
   /// @param func the function
-  void ApplyRow_in(Ti i, std::function<Tw(Tw)> func);
+  void ApplyRow_in(Ti i, std::function<Tw(Tw)> &func);
 
   /// @brief Applies a function to the elements of a specific column
   /// @param j Column index
   /// @param func the function
-  void ApplyColumn_in(Ti j, std::function<Tw(Tw)> func);
+  void ApplyColumn_in(Ti j, std::function<Tw(Tw)> &func);
 
   /// @brief Applies a function to each elements of the inner vector and stores
   /// the result in a new Matrix
   /// @param func The function
   /// @param storage A place to save the result
-  void Apply(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const;
+  void Apply(std::function<Tw(Tw)> &func, Matrix<Tw> &storage) const;
 
   /// @brief Similar to \ref Apply without checking bounds
   /// @param func The function
   /// @param storage  A place to save the result
-  void Apply0(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const;
+  void Apply0(std::function<Tw(Tw)> &func, Matrix<Tw> &storage) const;
 
   /// @brief Applies a function to each elements of this and a second matrix and
   /// saves the result in the third matrix
   /// @param B Second matrix
   /// @param func The function
   /// @param storage A place to save the result
-  void Apply(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+  void Apply(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
              Matrix<Tw> &storage) const;
 
   /// @brief Similar to \ref Apply without checking the bounds
   /// @param B Second matrix
   /// @param func The function
   /// @param storage A place to save the result
-  void Apply0(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+  void Apply0(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
               Matrix<Tw> &storage) const;
 
   // #pragma endregion

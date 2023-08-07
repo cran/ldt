@@ -34,7 +34,8 @@ void GroupData<linkMethod, distMethod, corrMethod>::Calculate(
   auto temp = GroupData<linkMethod, distMethod, corrMethod>(mat.RowsCount,
                                                             mat.ColsCount);
   if (temp.WorkSize > this->WorkSize)
-    throw std::logic_error("Inconsistent arguments");
+    throw LdtException(ErrorType::kLogic, "groupdata",
+                       "inconsistent arguments");
 
   // delete current storage and clear it
   for (auto a : this->Groups)
@@ -126,7 +127,7 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -145,11 +146,11 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     default:
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
     }
 
   case ldt::HClusterLinkage::kComplete:
@@ -188,7 +189,7 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -207,11 +208,11 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     default:
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
     }
 
   case ldt::HClusterLinkage::kAverageU:
@@ -251,7 +252,7 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -270,11 +271,11 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     default:
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
     }
 
   case ldt::HClusterLinkage::kAverageW:
@@ -314,7 +315,7 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -333,11 +334,11 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     default:
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
     }
 
   case ldt::HClusterLinkage::kWard:
@@ -375,7 +376,7 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -394,15 +395,15 @@ GroupDataBase::GetFromType(HClusterLinkage linkMethod,
                           CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
       }
 
     default:
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
     }
 
   default:
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "groupdata", "not implemented");
   }
 }
 

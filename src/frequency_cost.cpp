@@ -68,25 +68,26 @@ template <bool hasWeight>
 void FrequencyCost<hasWeight>::Check(const Matrix<Tv> frequencyCost,
                                      const Ti &numChoices) {
   if (frequencyCost.RowsCount <= 1)
-    throw std::logic_error(
-        "Invalid frequency cost matrix. I expect 2 or more rows.");
+    throw LdtException(
+        ErrorType::kLogic, "frequencycost",
+        "2 or more rows is expected in the frequency cost matrix");
   if (frequencyCost.ColsCount != numChoices + 1)
-    throw std::logic_error(
-        "Invalid frequency cost matrix. 'number of columns' must be = 'number "
-        "of "
-        "choices' + 1."); // number of columns must be 1+number of choices
+    throw LdtException(ErrorType::kLogic, "frequencycost",
+                       "number of columns in frequency cost matrix must be = "
+                       "'number of choices' + 1");
   Tv pre = 0;
   for (Ti i = 0; i < frequencyCost.RowsCount; i++) {
     auto d = frequencyCost.Get0(i, 0);
     if (d < 0 || d > 1)
-      throw std::logic_error("Invalid frequency cost matrix. Values in the "
-                             "first column must be in [0,1] "
-                             "range.");
+      throw LdtException(ErrorType::kLogic, "frequencycost",
+                         "values in the first column of frequency cost matrix "
+                         "must be in [0,1] range");
     if (i > 0) {
       if (d <= pre)
-        throw std::logic_error("Invalid frequency cost matrix. Values in the "
-                               "first column must be in "
-                               "ascending order.");
+        throw LdtException(ErrorType::kLogic, "frequencycost",
+                           "invalid frequency cost matrix. Values in the "
+                           "first column must be in "
+                           "ascending order");
     }
     pre = d;
   }

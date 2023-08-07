@@ -52,9 +52,9 @@ VarmaExtended::VarmaExtended(
 
   if (mHasPcaX) {
     if (Sizes.ExoCount == 0)
-      throw std::logic_error(
-          "Invalid operation. PCA for X is given but there is no exogenous "
-          "variable.");
+      throw LdtException(ErrorType::kLogic, "varma-extended",
+                         "PCA for X is given but there is no exogenous "
+                         "variable");
     pcaOptionsX->CheckValidity();
     pPcaOptionsX = pcaOptionsX;
     PcaX = PcaAnalysis(Sizes.ObsCount, Sizes.ExoCount, fHorizon, true, true,
@@ -71,7 +71,8 @@ VarmaExtended::VarmaExtended(
     Sizes.UpdateChanged(); // updata MAstart, etc.
 
   if (restriction == VarmaRestrictionType::kGeneral)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "varma-extended",
         "'VarmaRestrictionType::kGeneral' not implemented"); // esp. with
                                                              // PCA
   auto r = VarmaRestriction(Sizes, restriction);
@@ -94,14 +95,16 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
                               bool useCurrentEstime, Ti horizon, Ti sampleEnd,
                               double maxCn, double stdMultiplier) {
   if (horizon > mHorizon)
-    throw std::logic_error(
-        "Reserved maximum number of horizon is lower that the given horizon.");
+    throw LdtException(
+        ErrorType::kLogic, "varma-extended",
+        "reserved maximum number of horizon is lower that the given horizon");
 
   auto temp = VarmaExtended(Sizes, mRestriction, mCheckNan, mDoDetails,
                             mCalcVariance, horizon, pPcaOptionsY, pPcaOptionsX,
                             &Model.Result.Optim.Options);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent arguments (in VarmaExtended).");
+    throw LdtException(ErrorType::kLogic, "varma-extended",
+                       "inconsistent arguments (in VarmaExtended)");
 
   Ti p = 0;
 
@@ -110,9 +113,11 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
   p += Data.StorageSize;
   Data.Update(nullptr, storage);
   if (Data.HasMissingData)
-    throw std::logic_error("Missing data is found in VARMA data.");
+    throw LdtException(ErrorType::kLogic, "varma-extended",
+                       "missing data is found in VARMA data");
   if (Data.Start > Data.End)
-    throw std::logic_error("Data is not valid.");
+    throw LdtException(ErrorType::kLogic, "varma-extended",
+                       "data is not valid");
 
   auto estimStorage =
       &storage[p]; // let it be here, so that you do not override gamma when
@@ -138,8 +143,9 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
   if (Sizes.ExoCount > 0) { // change data for X
     if (horizon > 0) {
       if (data.RowsCount <= Data.End + horizon - sampleEnd)
-        throw std::logic_error(
-            "Not enough exogenous data point exists in the given horizon.");
+        throw LdtException(
+            ErrorType::kLogic, "varma-extended",
+            "not enough exogenous data point exists in the given horizon");
       useExoForecast.SetData(&storage[p], horizon, X.ColsCount);
       p += horizon * X.ColsCount;
       useExoForecast.SetSub(0, 0, data, Data.End + 1 - sampleEnd,
@@ -172,7 +178,8 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
 
   if (maxCn > 0) { // otherwise we do not check it
     if (Model.Result.cn > maxCn)
-      throw std::logic_error("maximum condition number reached");
+      throw LdtException(ErrorType::kLogic, "varma-extended",
+                         "maximum condition number reached");
   }
 
   // predict

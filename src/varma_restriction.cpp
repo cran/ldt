@@ -22,14 +22,16 @@ VarmaRestriction::VarmaRestriction(const VarmaSizes &sizes,
   } else if (type == VarmaRestrictionType::kGeneral) {
     q = sizes.NumParams - mGeneralRestrictionCount;
     if (mGeneralRestrictionCount <= 0)
-      throw std::logic_error("invalid number of restrictions");
+      throw LdtException(ErrorType::kLogic, "varma-restriction",
+                         "invalid number of restrictions");
   } else if (type == VarmaRestrictionType::kMaFinal) {
     if (sizes.EqsCount == 1 || sizes.HasMa == false)
       return;
     q = sizes.EqsCount * sizes.NumParamsEq -
         sizes.MaLength * (sizes.EqsCount * sizes.EqsCount - 1);
   } else
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "varma-restriction",
+                       "not implemented");
 
   IsRestricted = true;
   R = Matrix<Tv>(sizes.NumParams, q);
@@ -45,14 +47,16 @@ void VarmaRestriction::Calculate(Tv *storage,
 
   if (mType == VarmaRestrictionType::kGeneral) {
     if (!generalRestrictedIndexes)
-      throw std::logic_error("list of restriction indexes is missing");
+      throw LdtException(ErrorType::kLogic, "varma-restriction",
+                         "list of restriction indexes is missing");
     Ti r = (Ti)generalRestrictedIndexes->size();
     Ti q = params - r;
     R.Restructure0(params, q);
     R.SetData(0, storage);
     if (mGeneralRestrictionCount >
         r) // we can set larger restrictions, but not fewer
-      throw std::logic_error("inconsistent number of restrictions");
+      throw LdtException(ErrorType::kLogic, "varma-restriction",
+                         "inconsistent number of restrictions");
 
     Ti j = -1;
     for (Ti i = 0; i < params; i++) {
@@ -82,13 +86,15 @@ void VarmaRestriction::Calculate(Tv *storage,
         break;
     }
   } else
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "varma-restriction",
+                       "not implemented");
 }
 
 Ti VarmaRestriction::GetNumRestrictionInEq(Matrix<Tv> &R, Ti eqIndex,
                                            Ti eqCount) {
   // just a guess. check it
-  throw std::logic_error("Not yet tested and unreliable");
+  throw LdtException(ErrorType::kLogic, "varma-restriction",
+                     "not yet tested and unreliable");
 
   // empty rows indicate a restricted parameter
   auto m = (Ti)R.RowsCount / eqCount;

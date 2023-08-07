@@ -17,23 +17,29 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
     Ti costMatrixCount, bool doBrier, bool doAuc, bool doFrequencyTable,
     PcaAnalysisOptions *pcaOptions, bool weightedEval) {
   if (numChoices < 1)
-    throw std::logic_error("number of choices must be larger than 1");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "number of choices must be larger than 1");
   else if (numChoices == 2 && modelType == DiscreteChoiceModelType::kOrdered)
-    throw std::logic_error("use binary Model for 2 choices case");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "use binary Model for 2 choices case");
   else if (numChoices > 2 && modelType == DiscreteChoiceModelType::kBinary)
-    throw std::logic_error(
-        "Don't use binary Model when number of choices is larger than 2");
+    throw LdtException(
+        ErrorType::kLogic, "dc-sim",
+        "don't use binary Model when number of choices is larger than 2");
 
   if (costMatrixCount == 0 && doFrequencyTable == false && doAuc == false)
-    throw std::logic_error("No goal is set in discrete choice simulation.");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "no goal is set in discrete choice simulation");
 
   mTrainRatio = trainPercentage;
   mTrainFixSize = trainFixSize;
   if (mTrainFixSize < 0)
-    throw std::logic_error("invalid size of train sample (it is negative!)");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "invalid size of train sample (it is negative!)");
   else if (mTrainFixSize == 0) { // percentage is effective
     if (trainPercentage >= (Tv)1 || trainPercentage <= (Tv)0)
-      throw std::logic_error("training percentage is not valid");
+      throw LdtException(ErrorType::kLogic, "dc-sim",
+                         "training percentage is not valid");
   }
 
   mNumChoices = numChoices;
@@ -49,7 +55,8 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
               ? trainFixSize
               : static_cast<Ti>(std::round(rows * trainPercentage));
   if (N0 == 0 || N0 == rows)
-    throw std::logic_error("training percentage is not valid");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "training percentage is not valid");
   this->N1 = rows - N0;
   // Ti numExo = cols - (hasWeight ? 2 : 1);
 
@@ -99,8 +106,9 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
         mWeightedEval);
     if (temp.WorkSize > this->WorkSize || temp.WorkSizeI > this->WorkSizeI ||
         temp.StorageSize > this->StorageSize)
-      throw std::logic_error(
-          "inconsistent arguments in discrete choice simulation.");
+      throw LdtException(
+          ErrorType::kLogic, "dc-sim",
+          "inconsistent arguments in discrete choice simulation");
   }
 
   Ti N0 = rows - this->N1;
@@ -125,7 +133,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   }
 
   if (modelType != DiscreteChoiceModelType::kBinary) {
-    throw std::logic_error("not implemented discrete choice model type.");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "not implemented discrete choice model type");
     // TODO: implement it
   }
 
@@ -135,7 +144,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   if (hasWeight && mWeightedEval) {
 
     if (modelType != DiscreteChoiceModelType::kBinary) {
-      throw std::logic_error("not implemented discrete choice model type.");
+      throw LdtException(ErrorType::kLogic, "dc-sim",
+                         "not implemented discrete choice model type");
     }
     if (aucOptions.Costs.Data) {
       auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(this->N1));
@@ -293,7 +303,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
         yc = static_cast<Ti>(yi);
         actProb = model.PredProbs.Get0(i, yc);
         if (std::isnan(actProb)) {
-          throw std::logic_error("probability is nan!");
+          throw LdtException(ErrorType::kLogic, "dc-sim", "probability is nan");
         }
         j = static_cast<Ti>(std::floor(actProb * 10)); // if actual=0.1 => j=1
         if (j == 10) // if actual = 0.1 = > j = 10
@@ -303,7 +313,8 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     }
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
-      throw std::logic_error("Model check failed: Minimum Valid Simulations");
+      throw LdtException(ErrorType::kLogic, "dc-sim",
+                         "model check: minimum valid simulations");
 
     this->ValidSimulationCount++;
   }
@@ -311,11 +322,13 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   if (cancel)
     return;
 
-  if (this->ValidSimulationCount == 0)
-    throw std::logic_error("no valid simulation is available");
-
   if (invalidCounts > maxInvalidSim)
-    throw std::logic_error("Model check failed: Minimum Valid Simulations");
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "model check: minimum valid simulations");
+
+  if (this->ValidSimulationCount == 0)
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "no valid simulation is available");
 
   for (i = 0; i < costCount; i++)
     this->CostRatios.Data[i] /= overall_count.Data[i];
@@ -351,7 +364,8 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
             weightedEval);
         break;
       default:
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "dc-sim",
             "not implemented (distribution type in discrete choice "
             "simulation)");
       }
@@ -373,13 +387,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
             weightedEval);
         break;
       default:
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "dc-sim",
             "not implemented (distribution type in discrete choice "
             "simulation)");
       }
       break;
     default:
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "dc-sim",
           "not implemented (Model type in discrete choice simulation)");
     }
 
@@ -403,7 +419,8 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
             weightedEval);
         break;
       default:
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "dc-sim",
             "not implemented (distribution type in discrete choice "
             "simulation)");
       }
@@ -425,13 +442,15 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
             weightedEval);
         break;
       default:
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "dc-sim",
             "not implemented (distribution type in discrete choice "
             "simulation)");
       }
       break;
     default:
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "dc-sim",
           "not implemented (Model type in discrete choice simulation)");
     }
   }

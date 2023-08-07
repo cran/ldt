@@ -21,7 +21,8 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
                int minExpectedX, int minExpectedW, int minExpectedNewX,
                bool appendNewX) {
   if (minExpectedY == 0 && minExpectedX == 0)
-    throw std::logic_error("Combining two null matrices is not implemented.");
+    throw LdtException(ErrorType::kLogic, "R-ldt",
+                       "combining two null matrices is not implemented");
 
   double *y_ = nullptr;
   double *x_ = nullptr;
@@ -31,20 +32,22 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
       newxCols = 0;
 
   if (minExpectedY > 0 && y == R_NilValue)
-    throw std::logic_error("Invalid 'y'. It is empty.");
+    throw LdtException(ErrorType::kLogic, "R-ldt", "'y' is empty");
   if (minExpectedX > 0 && x == R_NilValue)
-    throw std::logic_error("Invalid 'x'. It is empty.");
+    throw LdtException(ErrorType::kLogic, "R-ldt", "'x' is empty");
   if (minExpectedW > 0 && w == R_NilValue)
-    throw std::logic_error("Invalid 'w'. It is empty.");
+    throw LdtException(ErrorType::kLogic, "R-ldt", "'w' is empty");
 
   NumericMatrix y0;
   if (y != R_NilValue && is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-ldt",
+                       "'y' must be a 'numeric matrix'");
   else
     y0 = as<NumericMatrix>(y);
 
   if (y0.nrow() == 0 && y0.ncol() == 0)
-    throw std::logic_error("Invalid data: 'y' is empty.");
+    throw LdtException(ErrorType::kLogic, "R-ldt",
+                       "invalid data: 'y' is empty");
   y_ = &y0[0];
   yCols = y0.ncol();
   yRows = y0.nrow();
@@ -61,7 +64,8 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
 
   if (w != R_NilValue) {
     if (is<NumericMatrix>(w) == false)
-      throw std::logic_error("'w' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "'w' must be a 'numeric matrix'");
     auto w0 = as<NumericMatrix>(w);
     w_ = &w0[0];
     wRows = w0.nrow();
@@ -76,10 +80,12 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
 
   if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
-      throw std::logic_error("'x' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "'x' must be a 'numeric matrix'");
     NumericMatrix x0 = as<NumericMatrix>(x);
     if (x0.nrow() == 0 && x0.ncol() == 0)
-      throw std::logic_error("Invalid data: 'x' is empty.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "invalid data: 'x' is empty");
     x_ = &x0[0];
     xCols = x0.ncol();
     xRows = x0.nrow();
@@ -98,7 +104,8 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
     // handle new data if x exists
     if (newX != R_NilValue) {
       if (is<NumericMatrix>(newX) == false)
-        throw std::logic_error("'newX' must be a 'numeric matrix'.");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "'newX' must be a 'numeric matrix'");
       NumericMatrix newX0 = as<NumericMatrix>(newX);
 
       newX_ = &newX0[0];
@@ -109,26 +116,30 @@ CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
 
         Rcout << "Number of columns in:\n    - newX = " << newxCols
               << "\n    - x = " << (xCols + (int)addIntercept) << "\n";
-        throw std::logic_error("Invalid number of columns in 'newX'. It must "
-                               "be equal to the number of columns in 'x'.");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "invalid number of columns in 'newX'. It must "
+                           "be equal to the number of columns in 'x'");
       }
     }
 
     if (newxRows < minExpectedNewX) {
       Rcout << "Required number of new exogenous data = " << minExpectedNewX;
-      throw std::logic_error("There is not enough new exogenous data.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "there is not enough new exogenous data");
     }
   }
 
   if (y != R_NilValue && x != R_NilValue) {
     if (yRows != xRows)
-      throw std::logic_error(
-          "Invalid data. Different number of observations in 'x' and 'y'.");
+      throw LdtException(
+          ErrorType::kLogic, "R-ldt",
+          "invalid data. Different number of observations in 'x' and 'y'");
   }
   if (y != R_NilValue && w != R_NilValue) {
     if (yRows != wRows)
-      throw std::logic_error(
-          "Invalid data. Different number of observations in 'w' and 'y'.");
+      throw LdtException(
+          ErrorType::kLogic, "R-ldt",
+          "invalid data. Different number of observations in 'w' and 'y'");
   }
 
   mx.SetData(x_, xRows, xCols);
@@ -213,7 +224,8 @@ void GetSizes(bool printMsg, std::vector<int> &result, SEXP &sizes,
     result.push_back(1);
   else {
     if (is<IntegerVector>(sizes) == false)
-      throw std::logic_error("'sizes' must be an 'integer vector'.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "'sizes' must be an 'integer vector'");
     IntegerVector sizes_ = as<IntegerVector>(sizes);
     for (int i = 0; i < sizes_.length(); i++)
       result.push_back((sizes_[i]));
@@ -221,9 +233,10 @@ void GetSizes(bool printMsg, std::vector<int> &result, SEXP &sizes,
   if (result.size() == 0 ||
       *std::min_element(result.begin(), result.end()) < 1 ||
       *std::max_element(result.begin(), result.end()) > variableCount)
-    throw std::logic_error(
-        "Invalid sizes array. It cannot be empty and elements must larger than "
-        "1 and less than the number of variables.");
+    throw LdtException(
+        ErrorType::kLogic, "R-ldt",
+        "invalid sizes array. It cannot be empty and elements must larger than "
+        "1 and less than the number of variables");
 
   if (printMsg) {
     if (isX)
@@ -239,11 +252,13 @@ void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
 
   if (partitions != R_NilValue) {
     if (is<List>(partitions) == false)
-      throw std::logic_error("'partitions' must be a 'List'.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "'partitions' must be a 'List'");
     List partitions0 = as<List>(partitions);
     for (int i = 0; i < partitions0.length(); i++) {
       if (is<IntegerVector>(partitions0[i]) == false)
-        throw std::logic_error("'partitions[i]' must be an 'integer vector'.");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "'partitions[i]' must be an 'integer vector'");
       IntegerVector par_i = as<IntegerVector>(partitions0[i]);
       auto ar = std::vector<int>();
       for (int j = 0; j < par_i.length(); j++) {
@@ -264,9 +279,10 @@ void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
         Rcout << "Position Adjustment =" << adjustPos
               << "\nNumber of Variables = " << variableCount
               << "\nIndex of Element = " << pi << "\n";
-        throw std::logic_error(
-            "Invalid element in a partition. Elements cannot be larger than "
-            "the number of variables.");
+        throw LdtException(
+            ErrorType::kLogic, "R-ldt",
+            "invalid element in a partition. Elements cannot be larger than "
+            "the number of variables");
       }
     }
   }
@@ -292,11 +308,13 @@ void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
   if (groups != R_NilValue) {
 
     if (is<List>(groups) == false)
-      throw std::logic_error("'groups' must be a 'List'.");
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         "'groups' must be a 'List'");
     List groups0 = as<List>(groups);
     for (int i = 0; i < groups0.length(); i++) {
       if (is<IntegerVector>(groups0[i]) == false)
-        throw std::logic_error("'groups[i]' must be an 'integer vector'.");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "'groups[i]' must be an 'integer vector'");
       IntegerVector gro_i = as<IntegerVector>(groups0[i]);
       auto ar = std::vector<int>();
       for (int j = 0; j < gro_i.length(); j++) {
@@ -334,8 +352,9 @@ void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
         Rcout << "---------------\n";
         Rcout << "Position Adjustment = " << adjustPos << "\n";
         Rcout << "Element of a Groups = " << b << "\n";
-        throw std::logic_error("Invalid variable group. An element is negative "
-                               "or larger than the number of variables.");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "invalid variable group. An element is negative "
+                           "or larger than the number of variables");
       }
   }
 }
@@ -388,7 +407,8 @@ NumericMatrix as_matrix(ldt::Matrix<double> &mat,
       Rcout << "---------------\n";
       Rcout << "Number of Rows: " << mat.RowsCount << "\n";
       Rcout << "Row Names:" << VectorToCsv(*rowNames) << "\n";
-      throw std::logic_error(std::string("Invalid number of rows/row_names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of rows/row_names."));
     }
     rownames(res) = wrap(*rowNames);
   }
@@ -397,8 +417,8 @@ NumericMatrix as_matrix(ldt::Matrix<double> &mat,
       Rcout << "---------------\n";
       Rcout << "Number of Columns: " << mat.ColsCount << "\n";
       Rcout << "Column Names:" << VectorToCsv(*colNames) << "\n";
-      throw std::logic_error(
-          std::string("Invalid number of columns/col_names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of columns/col_names."));
     }
     colnames(res) = wrap(*colNames);
   }
@@ -411,7 +431,8 @@ NumericVector as_vector(ldt::Matrix<double> &vec,
   if (names) {
     if ((int)names->size() != vec.length()) {
       Rcout << "names:" << VectorToCsv(*names);
-      throw std::logic_error(std::string("Invalid number of elements/names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of elements/names."));
     }
     res.names() = wrap(*names);
   }
@@ -425,15 +446,16 @@ IntegerMatrix as_imatrix(ldt::Matrix<int> &mat,
   if (rowNames) {
     if ((int)rowNames->size() != mat.RowsCount) {
       Rcout << "Row names:" << VectorToCsv(*rowNames);
-      throw std::logic_error(std::string("Invalid number of rows/row_names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of rows/row_names."));
     }
     rownames(res) = wrap(*rowNames);
   }
   if (colNames) {
     if ((int)colNames->size() != mat.ColsCount) {
       Rcout << "Column names:" << VectorToCsv(*colNames);
-      throw std::logic_error(
-          std::string("Invalid number of columns/col_names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of columns/col_names."));
     }
     colnames(res) = wrap(*colNames);
   }
@@ -446,7 +468,8 @@ IntegerVector as_ivector(ldt::Matrix<int> &vec,
   if (names) {
     if ((int)names->size() != vec.length()) {
       Rcout << "names:" << VectorToCsv(*names);
-      throw std::logic_error(std::string("Invalid number of elements/names."));
+      throw LdtException(ErrorType::kLogic, "R-ldt",
+                         std::string("invalid number of elements/names."));
     }
     res.names() = wrap(*names);
   }
@@ -562,7 +585,7 @@ void ReportProgress(bool printMsg, int reportInterval, ModelSet &model,
   }
 
   if (options.RequestCancel)
-    throw std::logic_error("Calculations is canceled.");
+    throw LdtException(ErrorType::kLogic, "R-ldt", "calculations is canceled");
   else if (printMsg)
     Rprintf("Calculations Ended.\n");
 }
@@ -744,7 +767,7 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
                       _["failedCount"] = wrap(fcount),
                       _["failedDetails"] = wrap(failDetails));
   if (fcount > 0)
-    warning("Error occurred in the search process. See 'result$counts'.");
+    warning("Error occurred in the search process. See 'result$counts'");
 
   for (auto eIndex = 0; eIndex < searchItems.LengthEvals; eIndex++) {
 
@@ -824,7 +847,8 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
         L_i_t[2] = R_NilValue;
 
       if (searchItems.Length2 > 0) {
-        throw std::logic_error("not implemented: length2>0");
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "not implemented: length2>0");
       }
     }
     L_i.names() = L_i_names;
@@ -976,7 +1000,8 @@ void UpdateSearchItems(bool printMsg, List &searchItems, SearchItems &items,
     items.KeepModelEvaluations = true;
   if (items.KeepModelEvaluations == false && items.Length1 == 0 &&
       items.Length2 == 0)
-    throw std::logic_error("No evaluation data is saved");
+    throw LdtException(ErrorType::kLogic, "R-ldt",
+                       "no evaluation data is saved");
 
   if (printMsg) {
 
@@ -1031,7 +1056,7 @@ void UpdateSearchItems(bool printMsg, List &searchItems, SearchItems &items,
   }
 
   if (hasGoal == false)
-    throw std::logic_error("No goal is set.");
+    throw LdtException(ErrorType::kLogic, "R-ldt", "no goal is set");
 }
 
 void UpdateSearchOptions(List &searchOptions, SearchOptions &options,
@@ -1125,9 +1150,10 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
   auto lmetricIn = metricsIn0.length();
 
   if (lmetricIn == 0 && lmetricOut == 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "R-ldt",
         "No metric is specified. Check the inputs (also, check the number "
-        "of simulations).");
+        "of simulations)");
   if (lmetricIn > 0) {
     for (auto i = 0; i < lmetricIn; i++) {
       auto a = as<std::string>(metricsIn0[i]);
@@ -1228,5 +1254,51 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
     metrics.WeightedEval = as<bool>(metricOptions["weightedEval"]);
     if (printMsg)
       Rprintf("    - Weighted = %s\n", metrics.WeightedEval ? "true" : "false");
+  }
+
+  if (lmetricOut > 0) {
+    // transform
+    auto transformR = metricOptions["transform"];
+
+    if (printMsg)
+      Rprintf("    - Metric Transform = ");
+
+    if (transformR == R_NilValue) {
+      // do nothing
+      if (printMsg)
+        Rprintf("none");
+    } else if (is<Function>(transformR)) {
+
+      auto F = as<Function>(transformR);
+      metrics.TransformForMetrics = [&F](double &x) {
+        x = as<double>(F(wrap(x)));
+      };
+      if (printMsg)
+        Rprintf("Custom function");
+
+    } else if (TYPEOF(transformR) == STRSXP) {
+
+      auto funcType = FromString_FunctionType(as<const char *>(transformR));
+
+      if (printMsg)
+        Rprintf(ToString(funcType));
+
+      if (funcType == FunctionType::kId) { // for tests
+        metrics.TransformForMetrics = [](double &x) { };
+      } else if (funcType == FunctionType::kExp) {
+        metrics.TransformForMetrics = [](double &x) { x = std::exp(x); };
+      } else if (funcType == FunctionType::kPow2) {
+        metrics.TransformForMetrics = [](double &x) { x = x * x; };
+      } else {
+        throw LdtException(ErrorType::kLogic, "R-ldt",
+                           "this type of transformation is not available");
+      }
+    } else {
+      throw LdtException(
+          ErrorType::kLogic, "R-ldt",
+          "invalid 'transform'. It can be null, string or function");
+    }
+    if (printMsg)
+      Rprintf("\n");
   }
 }

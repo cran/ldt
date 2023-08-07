@@ -28,7 +28,8 @@ template <class Tw> void Polynomial<Tw>::Data(Matrix<Tw> &a, bool trim) {
       if (a.Data[j - 1] != 0)
         break;
     if (j == 0)
-      throw std::logic_error("length of 'a' must be > 0.");
+      throw LdtException(ErrorType::kLogic, "poly",
+                         "length of 'a' must be > 0");
     Coefficients.Restructure0(j, 1);
   } else
     Coefficients.Restructure0(a.length(), (Ti)1);
@@ -62,7 +63,8 @@ void PolynomialMultiply<Tw>::Calculate(const Polynomial<Tw> &a,
   Ti b_n = b.GetDegree();
   auto temp = PolynomialMultiply<Tw>(a_n, b_n, maxLength);
   if (temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent arguments (in polynomial multiply)");
+    throw LdtException(ErrorType::kLogic, "poly",
+                       "inconsistent arguments (in polynomial multiply)");
   Ti length = temp.StorageSize;
 
   Result.Data(0, storage, length);
@@ -96,7 +98,8 @@ void PolynomialPower<Tw>::Calculate(const Polynomial<Tw> &a, Ti power,
   Ti a_n = a.GetDegree();
   auto temp = PolynomialPower<Tw>(power, a_n, maxLength);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
-    throw("Inconsistent arguments (in polynomial power)");
+    throw LdtException(ErrorType::kLogic, "poly",
+                       "inconsistent arguments (in polynomial power)");
   Ti length = temp.StorageSize;
   Result.Data(0, storage, length);
 

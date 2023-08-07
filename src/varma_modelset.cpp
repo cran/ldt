@@ -50,7 +50,8 @@ VarmaSearcher::VarmaSearcher(
     DModel = Varma(Sizes, true, true, true, optimOptions);
     if (checks.Prediction) {
       if (maxHorizonCheck <= 0)
-        throw std::logic_error("Invalid horizon in checking the predictions");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "invalid horizon in checking the predictions");
       FModel =
           VarmaForecast(Sizes,
                         // this->Sizes
@@ -61,8 +62,9 @@ VarmaSearcher::VarmaSearcher(
 
   if (metrics.SimFixSize > 0) { // we estimate a simulation model
     if (metrics.MetricsOut.size() == 0)
-      throw std::logic_error(
-          "Simulation is requested by there is no evaluation metric.");
+      throw LdtException(
+          ErrorType::kLogic, "varma-modelset",
+          "simulation is requested by there is no evaluation metric");
     Model = VarmaSimulation(Sizes, metrics.SimFixSize, metrics.Horizons,
                             metrics.MetricsOut,
                             optimOptions); // no PCA in search
@@ -169,13 +171,12 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     if (this->pChecks) {
       if (this->pChecks->MinObsCount > 0 && this->pChecks->MinObsCount > ycount)
-        throw std::logic_error(
-            "Model check failed: Minimum number of observations");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "model check: minimum no. obs");
       if (this->pChecks->MinDof > 0 &&
           this->pChecks->MinDof > ycount - X.RowsCount)
-        throw std::logic_error(
-            "Model check failed: Minimum number of degrees of "
-            "freedom");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "model check: minimum dof");
     }
 
     if (this->pOptions->RequestCancel)
@@ -190,11 +191,14 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     if (this->pChecks) {
       if (this->pChecks->MaxAic < DModel.Result.Aic)
-        throw std::logic_error("Model check failed: Maximum Aic");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "model check: maximum aic");
       if (this->pChecks->MaxSic < DModel.Result.Sic)
-        throw std::logic_error("Model check failed: Maximum Sic");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "model check: maximum sic");
       // if (pChecks->MinR2 > DModel.Result.R2)
-      //	throw std::logic_error("Model check failed: Maximum R2");
+      //	throw LdtException(ErrorType::kLogic, "varma-modelset", "model
+      // check failed: Maximum R2");
     }
 
     if (this->pChecks->Prediction) {
@@ -204,15 +208,17 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
         FModel.Calculate(DModel, hasExo ? &X : nullptr, &Y, S_p, W,
                          mMaxHorizonCheck, false);
       } catch (...) {
-        throw std::logic_error(
-            std::string("Forecast Error: (Exo. count =") +
-            std::to_string(X.ColsCount) + std::string("; Obs. count=") +
-            std::to_string(this->Sizes.T) + std::string(")"));
+        throw LdtException(
+            ErrorType::kLogic, "varma-modelset",
+            std::string("forecast Error: (Exo. count =") +
+                std::to_string(X.ColsCount) + std::string("; Obs. count=") +
+                std::to_string(this->Sizes.T) + std::string(")"));
         //    Varma::ModelToString(this->Sizes);
         // VectorToCsv(ExoIndexes.Data, ExoIndexes.length());
       }
       if (FModel.Forecast.Any(NAN))
-        throw std::logic_error("nan is produced in the prediction matrix");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "nan is produced in the prediction matrix");
 
       // check bounds
 
@@ -230,13 +236,13 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
             if (pForLowerBounds &&
                 FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) <
                     pForLowerBounds->Get0(i, j))
-              throw std::logic_error(
-                  "Model check failed: Prediction Lower Bound");
+              throw LdtException(ErrorType::kLogic, "varma-modelset",
+                                 "model check: prediction lower bound");
             if (pForUpperBounds &&
                 FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) >
                     pForUpperBounds->Get0(i, j))
-              throw std::logic_error(
-                  "Model check failed: Prediction Upper Bound");
+              throw LdtException(ErrorType::kLogic, "varma-modelset",
+                                 "model check: prediction upper bound");
           }
         }
       }
@@ -268,10 +274,14 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
         this->pChecks && this->pChecks->mCheckCN
             ? this->pChecks->MaxConditionNumber
             : INFINITY,
-        StdMultiplier, false, count0 - this->pChecks->MinOutSim);
+        StdMultiplier, false, count0 - this->pChecks->MinOutSim,
+        this->pMetrics->TransformForMetrics
+            ? &(this->pMetrics->TransformForMetrics)
+            : nullptr);
 
     if (Model.ValidCounts == 0)
-      throw std::logic_error("Number of valid simulations is 0.");
+      throw LdtException(ErrorType::kLogic, "varma-modelset",
+                         "number of valid simulations is 0");
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)targetPositions.size(); t++) {
@@ -339,7 +349,8 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
              t++) { // length1 is the max horizon
 
           if (t + Model.Forecast.StartIndex >= FModel.Forecast.ColsCount)
-            throw std::logic_error("Not enough number of forecasts.");
+            throw LdtException(ErrorType::kLogic, "varma-modelset",
+                               "not enough number of forecasts");
 
           auto ek = new EstimationKeep(
               weight, &ExoIndexes, &Params, &this->CurrentIndices,
@@ -390,28 +401,32 @@ VarmaModelset::VarmaModelset(
 
   // searchItems.Length1 is the forecast horizon in 'metrics.Type1'
   if (searchItems.Length1 > 0 && checks.Prediction == false)
-    throw std::logic_error(
-        "Length1 is the forecast horizon. Set 'checks.Prediction=true' when "
-        "it is positive.");
+    throw LdtException(
+        ErrorType::kLogic, "varma-modelset",
+        "'Length1' is the forecast horizon. Set 'checks.Prediction=true' when "
+        "it is positive");
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
     for (auto &a : b) {
       if (a > searchItems.LengthDependents)
-        throw std::logic_error(
-            "Invalid endogenous group element (it is larger than the number "
-            "of available endogenous variables).");
+        throw LdtException(
+            ErrorType::kLogic, "varma-modelset",
+            "invalid endogenous group element (it is larger than the number "
+            "of available endogenous variables)");
       if (a < 0)
-        throw std::logic_error(
-            "Invalid exogenous group element (it is negative).");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "invalid exogenous group element (it is negative)");
     }
   }
 
   if (varmaMaxParameters6.size() != 6)
-    throw std::logic_error("length of varma parameters must be 6");
+    throw LdtException(ErrorType::kLogic, "varma-modelset",
+                       "length of varma parameters must be 6");
   for (auto i : varmaMaxParameters6)
     if (i < 0)
-      throw std::logic_error("invalid varma parameter");
+      throw LdtException(ErrorType::kLogic, "varma-modelset",
+                         "invalid varma parameter");
   if (seasonCount < 2) {
     varmaMaxParameters6.at(3) = 0;
     varmaMaxParameters6.at(4) = 0;
@@ -428,10 +443,12 @@ VarmaModelset::VarmaModelset(
   bool hasBounds = checks.PredictionBoundMultiplier > 0;
   if (metrics.MetricsOut.size() != 0) {
     if (hasBounds && checks.Prediction == false)
-      throw std::logic_error(
-          "Forecast bounds are given but 'forecast check' is false.");
+      throw LdtException(
+          ErrorType::kLogic, "varma-modelset",
+          "forecast bounds are given but 'forecast check' is false");
     if (checks.PredictionBoundMultiplier < 0)
-      throw std::logic_error("invalid forecast bound multiplier");
+      throw LdtException(ErrorType::kLogic, "varma-modelset",
+                         "invalid forecast bound multiplier");
     else { // create matrixes
       ForecastLowers = Matrix<Tv>(
           new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
@@ -458,9 +475,10 @@ VarmaModelset::VarmaModelset(
 
   for (auto const &s : sizes) {
     if (s <= 0)
-      throw std::logic_error(
-          "Invalid model size (zero or negative). Make sure array is "
-          "initialized properly.");
+      throw LdtException(
+          ErrorType::kLogic, "varma-modelset",
+          "invalid model size (zero or negative). Make sure array is "
+          "initialized properly");
 
     for (auto p = 0; p <= varmaMaxParameters6.at(0); p++) {
       for (auto d = 0; d <= varmaMaxParameters6.at(1); d++) {

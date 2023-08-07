@@ -425,6 +425,7 @@ CheckModelCheckItems <- function(O){
 #' @param seed A seed for the random number generator. Use zero for a random value. It can be negative to get reproducible results between the \code{search.?} function and the \code{estim.?} function.
 #' @param horizons An array of integers representing the prediction horizons to be used in out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
 #' @param weightedEval If \code{TRUE}, weights are used in evaluating discrete-choice models.
+#' @param transform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
 #'
 #' @details
 #' The following list describe the details of calculating the metrics:
@@ -500,14 +501,16 @@ CheckModelCheckItems <- function(O){
 #'
 #' @export
 get.options.metric <- function(typesIn = character(0), typesOut = character(0),
-                                simFixSize = 10, trainRatio = 0.75,
-                                trainFixSize = 0, seed = 0,
-                                horizons = c(1L), weightedEval = FALSE){
+                               simFixSize = 10, trainRatio = 0.75,
+                               trainFixSize = 0, seed = 0,
+                               horizons = c(1L), weightedEval = FALSE,
+                               transform = NULL){
   O = list(
     typesIn = typesIn, typesOut = typesOut,
     simFixSize = simFixSize, trainRatio = trainRatio,
     trainFixSize = trainFixSize, seed = seed,
-    horizons = horizons, weightedEval = weightedEval)
+    horizons = horizons, weightedEval = weightedEval,
+    transform = transform)
   O = CheckmetricOptions(O)
   O
 }
@@ -529,6 +532,9 @@ CheckmetricOptions <- function(O){
     O$trainRatio = as.numeric(O$trainRatio)
     O$trainFixSize = as.integer(O$trainFixSize)
     O$seed = as.numeric(O$seed)
+
+    if (is.null(O$transform) == FALSE && is.character(O$transform) == FALSE && is.function(O$transform) == FALSE)
+      stop("Invalid transform option. It should be a character string or a function.")
 
     for (h in O$horizons) {
       if (h <= 0)

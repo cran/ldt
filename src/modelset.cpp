@@ -75,7 +75,8 @@ void ModelSet::Start(Tv *work, Ti *workI) {
       item->Start(w.get(), wI.get());
     }
 #else
-    throw std::logic_error("Parallel execution is not supported.");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "parallel execution is not supported");
 #endif
 
     /*std::for_each(std::execution::par, pSearchers->begin(), pSearchers->end(),
@@ -159,7 +160,8 @@ void ModelSet::CombineAll(Ti index1, Ti index2, Ti index3,
                           const std::vector<SearcherSummary *> &summaries,
                           std::vector<EstimationKeep *> &result) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   for (auto &s : summaries) {
     if (s->Index1 == index1 && s->Index2 == index2 && s->Index3 == index3) {
@@ -174,7 +176,8 @@ void ModelSet::CombineBests(Ti index1, Ti index2, Ti index3,
                             const std::vector<SearcherSummary *> &summaries,
                             std::vector<EstimationKeep *> &result) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   auto k = summaries.at(0)->pItems->KeepBestCount;
   if (k <= 0)
@@ -205,7 +208,8 @@ void ModelSet::CombineInclusionWeights(
     const std::vector<SearcherSummary *> &summaries,
     RunningMoments<1, true, false, Tv> &result) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   result.Reset();
 
@@ -220,7 +224,8 @@ void ModelSet::CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
                             const std::vector<SearcherSummary *> &summaries,
                             RunningMoments<1, true, true, Tv> &result) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   result.Reset();
 
@@ -235,7 +240,8 @@ void ModelSet::CombineExtremeBounds(
     Ti index1, Ti index2, Ti index3,
     const std::vector<SearcherSummary *> &summaries, double &min, double &max) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   min = std::numeric_limits<Tv>::max();
   max = std::numeric_limits<Tv>::min();
@@ -254,7 +260,8 @@ void ModelSet::CombineMixture(Ti index1, Ti index2, Ti index3,
                               const std::vector<SearcherSummary *> &summaries,
                               RunningMoments<4, true, true, Tv> &result) {
   if (summaries.size() == 0)
-    throw std::logic_error("List of search summaries is empty!");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "list of search summaries is empty!");
 
   result.Reset();
   for (auto &s : summaries) {

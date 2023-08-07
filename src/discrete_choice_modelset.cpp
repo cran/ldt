@@ -156,12 +156,12 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
 
     if (this->pChecks) {
       if (this->pChecks->MinObsCount > 0 && this->pChecks->MinObsCount > count)
-        throw std::logic_error(
-            "Model check failed: Minimum number of observations");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: minimum no. obs");
       if (this->pChecks->MinDof > 0 &&
           this->pChecks->MinDof > count - numExo - this->mNumChoices - 2)
-        throw std::logic_error(
-            "Model check failed: Minimum number of degrees of freedom");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: minimum dof");
     }
 
     if (this->pOptions->RequestCancel)
@@ -176,14 +176,18 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     if (this->pChecks) {
       if (pChecks->mCheckCN_all &&
           this->DModel.condition_number > pChecks->MaxConditionNumber)
-        throw std::logic_error("Model check failed: Maximum CN");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: maximum cn");
 
       if (this->pChecks->MaxAic < this->DModel.Aic)
-        throw std::logic_error("Model check failed: Maximum Aic");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: maximum aic");
       if (this->pChecks->MaxSic < this->DModel.Sic)
-        throw std::logic_error("Model check failed: Maximum Sic");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: maximum sic");
       // if (pChecks->MinR2 > Model.r2)
-      //	throw std::logic_error("Model check failed: Maximum R2");
+      //	throw LdtException(ErrorType::kLogic, "dc-modelset", "model
+      // check failed: Maximum R2");
     }
   }
 
@@ -323,7 +327,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   }
 
   if (allNan)
-    throw std::logic_error("All weights are NaN");
+    throw LdtException(ErrorType::kLogic, "dc-modelset", "all weights are NaN");
 
   return "";
 }
@@ -395,7 +399,8 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   Ti r = 0;
   this->mNumChoices = (Ti)(source.MaximumInColumn(0, r) + 1);
   if (this->mNumChoices < 2)
-    throw std::logic_error("Invalid number of choices");
+    throw LdtException(ErrorType::kLogic, "dc-modelset",
+                       "invalid number of choices");
   searchItems.LengthTargets = 1;
   searchItems.LengthDependents = 1;
   searchItems.LengthExogenouses =
@@ -403,7 +408,8 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   if (searchItems.LengthExogenouses <
       1) // =1, means the model has just one intercept. Let estimation process
          // throw error (if any)
-    throw std::logic_error("Invalid number of exogenous variables.");
+    throw LdtException(ErrorType::kLogic, "dc-modelset",
+                       "invalid number of exogenous variables");
 
   metrics.Update(true, false);
   checks.Update(metrics);
@@ -416,11 +422,12 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   if (searchItems.Length1 != 0 &&
       searchItems.Length1 !=
           (searchItems.LengthExogenouses + this->mNumChoices - 2))
-    throw std::logic_error(
-        "Inconsistent number of exogenous variables and thresholds.");
+    throw LdtException(
+        ErrorType::kLogic, "dc-modelset",
+        "inconsistent number of exogenous variables and thresholds");
   if (searchItems.Length1 != 0 && checks.Estimation == false)
-    throw std::logic_error(
-        "Parameters are needed. Set 'checks.Estimation = true'.");
+    throw LdtException(ErrorType::kLogic, "dc-modelset",
+                       "parameters are needed. Set 'checks.Estimation = true'");
 
   this->pItems = &searchItems;
 
@@ -433,23 +440,26 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     if (source.EqualsValueColumn(2, 1, 0, false, true) ==
         false) // third column must be intercept. ignore NANs, because I will
                // deal with them later
-      throw std::logic_error("Third column of data is not intercept.");
+      throw LdtException(ErrorType::kLogic, "dc-modelset",
+                         "third column of data is not intercept");
   } else if constexpr (true) {
     if (source.EqualsValueColumn(1, 1, 0, false, true) ==
         false) // in non-weighted case, second column must be intercept
-      throw std::logic_error("Second column of data is not intercept.");
+      throw LdtException(ErrorType::kLogic, "dc-modelset",
+                         "second column of data is not intercept");
   }
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMaps) {
     for (auto &a : b) {
       if (a > searchItems.LengthExogenouses)
-        throw std::logic_error(
-            "Invalid exogenous group element (it is larger than the number "
-            "of available variables).");
+        throw LdtException(
+            ErrorType::kLogic, "dc-modelset",
+            "invalid exogenous group element (it is larger than the number "
+            "of available variables)");
       if (a < 0)
-        throw std::logic_error(
-            "Invalid exogenous group element (it is negative).");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "invalid exogenous group element (it is negative)");
     }
   }
 
@@ -457,15 +467,17 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   if (metrics.mIndexOfCostMatrixIn == -1 &&
       metrics.mIndexOfCostMatrixOut == -1) {
     if (costMatrixes.size() > 0)
-      throw std::logic_error("There is no frequency cost metric and yet "
-                             "frequency cost matrix list is not "
-                             "empty!");
+      throw LdtException(ErrorType::kLogic, "dc-modelset",
+                         "There is no frequency cost metric and yet "
+                         "frequency cost matrix list is not "
+                         "empty!");
   } else if (metrics.mIndexOfCostMatrixIn != -1 ||
              metrics.mIndexOfCostMatrixOut != -1) {
     if (costMatrixes.size() == 0)
-      throw std::logic_error("Frequency cost metrics are given, "
-                             "however frequency cost matrix list is "
-                             "empty!");
+      throw LdtException(ErrorType::kLogic, "dc-modelset",
+                         "Frequency cost metrics are given, "
+                         "however frequency cost matrix list is "
+                         "empty!");
     for (auto const &table : costMatrixes) {
       FrequencyCost<hasWeight>::Check(table, this->mNumChoices);
     }
@@ -474,9 +486,10 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   Ti co = 0;
   for (auto const s : sizes) {
     if (s <= 0)
-      throw std::logic_error(
-          "Invalid model size (zero or negative). Make sure array is "
-          "initialized properly.");
+      throw LdtException(
+          ErrorType::kLogic, "dc-modelset",
+          "invalid model size (zero or negative). Make sure array is "
+          "initialized properly");
     co++;
     auto seed = metrics.Seed == (unsigned int)0
                     ? 0

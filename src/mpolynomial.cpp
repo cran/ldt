@@ -14,7 +14,7 @@
 
 using namespace ldt;
 
-//#pragma region Polynomial
+// #pragma region Polynomial
 
 PolynomialM::PolynomialM() { Coefficients = std::vector<Matrix<Tv> *>(); }
 
@@ -37,7 +37,7 @@ void PolynomialM::Data(std::vector<Matrix<Tv> *> &a, bool trim) {
       }
   }
   if (j == 0)
-    throw std::logic_error("length of 'a' must be > 0.");
+    throw LdtException(ErrorType::kLogic, "mpoly", "length of 'a' must be > 0");
   j--;
   for (int i = 0; i < j + 1; i++)
     Coefficients.push_back(a.at(i));
@@ -60,9 +60,9 @@ bool PolynomialM::IsMonic() const {
   return Matrix<Tv>::IsDiagonal(*Coefficients.at(GetDegree()));
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Multiply
+// #pragma region Multiply
 
 PolynomialMMultiply::PolynomialMMultiply(Ti size, Ti degree1, Ti degree2,
                                          Ti maxLength) {
@@ -79,7 +79,8 @@ void PolynomialMMultiply::Calculate(const PolynomialM &a, const PolynomialM &b,
 
   auto temp = PolynomialMMultiply(size, degree1, degree2, maxLength);
   if (temp.StorageSize > StorageSize)
-    throw std::logic_error("inconsistent arguments (in polynomialM multiply).");
+    throw LdtException(ErrorType::kLogic, "mpoly",
+                       "inconsistent arguments (in polynomialM multiply)");
   auto length = std::min(degree1 + degree2 + 1, maxLength);
 
   Result.Data(length - 1, size, storage);
@@ -107,7 +108,8 @@ void PolynomialMMultiply::Calculate(const PolynomialM &a,
 
   auto temp = PolynomialMMultiply(size, degree1, degree2, maxLength);
   if (temp.StorageSize > StorageSize)
-    throw std::logic_error("inconsistent arguments (in polynomialM multiply).");
+    throw LdtException(ErrorType::kLogic, "mpoly",
+                       "inconsistent arguments (in polynomialM multiply)");
   auto length = std::min(degree1 + degree2 + 1, maxLength);
 
   Result.Data(length - 1, size, storage);
@@ -125,9 +127,9 @@ void PolynomialMMultiply::Calculate(const PolynomialM &a,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Inverse
+// #pragma region Inverse
 
 PolynomialMInvert::PolynomialMInvert(Ti size, Ti degree, Ti maxLength) {
   StorageSize = maxLength * size * size;
@@ -142,14 +144,15 @@ void PolynomialMInvert::Calculate(const PolynomialM &a, Tv *storage, Tv *work,
   Ti degree = a.GetDegree();
   auto temp = PolynomialMInvert(size, degree, maxLength);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
-    throw std::logic_error("inconsistent arguments (in polynomialM invert).");
+    throw LdtException(ErrorType::kLogic, "mpoly",
+                       "inconsistent arguments (in polynomialM invert)");
 
   Result.Data(maxLength - 1, size, storage);
 
   try {
     a.Coefficients.at(0)->Inv(*Result.Coefficients.at(0));
   } catch (...) {
-    throw std::logic_error("A0 is not invertible.");
+    throw LdtException(ErrorType::kLogic, "mpoly", "'A0' is not invertible");
   }
 
   auto inv0 = Result.Coefficients.at(0);
@@ -178,4 +181,4 @@ void PolynomialMInvert::Calculate(const PolynomialM &a, Tv *storage, Tv *work,
   tempmats.clear();
 }
 
-//#pragma endregion
+// #pragma endregion

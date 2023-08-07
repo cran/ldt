@@ -13,12 +13,15 @@ DiscreteChoice<modelType, distType>::DiscreteChoice(Ti numObs, Ti numExo,
                                                     Ti numChoices,
                                                     bool doDetails) {
   if (numChoices < 1)
-    throw std::logic_error("number of choices must be larger than 1");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "number of choices must be larger than 1");
   else if (numChoices == 2 && modelType == DiscreteChoiceModelType::kOrdered)
-    throw std::logic_error("use binary model for 2 choices case");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "use binary model for 2 choices case");
   else if (numChoices > 2 && modelType == DiscreteChoiceModelType::kBinary)
-    throw std::logic_error(
-        "Don't use binary model when number of choices is larger than 2");
+    throw LdtException(
+        ErrorType::kLogic, "discrete-choice",
+        "don't use binary model when number of choices is larger than 2");
 
   this->mDoDetails = doDetails;
   Ti k = numExo + numChoices -
@@ -54,9 +57,11 @@ void DiscreteChoice<modelType, distType>::Calculate(
   // auto n = y.length();
 
   if (x.RowsCount != numObs)
-    throw std::logic_error("length of y is different from rows of x");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "length of y is different from rows of x");
   if (w && w->RowsCount != numObs)
-    throw std::logic_error("length of y is different from rows of x");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "length of y is different from rows of x");
 
   if constexpr (modelType == DiscreteChoiceModelType::kBinary) {
     numChoices = 2;
@@ -68,14 +73,16 @@ void DiscreteChoice<modelType, distType>::Calculate(
     } else
       this->NumCutoff = numChoices - 1;
     if (this->NumCutoff <= 0)
-      throw std::logic_error("Invalid dependent data");
+      throw LdtException(ErrorType::kLogic, "discrete-choice",
+                         "invalid dependent data");
   }
   this->NumChoices = numChoices;
 
   auto temp = DiscreteChoice<modelType, distType>(numObs, numExo, numChoices,
                                                   this->mDoDetails);
   if (temp.WorkSize > this->WorkSize || temp.StorageSize > this->StorageSize)
-    throw std::logic_error("inconsistent arguments in discrete choice.");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "inconsistent arguments in discrete choice");
 
   // set storage
   Ti k = numExo + this->NumCutoff - 1;
@@ -127,15 +134,17 @@ int get_constIndex(const Matrix<Tv> &x) {
 template <DiscreteChoiceModelType modelType, DiscreteChoiceDistType distType>
 void setestimdetails(DiscreteChoice<modelType, distType> &model) {
   model.BetaVar.GetDiag(model.BetaStd);
-  model.BetaStd.Apply_in([](Tv d) -> Tv { return std::sqrt(d); });
+  std::function<Tv(Tv)> f = [](Tv d) -> Tv { return std::sqrt(d); };
+  model.BetaStd.Apply_in(f);
 
   // z, prob
-  model.Beta.Apply0(
-      model.BetaStd, [](Tv c, Tv s) -> Tv { return c / s; }, model.BetaZ);
+  std::function<Tv(Tv, Tv)> h = [](Tv c, Tv s) -> Tv { return c / s; };
+  model.Beta.Apply0(model.BetaStd, h, model.BetaZ);
   auto zdist = Distribution<DistributionType::kNormal>((Tv)0, (Tv)1);
-  model.BetaZ.Apply0(
-      [&](Tv t) -> Tv { return (Tv)2 * ((Tv)1 - zdist.GetCdf(std::abs(t))); },
-      model.BetaProb);
+  std::function<Tv(Tv)> g = [&](Tv t) -> Tv {
+    return (Tv)2 * ((Tv)1 - zdist.GetCdf(std::abs(t)));
+  };
+  model.BetaZ.Apply0(g, model.BetaProb);
   // z? see [section 21.4.3]
 }
 
@@ -262,6 +271,11 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
   Ti k = x.ColsCount;
   // Ti k0 = k; // no cutoff
 
+  if (n < 1 || k < 1)
+    throw LdtException(
+        ErrorType::kLogic, "discrete-choice",
+        format("invalid data dimension in binary (n={}, k={}).", n, k));
+
   if (w) {
     for (Ti i = 0; i < n; i++) {
       auto j = static_cast<Ti>(y.Data[i]);
@@ -273,7 +287,8 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
   }
 
   if (this->Counts.Data[0] == (Tv)0 || this->Counts.Data[1] == (Tv)0)
-    throw std::logic_error("Dependent variable has no variance");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "dependent variable has no variance");
 
   // Initialize
   if (olsInitial || std::isnan(this->Beta.Data[0]))
@@ -401,8 +416,8 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
     };
 
   } else if constexpr (true) {
-    throw std::logic_error(
-        "not implemented (discerete choice distribution type).");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "not implemented (discrete choice distribution type)");
     ;
   }
 
@@ -493,8 +508,8 @@ void DiscreteChoice<modelType, distType>::EstimatePriorOrdered(
       mu.Data[i] = dist_normal_cdfInv(tmp0, (Tv)0, (Tv)1);
     }
   } else
-    throw std::logic_error(
-        "not implemented (discerete choice distribution type).");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "not implemented (discrete choice distribution type)");
 
   // estimate OLS
   if (w) { // multiply rows by sqrt(weight)
@@ -603,6 +618,11 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
   auto k0 = x.ColsCount;
   Ti k = k0 + this->NumCutoff - 1;
 
+  if (n < 1 || k < 1)
+    throw LdtException(
+        ErrorType::kLogic, "discrete-choice",
+        format("invalid data dimension in ordered (n={0}, k={1}).", n, k));
+
   // count and check variance of y
   if (w)
     for (Ti i = 0; i < n; i++) {
@@ -616,8 +636,9 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
     }
   for (Ti i = 0; i <= this->NumCutoff; i++)
     if (this->Counts.Data[i] < 1e-16)
-      throw std::logic_error(
-          "Number of data-points of at least one specific group is zero");
+      throw LdtException(
+          ErrorType::kLogic, "discrete-choice",
+          "number of data-points of at least one specific group is zero");
 
   // Initialize
   if (olsInitial || std::isnan(this->Beta.Data[0]))
@@ -1017,8 +1038,8 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
     };
 
   } else if constexpr (true) {
-    throw std::logic_error(
-        "not implemented (discerete choice distribution type).");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "not implemented (discrete choice distribution type)");
   }
 
   this->Optim.Minimize2(fun, gfun, hfun, this->Beta, vg.Data,
@@ -1076,8 +1097,8 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         result.Set0(i, 0, (Tv)1 - c);
       }
     } else if constexpr (true) {
-      throw std::logic_error(
-          "not implemented (discrete choice distribution type).");
+      throw LdtException(ErrorType::kLogic, "discrete-choice",
+                         "not implemented (discrete choice distribution type)");
     }
   } else if constexpr (modelType == DiscreteChoiceModelType::kOrdered) {
     Ti j;
@@ -1126,11 +1147,12 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         }
       }
     } else if constexpr (true) {
-      throw std::logic_error(
-          "not implemented (discrete choice distribution type).");
+      throw LdtException(ErrorType::kLogic, "discrete-choice",
+                         "not implemented (discrete choice distribution type)");
     }
   } else if constexpr (true) {
-    throw std::logic_error("not implemented (discrete choice model type).");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "not implemented (discrete choice model type)");
   }
 }
 
@@ -1154,7 +1176,8 @@ DiscreteChoiceBase::GetFromType(DiscreteChoiceModelType modelType,
           numObs, numExo, numChoices, doDetails);
       break;
     default:
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "discrete-choice",
           "not implemented (distribution type in discrete choice model)");
     }
     break;
@@ -1171,12 +1194,14 @@ DiscreteChoiceBase::GetFromType(DiscreteChoiceModelType modelType,
           numObs, numExo, numChoices, doDetails);
       break;
     default:
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "discrete-choice",
           "not implemented (distribution type in discrete choice model)");
     }
     break;
   default:
-    throw std::logic_error("not implemented (discrete choice model type)");
+    throw LdtException(ErrorType::kLogic, "discrete-choice",
+                       "not implemented (discrete choice model type)");
   }
   d->mModelType = modelType;
   d->mDistType = distType;

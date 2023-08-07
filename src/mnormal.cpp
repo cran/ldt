@@ -139,8 +139,9 @@ void NormalM::GetSample(Tv *storage, Tv *WORK, unsigned int seed) {
 
   int info = Variance.Chol0(false);
   if (info != 0)
-    throw std::logic_error(
-        "Invalid variance matrix. Cholesky decomposition failed.");
+    throw LdtException(
+        ErrorType::kLogic, "mnormal",
+        "Cholesky decomposition failed in calculating variance matrix");
 
   for (i = 0; i < n; i++) {
     for (j = 0; j < pM; j++)

@@ -40,10 +40,12 @@ void NelderMead::Minimize(
   // Check if starting point is within bounds and adjust if necessary
   for (int i = 0; i < n; i++) {
     if (std::isnan(start.Data[i]))
-      throw std::logic_error("A starting value is NAN.");
+      throw LdtException(ErrorType::kLogic, "nelder-mead",
+                         "a starting value is NAN");
     if (lower && upper && lower->Data[i] > upper->Data[i])
-      throw std::logic_error(
-          "Lower bound must be equal or smaller than the upper bound.");
+      throw LdtException(
+          ErrorType::kLogic, "nelder-mead",
+          "lower bound must be equal or smaller than the upper bound");
     if (lower && start.Data[i] < lower->Data[i]) {
       start.Data[i] = lower->Data[i];
     }

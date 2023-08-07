@@ -191,6 +191,11 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   auto f = Sizes.NumParamsEq;
   auto T = Sizes.T - sampleEnd;
 
+  if (T < 1 || g < 1 || q < 1)
+    throw LdtException(
+        ErrorType::kLogic, "varma",
+        format("invalid data dimension in VARMA (T={}, g={}, q={}).", T, g, q));
+
   if (R)
     q = R->ColsCount;
 
@@ -279,12 +284,13 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         Result.cn = sxx.Norm('1');
         info = sxx.Inv0();
         if (info != 0) {
-          throw std::logic_error("matrix singularity");
+          throw LdtException(ErrorType::kLogic, "varma", "matrix singularity");
           return;
         }
         Result.cn *= sxx.Norm('1');
         if (Result.cn > maxCondNum)
-          throw std::logic_error("Model check failed: Maximum CN");
+          throw LdtException(ErrorType::kLogic, "varma",
+                             "model check: maximum cn");
 
         Result.Xt.Dot0(sxx, sxxx);
         Result.y.Dot0(sxxx, Result.gamma);
@@ -325,13 +331,15 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.cn = sxx.Norm('1');
           info = sxx.Inv0();
           if (info != 0) {
-            throw std::logic_error("matrix singularity");
-            ; // Matrix<Tv> singularity
+            throw LdtException(ErrorType::kLogic, "varma",
+                               "matrix singularity");
+            // Matrix<Tv> singularity
             return;
           }
           Result.cn *= sxx.Norm('1');
           if (Result.cn > maxCondNum)
-            throw std::logic_error("Model check failed: Maximum CN");
+            throw LdtException(ErrorType::kLogic, "varma",
+                               "model check: maximum cn");
 
           Result.Xt.Dot0(sxx, sxxx);
           Result.y.Dot0(sxxx, Result.gamma);
@@ -356,12 +364,13 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         info = Result.gammavar.Inv0();
 
         if (info != 0) {
-          throw std::logic_error("matrix singularity");
+          throw LdtException(ErrorType::kLogic, "varma", "matrix singularity");
           return;
         }
         Result.cn *= Result.gammavar.Norm('1'); // TODO: is it valid?!
         if (Result.cn > maxCondNum)
-          throw std::logic_error("Model check failed: Maximum CN");
+          throw LdtException(ErrorType::kLogic, "varma",
+                             "model check: maximum cn");
 
         // TODO: variance of gamma is RsxxoIR and it might be wrong.
         // check it
@@ -503,19 +512,20 @@ void SetDetails(Varma &varma, const Matrix<Tv> *R) {
     varma.Result.gamma.CopyTo00(varma.Result.coef);
     varma.Result.gammavar.GetDiag(varma.Result.coefstd);
   }
-  varma.Result.coefstd.Apply_in([](Tv d) -> Tv { return std::sqrt(d); });
+  std::function<Tv(Tv)> f = [](Tv d) -> Tv { return std::sqrt(d); };
+  varma.Result.coefstd.Apply_in(f);
 
   // t, prob
   auto Tg = static_cast<Tv>(
       varma.Result.y.length()); // if adjusted, (varma.Result.y.RowsCount -
                                 // f) is degrees of freedom
   auto tdist = Distribution<DistributionType::kT>(Tg);
-  varma.Result.coef.Apply0(
-      varma.Result.coefstd, [](Tv c, Tv s) -> Tv { return c / s; },
-      varma.Result.coeft);
-  varma.Result.coeft.Apply0(
-      [&](Tv t) -> Tv { return 2 * (1 - tdist.GetCdf(std::abs(t))); },
-      varma.Result.coefprob);
+  std::function<Tv(Tv, Tv)> g = [](Tv c, Tv s) -> Tv { return c / s; };
+  varma.Result.coef.Apply0(varma.Result.coefstd, g, varma.Result.coeft);
+  std::function<Tv(Tv)> h = [&](Tv t) -> Tv {
+    return 2 * (1 - tdist.GetCdf(std::abs(t)));
+  };
+  varma.Result.coeft.Apply0(h, varma.Result.coefprob);
 }
 
 void CalculateGoodness(Varma &varma, Ti T, Ti g, Ti f, Tv max_vf) {

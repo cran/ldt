@@ -11,7 +11,8 @@ using namespace ldt;
 template <typename Tw>
 MatrixSvd<Tw>::MatrixSvd(Ti rows, Ti cols, char jobU, char jobVT) {
   if (cols <= 0 || rows <= 0)
-    throw std::logic_error("invalid size in 'svd'.");
+    throw LdtException(ErrorType::kLogic, "matrix-decomposition",
+                       "invalid size in 'svd'");
   mJobU = jobU;
   mJobVT = jobVT;
   auto mn = std::min(rows, cols);
@@ -38,7 +39,8 @@ void MatrixSvd<Tw>::Calculate(const Matrix<Tw> &mat, Tw *storage, Tw *work) {
 
   auto temp = MatrixSvd(mat.RowsCount, mat.ColsCount, mJobU, mJobVT);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
-    throw std::logic_error("inconsistent arguments in 'MatrixSvd'.");
+    throw LdtException(ErrorType::kLogic, "matrix-decomposition",
+                       "inconsistent arguments in 'MatrixSvd'");
   Calculate0(mat, storage, work);
 }
 
@@ -68,7 +70,7 @@ void MatrixSvd<Tw>::Calculate0(const Matrix<Tw> &mat, Tw *storage, Tw *work) {
   auto info = Matrix<Tw>::SVD0(copy_mat.Data, rows, cols, &work[rows * cols],
                                W_svd, U, S, VT, mJobU, mJobVT);
   if (info != 0)
-    throw std::logic_error("svd failed");
+    throw LdtException(ErrorType::kLogic, "matrix-decomposition", "svd failed");
 }
 
 template class ldt::MatrixSvd<Tv>;

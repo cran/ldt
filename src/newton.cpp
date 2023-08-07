@@ -85,7 +85,8 @@ wolfe_weak(const std::function<Tv(const Matrix<Tv> &)> &F,
   //        ↓ −∞
 
   if (Iteration == maxIterations && std::isinf(beta))
-    throw std::logic_error("Line search failed. f(x+td)->-inf");
+    throw LdtException(ErrorType::kLogic, "newton",
+                       "line search failed. f(x+td)->-inf");
 }
 
 void Newton::minimize(
@@ -122,7 +123,8 @@ void Newton::minimize(
     if (checkGtol) {
       gnorm = norm2(Gradient);
       if (std::isnan(gnorm) || std::isinf(gnorm))
-        throw std::logic_error("NAN or INf in Gradient/Value of function");
+        throw LdtException(ErrorType::kLogic, "newton",
+                           "NAN or INF in gradient/value of function");
       if (gnorm < TolGradient)
         break;
     }
@@ -132,9 +134,8 @@ void Newton::minimize(
     d.Multiply_in(-1.0);
     info = Hessian.SolvePos0(d, false);
     if (info != 0)
-      throw std::logic_error(
-          "Could not solve for the direction vector. It might be because "
-          "Hessian is not positive definite");
+      throw LdtException(ErrorType::kLogic, "newton",
+                         "solving for direction failed");
 
     if (UseLineSearch) {
       steplength = 1.0;
@@ -165,7 +166,7 @@ void Newton::Minimize(
   X = &x0;
   auto n = x0.length();
   if (n > mK)
-    throw std::logic_error("inconsistent arguments");
+    throw LdtException(ErrorType::kLogic, "newton", "inconsistent arguments");
 
   Gradient.SetData(storage, n, 1);
   Hessian.SetData(&storage[n], n, n);
@@ -181,7 +182,7 @@ void Newton::Minimize2(
   X = &x0;
   auto n = x0.length();
   if (n > mK)
-    throw std::logic_error("inconsistent arguments");
+    throw LdtException(ErrorType::kLogic, "newton", "inconsistent arguments");
 
   Gradient.SetData(storageG, n, 1);
   Hessian.SetData(storageH, n, n);

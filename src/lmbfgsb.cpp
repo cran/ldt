@@ -69,7 +69,8 @@ void LimitedMemoryBFGSB::Minimize00(
 
   Ti n = startPoint.length();
   if (n > mN)
-    throw std::logic_error("invalid size for 'lmbfgsb'.");
+    throw LdtException(ErrorType::kLogic, "lmbfgsb",
+                       "invalid size for 'lmbfgsb'");
 
   GradientVector.SetData(0, storage);
   GradientVector.Restructure0(n, 1);

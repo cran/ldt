@@ -26,18 +26,21 @@ void ROC<hasWeight, hasCost>::Calculate(const Matrix<Tv> &y,
         true; // we should normalize the points before using thresholds
     if (options.UpperThreshold < options.LowerThreshold ||
         options.UpperThreshold > 1 || options.LowerThreshold < 0)
-      throw std::logic_error("Invalid bounds in partial AUC.");
+      throw LdtException(ErrorType::kLogic, "roc",
+                         "invalid bounds in partial AUC");
   }
 
   if constexpr (hasCost) {
     if (!options.CostMatrix.Data || options.CostMatrix.RowsCount != 2 ||
         options.CostMatrix.ColsCount != 2)
-      throw std::logic_error("Missing or invalid cost matrix.");
+      throw LdtException(ErrorType::kLogic, "roc",
+                         "missing or invalid cost matrix");
   }
 
   Ti n = y.length();
   if (n == 0)
-    throw std::logic_error("zero number of observations in calculating ROC.");
+    throw LdtException(ErrorType::kLogic, "roc",
+                       "zero number of observations in calculating ROC");
 
   // first column must be the scores (i.e., probability of negative
   // observations) score=1 => It is definitely negative
@@ -79,12 +82,14 @@ void ROC<hasWeight, hasCost>::Calculate(const Matrix<Tv> &y,
       Tv xi = options.Costs.Data ? options.Costs.Data[ind] : 1;
       Tv b_tp = options.CostMatrix.Data[0] * xi - options.CostMatrix.Data[2];
       if (b_tp < 0)
-        throw std::logic_error("Invalid cost matrix: benefit of TP is "
-                               "negative. Check the first row.");
+        throw LdtException(ErrorType::kLogic, "roc",
+                           "invalid cost matrix: benefit of TP is "
+                           "negative. Check the first row");
       Tv c_fp = -(options.CostMatrix.Data[1] * xi - options.CostMatrix.Data[3]);
       if (c_fp < 0)
-        throw std::logic_error("Invalid cost matrix: cost of FP is negative. "
-                               "Check the second row.");
+        throw LdtException(ErrorType::kLogic, "roc",
+                           "invalid cost matrix: cost of FP is negative (check "
+                           "the second row)");
       if (isNeg)
         horiz += w * c_fp;
       else
@@ -113,7 +118,8 @@ void ROC<hasWeight, hasCost>::Calculate(const Matrix<Tv> &y,
     }
     if (isPartial) { // TODO: create a Bounded AUC class and move this logic
                      // to that class
-      // throw std::logic_error("Partial AUC is not implemented.");
+      // throw LdtException(ErrorType::kLogic, "roc", "partial AUC is not
+      // implemented");
       std::vector<std::tuple<Tv, Tv>> newPoints;
       Tv x, y, x0 = 0, y0 = 0, slope;
       for (auto &p : Points) {

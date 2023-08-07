@@ -98,13 +98,15 @@ VarmaSizes::VarmaSizes(Ti obsCount, Ti eqsCount, Ti exoCount, Ti arP, Ti arD,
 
   if (arP < 0 || arD < 0 || maD < 0 || maP < 0 || arQ < 0 || maQ < 0 ||
       seasonsCount < 0)
-    throw std::logic_error("negative parameters: (p,d,q)x(P,D,Q)_m");
+    throw LdtException(ErrorType::kLogic, "varma-sizes",
+                   "negative parameters: (p,d,q)x(P,D,Q)_m");
   if (seasonsCount == 0) {
     if (maP != 0 || maQ != 0 || maD != 0)
-      throw std::logic_error("invalid seasonal parameters");
+      throw LdtException(ErrorType::kLogic, "varma-sizes",
+                     "invalid seasonal parameters");
   }
   if (arP == 0 && arQ == 0 && maP == 0 && maQ == 0)
-    throw std::logic_error("all parameters zero");
+    throw LdtException(ErrorType::kLogic, "varma-sizes", "all parameters zero");
 
   ObsCount = obsCount;
   EqsCount = eqsCount;

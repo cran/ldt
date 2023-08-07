@@ -140,6 +140,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.options.metric()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
+#' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
 #' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @return A nested list with the following items:
@@ -178,7 +179,8 @@ estim.varma <- function(y, x = NULL, params = NULL,
                         pcaOptionsY = NULL, pcaOptionsX = NULL,
                         maxHorizon = 0, newX = NULL, simFixSize = 0,
                         simHorizons = NULL, simUsePreviousEstim = TRUE,
-                        simMaxConditionNumber = Inf, printMsg = FALSE){
+                        simMaxConditionNumber = Inf, simTransform = NULL,
+                        printMsg = FALSE){
 
   y = as.matrix(y)
   x = if (is.null(x)) NULL else as.matrix(x)
@@ -194,6 +196,9 @@ estim.varma <- function(y, x = NULL, params = NULL,
   simMaxConditionNumber = as.numeric(simMaxConditionNumber)
   printMsg = as.logical(printMsg)
 
+  if (is.null(simTransform) == FALSE && is.character(simTransform) == FALSE && is.function(simTransform) == FALSE)
+    stop("Invalid 'simTransform'. It should be a character string or a function.")
+
   if (is.null(lbfgsOptions))
     lbfgsOptions = get.options.lbfgs()
   else
@@ -208,7 +213,7 @@ estim.varma <- function(y, x = NULL, params = NULL,
                      lbfgsOptions, olsStdMultiplier,
                      pcaOptionsY, pcaOptionsX,
                      maxHorizon, newX, simFixSize, simHorizons,
-                     simUsePreviousEstim, simMaxConditionNumber, printMsg)
+                     simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg)
 
   # other information
 
@@ -257,6 +262,7 @@ GetEstim_varma <- function(searchRes, endoIndices,
                    simHorizons = searchRes$info$metricOptions$simHorizons,
                    simUsePreviousEstim = searchRes$info$simUsePreviousEstim,
                    simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
+                   simTransform = searchRes$info$metricOptions$transform,
                    printMsg = printMsg
   )
 

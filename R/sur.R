@@ -121,6 +121,7 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param simMaxConditionNumber A number for the maximum value for the condition number in the simulation.
+#' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
 #' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @return A nested list with the following items:
@@ -152,7 +153,8 @@ estim.sur <- function(y, x, addIntercept = TRUE,
                      pcaOptionsY = NULL, pcaOptionsX = NULL,
                      simFixSize = 0, simTrainFixSize = 0,
                      simTrainRatio = 0.75, simSeed = 0,
-                     simMaxConditionNumber = Inf, printMsg = FALSE){
+                     simMaxConditionNumber = Inf, simTransform = NULL,
+                     printMsg = FALSE){
   y = as.matrix(y)
   x = as.matrix(x)
   addIntercept = as.logical(addIntercept)
@@ -167,6 +169,9 @@ estim.sur <- function(y, x, addIntercept = TRUE,
   simMaxConditionNumber = as.numeric(simMaxConditionNumber)
   printMsg = as.logical(printMsg)
 
+  if (is.null(simTransform) == FALSE && is.character(simTransform) == FALSE && is.function(simTransform) == FALSE)
+    stop("Invalid 'simTransform'. It should be a character string or a function.")
+
   if (is.null(pcaOptionsY) == FALSE)
     pcaOptionsY = CheckPcaOptions(as.list(pcaOptionsY))
   if (is.null(pcaOptionsX) == FALSE)
@@ -177,7 +182,7 @@ estim.sur <- function(y, x, addIntercept = TRUE,
                    restriction, newX, pcaOptionsY, pcaOptionsX,
                    simFixSize, simTrainRatio,
                    simTrainFixSize, simSeed,
-                   simMaxConditionNumber, printMsg)
+                   simMaxConditionNumber, simTransform, printMsg)
 
   res$info$searchSigMaxIter = searchSigMaxIter
   res$info$addIntercept = addIntercept
@@ -216,6 +221,7 @@ GetEstim_sur <- function(searchRes, endoIndices,
     simTrainFixSize = searchRes$info$metricOptions$trainFixSize,
     simSeed = abs(searchRes$info$metricOptions$seed),
     simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
+    simTransform = searchRes$info$metricOptions$transform,
     printMsg = printMsg
   )
 
@@ -250,8 +256,13 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' @seealso [search.sur], [estim.sur]
 search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1), c(2)),
                                 countSteps = c(NA, 10),
-                        savePre = NULL, ...) {
-  Search_s("sur", x, xSizeSteps, countSteps, savePre, y = y, ...)
+                                savePre = NULL, ...) {
+
+  if (is.null(savePre) == FALSE && (is.character(savePre) == FALSE || length(savePre) > 1))
+    stop("'savePre' must be a character string.")
+
+  Search_s("sur", data = x, sizes = xSizeSteps, counts = countSteps,
+          savePre = savePre, y = y, ...)
 }
 
 

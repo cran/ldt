@@ -123,7 +123,8 @@ template <typename Tw> MatIterator<Tw> Matrix<Tw>::RowEnd(Ti row) {
 
 template <typename Tw> void Matrix<Tw>::Restructure(Ti newrows, Ti newcols) {
   if (newrows * newcols != RowsCount * ColsCount)
-    throw std::logic_error("number of elements does not match.");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "number of elements does not match");
   Restructure0(newrows, newcols);
 }
 
@@ -171,7 +172,8 @@ template <typename Tw> bool Matrix<Tw>::IsSquare() const {
 template <typename Tw> bool Matrix<Tw>::IsSymmetric(Tw epsilon) const {
   auto N = RowsCount;
   if (ColsCount != N)
-    throw std::logic_error("invalid operation: Matrix is not square.");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation: Matrix is not square");
   Tw d;
   for (Ti i = 0; i < N; i++)
     for (Ti j = 0; j < N; j++) {
@@ -198,7 +200,7 @@ template <typename Tw> bool Matrix<Tw>::HasNaN() const {
     }
     return false;
   } else
-    throw std::logic_error("invalid operation");
+    throw LdtException(ErrorType::kLogic, "matrix", "invalid operation");
 }
 
 // #pragma endregion
@@ -213,7 +215,7 @@ void Matrix<Tw>::TranslateIndex(Ti index, Ti &rowIndex, Ti &colIndex) const {
 
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i, Ti j) const {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   return Get0(i, j);
 }
 
@@ -223,22 +225,22 @@ template <typename Tw> Tw Matrix<Tw>::Get0(Ti i, Ti j) const {
 
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i) const {
   if (i < 0 || i >= length())
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   return Data[i];
   ;
 }
 
 template <typename Tw> Tw Matrix<Tw>::GetVector(Ti i) const {
   if (IsVector() == false)
-    throw std::logic_error("a vector is expected.");
+    throw LdtException(ErrorType::kLogic, "matrix", "a vector is expected");
   if (i < 0 || i >= RowsCount)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   return Data[i];
 }
 
 template <typename Tw> void Matrix<Tw>::Set(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Set0(i, j, value);
 }
 
@@ -248,7 +250,7 @@ template <typename Tw> void Matrix<Tw>::Set0(Ti i, Ti j, Tw value) {
 
 template <typename Tw> void Matrix<Tw>::Set_Plus(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Set_Plus0(i, j, value);
 }
 
@@ -258,7 +260,7 @@ template <typename Tw> void Matrix<Tw>::Set_Plus0(Ti i, Ti j, Tw value) {
 
 template <typename Tw> void Matrix<Tw>::Set_Minus(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Set_Minus0(i, j, value);
 }
 
@@ -268,15 +270,15 @@ template <typename Tw> void Matrix<Tw>::Set_Minus0(Ti i, Ti j, Tw value) {
 
 template <typename Tw> void Matrix<Tw>::Set(Ti i, Tw value) {
   if (i >= length() || i < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Data[i] = value;
 }
 
 template <typename Tw> void Matrix<Tw>::SetVector(Ti i, Tw value) {
   if (IsVector() == false)
-    throw std::out_of_range("a vector is expected.");
+    throw std::out_of_range("a vector is expected");
   if (i < 0 || i >= RowsCount)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Data[i] = value;
 }
 
@@ -354,7 +356,7 @@ bool Matrix<Tw>::Equals(const Matrix<Tw> &m, Tw &abs_diff, Tw epsilon,
 
   if (m.RowsCount != RowsCount || m.ColsCount != ColsCount) { // different sizes
     if (throwForSize) {
-      throw ::std::logic_error("unequal size.");
+      throw ::std::logic_error("unequal size");
     } else {
       return false;
     }
@@ -409,7 +411,8 @@ IndexRange Matrix<Tw>::GetRangeColumn(bool &hasMissing, Ti j) const {
     return range;
 
   } else if constexpr (true) {
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
   }
 }
 
@@ -441,7 +444,8 @@ IndexRange Matrix<Tw>::GetRangeRow(bool &hasMissing, Ti i) const {
       }
     return range;
   } else if constexpr (true) {
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
   }
 }
 
@@ -455,7 +459,8 @@ IndexRange Matrix<Tw>::InterpolateColumn(Ti &count, Ti colIndex) {
     return range;
 
   } else if constexpr (true) {
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
   }
 }
 
@@ -499,7 +504,8 @@ IndexRange Matrix<Tw>::InterpolateRow(Ti &count, Ti rowIndex) {
     }
     return range;
   } else if constexpr (true)
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
 }
 
 template <typename Tw>
@@ -592,7 +598,8 @@ void Matrix<Tw>::GetAnyNanRow(std::vector<Ti> &rowIndexes, bool checkInfinity,
       }
     }
   } else
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
 }
 
 // #pragma endregion
@@ -630,7 +637,8 @@ template <typename Tw> void Matrix<Tw>::RemoveNanVector_in(bool removeInf) {
     else
       Restructure0(j, 1);
   } else
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
 }
 
 template <typename Tw> void Matrix<Tw>::RemoveColumnsIn(std::vector<Ti> &cols) {
@@ -711,7 +719,8 @@ template <typename Tw> void Matrix<Tw>::RemoveColumnsAnyNan_in(bool removeInf) {
 
     Restructure0(RowsCount, ww);
   } else
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
 }
 
 template <typename Tw>
@@ -736,7 +745,8 @@ Ti Matrix<Tw>::RemoveNanVector(Matrix<Tw> &data, Matrix<Tw> &storage) {
     }
     return storage.length();
   } else
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation"); // there is no NAN
 }
 
 // #pragma endregion
@@ -810,7 +820,8 @@ template <typename Tw>
 void Matrix<Tw>::Sort(Matrix<Tw> &storage, bool ascending) const {
   if (storage.ColsCount != this->ColsCount ||
       storage.RowsCount != this->RowsCount)
-    throw std::logic_error("invalid dimension: storage");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimension: storage");
 
   CopyTo00(storage);
 
@@ -830,12 +841,13 @@ void Matrix<Tw>::Sort(Matrix<Tw> &storage, bool ascending) const {
 template <typename Tw>
 void Matrix<Tw>::SortByVector(Matrix<Tw> &storage, std::vector<Ti> &indexes) {
   if (storage.length() != this->length())
-    throw std::logic_error("invalid length: storage");
+    throw LdtException(ErrorType::kLogic, "matrix", "invalid length: storage");
   if ((Ti)indexes.size() != this->length())
-    throw std::logic_error("invalid size: indexes");
+    throw LdtException(ErrorType::kLogic, "matrix", "invalid size: indexes");
   auto max = *std::max_element(indexes.begin(), indexes.end());
   if (max > storage.length() - 1)
-    throw std::logic_error("invalid maximum element: indexes");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid maximum element: indexes");
 
   SortByVector0(storage, indexes);
 }
@@ -853,12 +865,15 @@ template <typename Tw>
 void Matrix<Tw>::SortRowsBy(Matrix<Tw> &storage, std::vector<Ti> &row_indexes) {
   if (storage.RowsCount != this->RowsCount ||
       storage.ColsCount != this->ColsCount)
-    throw std::logic_error("invalid dimension: storage");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimension: storage");
   if ((Ti)row_indexes.size() != this->RowsCount)
-    throw std::logic_error("invalid size: row_indexes");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid size: row_indexes");
   auto max = *std::max_element(row_indexes.begin(), row_indexes.end());
   if (max > storage.RowsCount - 1)
-    throw std::logic_error("invalid maximum element: row_indexes");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid maximum element: row_indexes");
 
   SortRowsBy0(storage, row_indexes);
 }
@@ -877,12 +892,15 @@ void Matrix<Tw>::SortColumnsBy(Matrix<Tw> &storage,
                                std::vector<Ti> &col_indexes) {
   if (storage.RowsCount != this->RowsCount ||
       storage.ColsCount != this->ColsCount)
-    throw std::logic_error("invalid dimension: storage");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimension: storage");
   if ((Ti)col_indexes.size() != this->ColsCount)
-    throw std::logic_error("invalid size: row_indexes");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid size: row_indexes");
   auto max = *std::max_element(col_indexes.begin(), col_indexes.end());
   if (max > storage.ColsCount - 1)
-    throw std::logic_error("invalid maximum element: col_indexes");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid maximum element: col_indexes");
 
   SortColumnsBy0(storage, col_indexes);
 }
@@ -928,34 +946,38 @@ template <typename Tw> void Matrix<Tw>::SetSequence(Tw start, Tw step) {
 
 template <typename Tw> void Matrix<Tw>::SetValueDiag(Tw diag) {
   if (RowsCount != ColsCount)
-    throw std::logic_error("invalid dimensions: Matrix<Tw> is not square");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimensions: matrix is not square");
   for (Ti i = 0; i < RowsCount; i++)
     Set0(i, i, diag);
 }
 
 template <typename Tw> void Matrix<Tw>::SetValueDiag(Tw diag, Tw off_diag) {
   if (RowsCount != ColsCount)
-    throw std::logic_error("invalid dimensions: Matrix<Tw> is not square");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimensions: matrix is not square");
   SetValue(off_diag);
   SetValueDiag(diag);
 }
 
 template <typename Tw> void Matrix<Tw>::SetValueOffDiag(Tw offdiag) {
   if (RowsCount != ColsCount)
-    throw std::logic_error("invalid dimensions: Matrix<Tw> is not square");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimensions: Matrix<Tw> is not square");
   for (Ti i = 0; i < RowsCount; i++)
     for (Ti j = 0; j < RowsCount; j++)
       if (i != j)
         Set0(i, j, offdiag);
 }
 
-template <typename Tw> void Matrix<Tw>::Apply_in(std::function<Tw(Tw)> func) {
+template <typename Tw> void Matrix<Tw>::Apply_in(std::function<Tw(Tw)> &func) {
   for (Ti i = 0; i < length(); i++)
     Data[i] = func(Data[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func) {
+void Matrix<Tw>::Apply_in(const Matrix<Tw> &B,
+                          std::function<Tw(Tw, Tw)> &func) {
   if (B.length() != length())
     throw std::invalid_argument("B");
   for (Ti i = 0; i < length(); i++)
@@ -963,7 +985,7 @@ void Matrix<Tw>::Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func) {
 }
 
 template <typename Tw>
-void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> func) {
+void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> &func) {
   auto d = &Data[i];
   Ti p;
   for (Ti j = 0; j < ColsCount; j++) {
@@ -973,27 +995,28 @@ void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> func) {
 }
 
 template <typename Tw>
-void Matrix<Tw>::ApplyColumn_in(Ti j, std::function<Tw(Tw)> func) {
+void Matrix<Tw>::ApplyColumn_in(Ti j, std::function<Tw(Tw)> &func) {
   auto d = &Data[RowsCount * j];
   for (Ti i = 0; i < RowsCount; i++)
     d[i] = func(d[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const {
+void Matrix<Tw>::Apply(std::function<Tw(Tw)> &func, Matrix<Tw> &storage) const {
   if (storage.length() != length())
     throw std::invalid_argument("storage");
   Apply0(func, storage);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply0(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const {
+void Matrix<Tw>::Apply0(std::function<Tw(Tw)> &func,
+                        Matrix<Tw> &storage) const {
   for (Ti i = 0; i < length(); i++)
     storage.Data[i] = func(Data[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+void Matrix<Tw>::Apply(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
                        Matrix<Tw> &storage) const {
   if (storage.length() != length())
     throw std::invalid_argument("storage");
@@ -1003,7 +1026,7 @@ void Matrix<Tw>::Apply(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply0(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+void Matrix<Tw>::Apply0(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
                         Matrix<Tw> &storage) const {
   for (Ti i = 0; i < length(); i++)
     storage.Data[i] = func(Data[i], B.Data[i]);
@@ -1015,25 +1038,27 @@ void Matrix<Tw>::Apply0(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
 
 template <typename Tw> void Matrix<Tw>::CopyTo(Matrix<Tw> &storage) const {
   if (storage.RowsCount != RowsCount || storage.ColsCount != ColsCount)
-    throw std::logic_error("dimensions does not match");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "dimensions does not match");
   CopyTo0(storage);
 }
 
 template <typename Tw> void Matrix<Tw>::CopyTo0(Matrix<Tw> &storage) const {
   if (this->length() != storage.length())
-    throw std::logic_error("lengths are not equal.");
+    throw LdtException(ErrorType::kLogic, "matrix", "lengths are not equal");
   CopyTo00(storage);
 }
 
 template <typename Tw> void Matrix<Tw>::CopyFrom(Matrix<Tw> &source) {
   if (source.RowsCount != RowsCount || source.ColsCount != ColsCount)
-    throw std::logic_error("dimensions does not match");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "dimensions does not match");
   CopyFrom0(source);
 }
 
 template <typename Tw> void Matrix<Tw>::CopyFrom0(Matrix<Tw> &source) {
   if (this->length() != source.length())
-    throw std::logic_error("lengths are not equal.");
+    throw LdtException(ErrorType::kLogic, "matrix", "lengths are not equal");
   CopyFrom00(source);
 }
 
@@ -1168,7 +1193,7 @@ void Matrix<Tw>::GetSub(Ti rowstart, Ti colstart, Ti rowcount, Ti colcount,
   auto storreqcol = colcount + storaecolstart;
 
   if (storage.RowsCount > storreqrow || storage.ColsCount > storreqcol)
-    throw std::invalid_argument("inconsistent size: 'storage'.");
+    throw std::invalid_argument("inconsistent size: 'storage'");
 
   GetSub0(rowstart, colstart, rowcount, colcount, storage, storagerowstart,
           storaecolstart);
@@ -1190,30 +1215,30 @@ void Matrix<Tw>::GetSub(Ti firststart, Ti firstcount,
   if (exclude) {
     if (firstIsRow) {
       if (storage.RowsCount != firstcount + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
       if (storage.ColsCount !=
           ColsCount - (Ti)secondindexes.size() + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
     }
     if (firstIsRow == false) {
       if (storage.ColsCount != firstcount + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
       if (storage.RowsCount !=
           RowsCount - (Ti)secondindexes.size() + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
     }
   } else {
     if (firstIsRow) {
       if (storage.RowsCount != firstcount + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
       if (storage.ColsCount != (Ti)secondindexes.size() + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
     }
     if (firstIsRow == false) {
       if (storage.ColsCount != firstcount + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
       if (storage.RowsCount != (Ti)secondindexes.size() + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'.");
+        throw std::invalid_argument("inconsistent size: 'storage'");
     }
   }
   GetSub0(firststart, firstcount, secondindexes, firstIsRow, storage,
@@ -1265,9 +1290,9 @@ void Matrix<Tw>::GetSub(std::vector<Ti> &rowindexes,
                         std::vector<Ti> &colindexes, Matrix<Tw> &storage,
                         Ti storagerowstart, Ti storaecolstart) const {
   if (storage.RowsCount != (Ti)rowindexes.size() + storagerowstart)
-    throw std::invalid_argument("inconsistent size: 'storage'.");
+    throw std::invalid_argument("inconsistent size: 'storage'");
   if (storage.ColsCount != (Ti)colindexes.size() + storaecolstart)
-    throw std::invalid_argument("inconsistent size: 'storage'.");
+    throw std::invalid_argument("inconsistent size: 'storage'");
 
   GetSub0(rowindexes, colindexes, storage, storagerowstart, storaecolstart);
 }
@@ -1291,11 +1316,12 @@ template <typename Tw>
 void Matrix<Tw>::GetSubVector(Ti start, Ti count, Matrix<Tw> &storage,
                               Ti storagestart) const {
   if (IsVector() == false)
-    throw std::logic_error("use this method for vectors.");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "use this method for vectors");
 
   auto storreqrow = count + storagestart;
   if (storage.RowsCount != storreqrow)
-    throw std::invalid_argument("inconsistent size: 'storage'.");
+    throw std::invalid_argument("inconsistent size: 'storage'");
 
   GetSubVector0(start, count, storage, storagestart);
 }
@@ -1533,9 +1559,9 @@ void Matrix<Tw>::GetColumn0(Ti j, Matrix<Tw> &storage) const {
 
 template <typename Tw> void Matrix<Tw>::GetDiag(Matrix<Tw> &storage) const {
   if (RowsCount != ColsCount)
-    throw std::logic_error("Matrix<Tw> is not square.");
+    throw LdtException(ErrorType::kLogic, "matrix", "matrix is not square");
   if (storage.length() < RowsCount)
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   GetDiag0(storage);
 }
 template <typename Tw> void Matrix<Tw>::GetDiag0(Matrix<Tw> &storage) const {
@@ -1554,7 +1580,7 @@ template <typename Tw>
 void Matrix<Tw>::Diagonal(Matrix<Tw> &storage, Tw diagv, Tw offdiagv) {
   Ti m = storage.RowsCount;
   if (m != storage.ColsCount)
-    throw std::logic_error("storage is not square!");
+    throw LdtException(ErrorType::kLogic, "matrix", "storage is not square");
 
   storage.SetValue(offdiagv);
   for (Ti i = 0; i < m; i++)
@@ -1566,7 +1592,7 @@ bool Matrix<Tw>::IsDiagonal(Matrix<Tw> &mat, Tw diagv, Tw offdiagv,
                             Tw epsilon) {
   Ti m = mat.RowsCount;
   if (m != mat.ColsCount)
-    throw std::logic_error("Matrix<Tw> is not square!");
+    throw LdtException(ErrorType::kLogic, "matrix", "matrix is not square");
 
   for (Ti i = 0; i < m; i++) {
     if constexpr (std::is_unsigned<Tw>() == false) {
@@ -1595,12 +1621,14 @@ void Matrix<Tw>::MakeTriangular(Matrix<Tw> &storage, Matrix<Tw> &elements,
                                 int up, bool diag, bool byrow) {
   Ti m = storage.RowsCount;
   if (m != storage.ColsCount)
-    throw std::logic_error("storage is not square!");
+    throw LdtException(ErrorType::kLogic, "matrix", "storage is not square");
 
   if (diag && elements.length() != m * (m + 1) / 2)
-    throw std::logic_error("wrong number of elements!");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "wrong number of elements!");
   if (diag == false && elements.length() != m * (m - 1) / 2)
-    throw std::logic_error("wrong number of elements!");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "wrong number of elements!");
 
   MakeTriangular0(storage, elements, up, diag, byrow);
 }
@@ -1626,7 +1654,7 @@ void Matrix<Tw>::MakeTriangular0(Matrix<Tw> &storage, Matrix<Tw> &elements,
           i++;
         }
       else
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
     } else // low
     {
       if (byrow == false)
@@ -1639,7 +1667,7 @@ void Matrix<Tw>::MakeTriangular0(Matrix<Tw> &storage, Matrix<Tw> &elements,
           i++;
         }
       else
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
     }
   } else // no diagonal
   {
@@ -1659,7 +1687,7 @@ void Matrix<Tw>::MakeTriangular0(Matrix<Tw> &storage, Matrix<Tw> &elements,
                          d);
         }
       else
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
     } else {
       if (byrow == false)
         for (Ti k = 0; k < static_cast<Ti>(elements.length()); k++) {
@@ -1671,7 +1699,7 @@ void Matrix<Tw>::MakeTriangular0(Matrix<Tw> &storage, Matrix<Tw> &elements,
             i += res.quot + 2;
         }
       else
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
     }
   }
 }
@@ -2038,7 +2066,7 @@ template <typename Tw> void Matrix<Tw>::Divide_in(const Matrix<Tw> &b) {
 template <typename Tw>
 Tw Matrix<Tw>::VectorDotVector(const Matrix<Tw> &b) const {
   if (IsVector() == false)
-    throw std::invalid_argument("a vector is expected.");
+    throw std::invalid_argument("a vector is expected");
   if (b.length() != this->length())
     throw std::invalid_argument("inconsistent size: b");
 
@@ -2049,9 +2077,10 @@ template <typename Tw>
 void Matrix<Tw>::DotVector(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
                            Tw beta) const {
   if (b.IsVector() == false)
-    throw std::logic_error("a vector is expected: b");
+    throw LdtException(ErrorType::kLogic, "matrix", "a vector is expected: b");
   if (storage.IsVector() == false)
-    throw std::logic_error("a vector is expected: storage");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "a vector is expected: storage");
   if (this->ColsCount != b.RowsCount)
     throw std::invalid_argument("inconsistent size: b");
   if (this->RowsCount != storage.RowsCount)
@@ -2064,9 +2093,10 @@ template <typename Tw>
 void Matrix<Tw>::tDotVector(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
                             Tw beta) const {
   if (b.IsVector() == false)
-    throw std::logic_error("a vector is expected: b");
+    throw LdtException(ErrorType::kLogic, "matrix", "a vector is expected: b");
   if (storage.IsVector() == false)
-    throw std::logic_error("a vector is expected: storage");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "a vector is expected: storage");
   if (this->RowsCount != b.RowsCount)
     throw std::invalid_argument("inconsistent size: b");
   if (this->ColsCount != storage.RowsCount)
@@ -2169,7 +2199,7 @@ void Matrix<Tw>::SymDot(const Matrix<Tw> &b, Matrix<Tw> &storage,
                         bool uppertrig, Tw alpha, Tw beta) const {
   if (IsSquare() == false)
     throw std::invalid_argument(
-        "inconsistent size: this Matrix<Tw> must be a square Matrix<Tw>");
+        "inconsistent size: this matrix must be a square Matrix<Tw>");
   if (this->ColsCount != b.RowsCount)
     throw std::invalid_argument("inconsistent size: b");
   if (this->RowsCount != storage.RowsCount || b.ColsCount != storage.ColsCount)
@@ -2183,7 +2213,7 @@ void Matrix<Tw>::DotSym(const Matrix<Tw> &b, Matrix<Tw> &storage,
                         bool uppertrig, Tw alpha, Tw beta) const {
   if (b.IsSquare() == false)
     throw std::invalid_argument(
-        "inconsistent size: this Matrix<Tw> must be a square Matrix<Tw>");
+        "inconsistent size: this matrix must be a square Matrix<Tw>");
   if (this->ColsCount != b.RowsCount)
     throw std::invalid_argument("inconsistent size: b");
   if (this->RowsCount != storage.RowsCount || b.ColsCount != storage.ColsCount)
@@ -2206,28 +2236,28 @@ template <typename Tw>
 void Matrix<Tw>::Kron(const Matrix<Tw> &B, Matrix<Tw> &storage) const {
   if (storage.ColsCount != ColsCount * B.ColsCount ||
       storage.RowsCount != RowsCount * B.RowsCount)
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   Kron0(B, storage);
 }
 
 template <typename Tw>
 void Matrix<Tw>::KronIden(Ti m, Matrix<Tw> &storage) const {
   if (storage.ColsCount != ColsCount * m || storage.RowsCount != RowsCount * m)
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   KronIden0(m, storage);
 }
 
 template <typename Tw>
 void Matrix<Tw>::IdenKron(Ti m, Matrix<Tw> &storage) const {
   if (storage.ColsCount != ColsCount * m || storage.RowsCount != RowsCount * m)
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   IdenKron0(m, storage);
 }
 
 template <typename Tw>
 void Matrix<Tw>::TrKronIden(Ti m, Matrix<Tw> &storage) const {
   if (storage.ColsCount != RowsCount * m || storage.RowsCount != ColsCount * m)
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   TrKronIden0(m, storage);
 }
 
@@ -2246,7 +2276,7 @@ template <typename Tw> Tw Matrix<Tw>::Det_pd0() {
       return NAN; // throw std::invalid_argument("Cholesky decomposition
                   // failed with code: " + res);
     } else if constexpr (true) {
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
     }
   }
 
@@ -2258,7 +2288,7 @@ template <typename Tw> Tw Matrix<Tw>::Det_pd0() {
 
 template <typename Tw> Ti Matrix<Tw>::Inv(Matrix<Tw> &storage) const {
   if (IsSquare() == false)
-    throw std::invalid_argument("Matrix<Tw> is not square.");
+    throw std::invalid_argument("matrix is not square");
   if (this->RowsCount != storage.RowsCount ||
       this->ColsCount != storage.ColsCount)
     throw std::invalid_argument("inconsistent size: storage");
@@ -2282,9 +2312,11 @@ template <typename Tw> Ti Matrix<Tw>::Inv0() {
 template <typename Tw>
 Ti Matrix<Tw>::Chol(Matrix<Tw> &storage, bool upper) const {
   if (IsSquare() == false)
-    throw std::logic_error("invalid operation: Matrix<Tw> is not square");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation: Matrix<Tw> is not square");
   if (IsSymmetric() == false)
-    throw std::logic_error("invalid operation: Matrix<Tw> is not symmetric");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid operation: Matrix<Tw> is not symmetric");
   if (storage.RowsCount != RowsCount)
     throw std::invalid_argument("invalid dimension: storage");
 
@@ -2311,14 +2343,14 @@ template <typename Tw> Ti Matrix<Tw>::QR(Matrix<Tw> &Q, Matrix<Tw> &R) {
   if (info != 0)
     return info;
 
-  throw std::logic_error("not implemented");
+  throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
 }
 
 template <typename Tw>
 Ti Matrix<Tw>::SolveTrian(Matrix<Tw> &b, bool upper, bool transpose,
                           bool unitdiag) {
   if (IsSquare() == false)
-    throw std::invalid_argument("Matrix<Tw> must be square.");
+    throw std::invalid_argument("matrix must be square");
   if ((transpose == false && b.RowsCount != RowsCount) ||
       (transpose && b.RowsCount != ColsCount))
     throw std::invalid_argument("invalid dimension: b");
@@ -2328,7 +2360,7 @@ Ti Matrix<Tw>::SolveTrian(Matrix<Tw> &b, bool upper, bool transpose,
 
 template <typename Tw> Ti Matrix<Tw>::SolvePos(Matrix<Tw> &b, bool upper) {
   if (IsSquare() == false)
-    throw std::invalid_argument("Matrix<Tw> must be square.");
+    throw std::invalid_argument("matrix must be square");
   if (b.RowsCount != RowsCount)
     throw std::invalid_argument("invalid dimension: b");
   return SolvePos0(b, upper);
@@ -2337,7 +2369,7 @@ template <typename Tw> Ti Matrix<Tw>::SolvePos(Matrix<Tw> &b, bool upper) {
 /*
 Ti Matrix<Tw>::solvesym(Matrix<Tw>& b, bool upper) {
         if (IsSquare() == false)
-                throw std::invalid_argument("Matrix<Tw> must be square.");
+                throw std::invalid_argument("matrix must be square");
         if (b.RowsCount != RowsCount)
                 throw std::invalid_argument("invalid dimension: b");
         return solvesym0(b, upper);
@@ -2566,7 +2598,8 @@ Tw Matrix<Tw>::MinimumInColumn(Ti j, Ti &rowIndex) const {
 
 template <typename Tw> Tw Matrix<Tw>::Trace() const {
   if (RowsCount != ColsCount)
-    throw std::logic_error("invalid dimension. needs a square Matrix<Tw>");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "invalid dimension. needs a square Matrix<Tw>");
   Tw s = 0;
   for (Ti i = 0; i < RowsCount; i++)
     s += Get0(i, i);
@@ -2618,13 +2651,14 @@ template <typename Tw> Tw Matrix<Tw>::Mean(bool check_nan) const {
     return me;
   } else // ignore nan since there is none
   {
-    throw std::logic_error("not implemented"); // you should deal with e.g.
-                                               // integer division. HOW?!!
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // you should deal with e.g.
+                                           // integer division. HOW?!!
 
     /*auto len = length();
     Tw me;
     if (len == 0) {
-            throw std::logic_error("invalid length");
+            throw LdtException(ErrorType::kLogic, "matrix", "invalid length");
     }
     else if (len == 1) {
             me = Data[0];
@@ -2694,16 +2728,17 @@ Tw Matrix<Tw>::Variance(Tw &me, bool sample, bool check_nan) const {
     return var;
   } else // ignore nan since there is none
   {
-    throw std::logic_error("not implemented"); // you should deal with e.g.
-                                               // integer division. HOW?!!
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // you should deal with e.g.
+                                           // integer division. HOW?!!
 
     /*auto len = length();
     Tw var;
     if (len == 0) {
-            throw std::logic_error("invalid length");
+            throw LdtException(ErrorType::kLogic, "matrix", "invalid length");
     }
     else if (len == 1) {
-            throw std::logic_error("invalid length");
+            throw LdtException(ErrorType::kLogic, "matrix", "invalid length");
     }
     else {
             Tw d;
@@ -2775,8 +2810,9 @@ Tw Matrix<Tw>::VarianceColumn(Ti j, Tw &me, Ti &count, bool sample,
     return var;
   } else // ignore nan since there is none
   {
-    throw std::logic_error("not implemented"); // you should deal with e.g.
-                                               // integer division. HOW?!!
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // you should deal with e.g.
+                                           // integer division. HOW?!!
   }
 }
 
@@ -2784,7 +2820,8 @@ template <typename Tw>
 Tw Matrix<Tw>::CovarianceColumn(Ti j1, Ti j2, Tw &mean1, Tw &mean2, Ti &count,
                                 bool sample, bool check_nan) const {
   if (j1 >= ColsCount || j2 >= ColsCount || j1 < 0 || j2 < 0)
-    throw std::logic_error("out-of-range column index");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "out-of-range column index");
   count = RowsCount;
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
     Tw covar;
@@ -2839,7 +2876,7 @@ Tw Matrix<Tw>::CovarianceColumn(Ti j1, Ti j2, Tw &mean1, Tw &mean2, Ti &count,
     return covar;
   } else // ignore nan since there is none
   {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
   }
 }
 
@@ -2848,7 +2885,8 @@ Tw Matrix<Tw>::CorrelationColumn(Ti j1, Ti j2, Tw &mean1, Tw &mean2, Tw &var1,
                                  Tw &var2, Ti &count, bool sample,
                                  bool check_nan) const {
   if (j1 >= ColsCount || j2 >= ColsCount || j1 < 0 || j2 < 0)
-    throw std::logic_error("out-of-range column index");
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "out-of-range column index");
 
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
     Tw cor;
@@ -2932,7 +2970,7 @@ Tw Matrix<Tw>::CorrelationColumn(Ti j1, Ti j2, Tw &mean1, Tw &mean2, Tw &var1,
     return cor;
   } else // ignore nan since there is none
   {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
   }
 }
 
@@ -2944,7 +2982,7 @@ void Matrix<Tw>::RowsSum(Matrix<Tw> &storage, std::vector<Ti> &rowinds) const {
   }
 
   if (storage.length() != (Ti)rowinds.size())
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   auto n = ColsCount;
   Ti q = 0;
   for (auto &i : rowinds) {
@@ -2965,7 +3003,7 @@ void Matrix<Tw>::ColumnsSum(Matrix<Tw> &storage,
   }
 
   if (storage.length() != (Ti)colinds.size())
-    throw std::invalid_argument("invalid dimension: storage.");
+    throw std::invalid_argument("invalid dimension: storage");
   auto n = RowsCount;
   Ti q = 0;
   for (auto &j : colinds) {
@@ -2987,7 +3025,7 @@ void Matrix<Tw>::ColumnsMean(Matrix<Tw> &storage,
     }
 
     if (storage.length() != (Ti)colinds.size())
-      throw std::invalid_argument("invalid dimension: storage.");
+      throw std::invalid_argument("invalid dimension: storage");
 
     auto n = RowsCount;
     Ti q = 0;
@@ -2999,7 +3037,8 @@ void Matrix<Tw>::ColumnsMean(Matrix<Tw> &storage,
       q++;
     }
   } else {
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "matrix",
         "not implemented"); // You should deal with integer division ?!
   }
 }
@@ -3014,7 +3053,7 @@ void Matrix<Tw>::ColumnsVariance(Matrix<Tw> &storage, std::vector<Ti> &colinds,
     }
     auto m = static_cast<Ti>(colinds.size());
     if (storage.RowsCount != m || storage.ColsCount != m)
-      throw std::invalid_argument("invalid dimension: storage.");
+      throw std::invalid_argument("invalid dimension: storage");
 
     auto means_d = std::unique_ptr<Tw[]>(new Tw[m]);
     Matrix<Tw> means = Matrix<Tw>(means_d.get(), m);
@@ -3044,7 +3083,8 @@ void Matrix<Tw>::ColumnsVariance(Matrix<Tw> &storage, std::vector<Ti> &colinds,
       q0++;
     }
   } else {
-    throw std::logic_error("not implemented"); // integer division
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // integer division
   }
 }
 
@@ -3054,7 +3094,7 @@ void Matrix<Tw>::ColumnsStandard(const Matrix<Tw> *means,
   if constexpr (std::is_floating_point<Tw>()) {
     if ((means && means->length() != ColsCount) ||
         (stds && stds->length() != ColsCount))
-      throw std::invalid_argument("invalid length: means || vars.");
+      throw std::invalid_argument("invalid length: means || vars");
 
     if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
       auto n = RowsCount;
@@ -3099,12 +3139,13 @@ void Matrix<Tw>::ColumnsStandard(const Matrix<Tw> *means,
             col[i] -= m;
         }
       } else
-        throw std::logic_error(
-            "invalid operation: no means or stds are given.");
+        throw LdtException(ErrorType::kLogic, "matrix",
+                           "invalid operation: no means or stds are given");
     } else
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "matrix", "not implemented");
   } else {
-    throw std::logic_error("not implemented"); // integer division?!
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // integer division?!
   }
 }
 
@@ -3112,7 +3153,7 @@ template <typename Tw>
 void Matrix<Tw>::ColumnsMeans(Matrix<Tw> &storage_mean, bool check_nan) const {
   if constexpr (std::is_floating_point<Tw>()) {
     if (storage_mean.length() != ColsCount)
-      throw std::invalid_argument("invalid length: storage.");
+      throw std::invalid_argument("invalid length: storage");
 
     auto n = RowsCount;
     Tw *col;
@@ -3124,7 +3165,8 @@ void Matrix<Tw>::ColumnsMeans(Matrix<Tw> &storage_mean, bool check_nan) const {
       storage_mean.Data[j] = m;
     }
   } else {
-    throw std::logic_error("not implemented"); // inetger division
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // inetger division
   }
 }
 
@@ -3133,7 +3175,7 @@ void Matrix<Tw>::ColumnsVariances(Matrix<Tw> &storage_var, bool sample,
                                   bool check_nan) const {
   if constexpr (std::is_floating_point<Tw>()) {
     if (storage_var.length() != ColsCount)
-      throw std::invalid_argument("invalid length: storage.");
+      throw std::invalid_argument("invalid length: storage");
 
     auto n = RowsCount;
     Tw *col;
@@ -3144,7 +3186,8 @@ void Matrix<Tw>::ColumnsVariances(Matrix<Tw> &storage_var, bool sample,
       storage_var.Data[j] = variance;
     }
   } else {
-    throw std::logic_error("not implemented"); // integer division
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // integer division
   }
 }
 
@@ -3154,7 +3197,7 @@ void Matrix<Tw>::ColumnsMeansVariances(Matrix<Tw> &storage_mean,
                                        bool check_nan) const {
   if constexpr (std::is_floating_point<Tw>()) {
     if (storage_mean.length() != ColsCount || storage_var.length() != ColsCount)
-      throw std::invalid_argument("invalid length: storage.");
+      throw std::invalid_argument("invalid length: storage");
 
     auto n = RowsCount;
     Tw *col;
@@ -3167,7 +3210,8 @@ void Matrix<Tw>::ColumnsMeansVariances(Matrix<Tw> &storage_mean,
       storage_var.Data[j] = variance;
     }
   } else {
-    throw std::logic_error("not implemented"); // integer division?!
+    throw LdtException(ErrorType::kLogic, "matrix",
+                       "not implemented"); // integer division?!
   }
 }
 

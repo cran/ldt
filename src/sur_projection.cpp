@@ -25,7 +25,8 @@ void SurProjection::Calculate(const Sur &model, const Matrix<Tv> &x,
   Ti k = x.ColsCount;
   auto temp = SurProjection(n, m, k, mIsRestricted, mDoVariance);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent arguments 'in SurProjection'");
+    throw LdtException(ErrorType::kLogic, "sur-projection",
+                       "inconsistent arguments 'in SurProjection'");
 
   Ti km = k * m;
   Ti nm = n * m;

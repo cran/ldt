@@ -75,7 +75,8 @@ static double logL(Matrix<Tv> &resid_var_copy, Ti N, Ti m) {
   Tv resid_var_det = W.Det_pd0(); // |W|
 
   if (std::isnan(resid_var_det))
-    throw std::logic_error("Determinant of residual variance is NAN");
+    throw LdtException(ErrorType::kLogic, "sur",
+                       "determinant of residual variance is NAN");
 
   auto ll =
       (Tv)-0.5 * N * (m * c_ln_2Pi + std::log(resid_var_det)) - (Tv)0.5 * m * N;
@@ -121,18 +122,17 @@ void Sur::calculate_details(Ti N, Ti m, Tv *work, bool just_probs,
   } else
     gamma_var.GetDiag0(e_beta_std);
 
-  e_beta_std.Apply_in([](Tv x) -> double { return std::sqrt(x); });
-
-  beta.Apply(
-      e_beta_std, [](Tv x, Tv y) -> double { return x / y; },
-      e_beta_t); // will generate NAN if std=0 (e.g. restricted)
+  std::function<Tv(Tv)> FF = [](Tv x) -> Tv { return std::sqrt(x); };
+  e_beta_std.Apply_in(FF);
+  std::function<Tv(Tv, Tv)> h = [](Tv x, Tv y) -> Tv { return x / y; };
+  beta.Apply(e_beta_std, h,
+             e_beta_t); // will generate NAN if std=0 (e.g. restricted)
 
   auto dis = Distribution<DistributionType::kT>((Tv)(N)); // or (N-k0)
-  e_beta_t.Apply(
-      [&dis](Tv x) -> double {
-        return std::isnan(x) ? NAN : 2 * (1.0 - dis.GetCdf(std::abs(x)));
-      },
-      e_beta_prob);
+  std::function<Tv(Tv)> g = [&dis](Tv x) -> Tv {
+    return std::isnan(x) ? NAN : 2 * (1.0 - dis.GetCdf(std::abs(x)));
+  };
+  e_beta_t.Apply(g, e_beta_prob);
 
   if (just_probs)
     return;
@@ -170,7 +170,7 @@ void Sur::estim_un(Ti N, Ti m, Tv *work,
   condition_number = xtx.Norm('1'); // condition number
   auto info = xtx.Inv0();
   if (info != 0) {
-    throw std::logic_error("matrix singularity");
+    throw LdtException(ErrorType::kLogic, "sur", "matrix singularity");
     return;
   }
   condition_number *= xtx.Norm('1');
@@ -252,7 +252,7 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
   condition_number = RV_o_xtx.Norm('1');
   auto info = gamma_var.Inv0(); // [R'[S^-1 o X'X]R]^{-1}
   if (info != 0) {
-    throw std::logic_error("matrix singularity");
+    throw LdtException(ErrorType::kLogic, "sur", "matrix singularity");
     return;
   }
   condition_number *= gamma_var.Norm('1');
@@ -267,7 +267,8 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
   resid_var.Kron(x, V_o_x); // S^-1 o x
   V_o_x.Dot(*pR, V_o_xR);   // [S^-1 o x]R
   if (pr) {
-    throw std::logic_error("not implemented (with r restriction)");
+    throw LdtException(ErrorType::kLogic, "sur",
+                       "not implemented (with r restriction)");
     // this is wrong. Kronecker is with I
     x.IdenKron(m, I_o_x);
     I_o_x.Dot(*pr, I_o_xr);
@@ -330,7 +331,8 @@ void Sur::estim_search(Ti N, Ti m, Tv *work, Tv sigSearchMaxProb) {
       return; // all coefficients are significant
     cs = (Ti)sig_inds.size();
     if (sig_inds.size() == 0)
-      throw std::logic_error("All coefficients are insignificant");
+      throw LdtException(ErrorType::kLogic, "sur",
+                         "all coefficients are insignificant");
 
     pR->Restructure0(k0m, (Ti)sig_inds.size());
     pR->SetValue(0);
@@ -352,29 +354,38 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   Ti N = y.RowsCount;
   Ti m = y.ColsCount;
   Ti k = x.ColsCount;
+
+  if (N < 1 || m < 1 || k < 1)
+    throw LdtException(
+        ErrorType::kLogic, "sur",
+        format("invalid data dimension in SUR (N={}, m={}, k={}).", N, m, k));
+
   Ti km = k * m;
 
   // check size
   auto temp = Sur(N, m, k, mIsRestricted, mDoDetails, mSigSearchMaxIter);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent size (SUR estimation).");
+    throw LdtException(ErrorType::kLogic, "sur",
+                       "inconsistent size (SUR estimation)");
 
   if (mSigSearchMaxIter != 0 &&
       (!R || R->RowsCount != km || R->ColsCount != km))
-    throw std::logic_error(
-        "R should be a 'km x km' Matrix, when you want a significant search.");
+    throw LdtException(ErrorType::kLogic, "sur",
+                       "'R' should be a 'km x km' Matrix, when you want a "
+                       "significant search");
   else if (R && (R->RowsCount != km || R->ColsCount > km))
-    throw std::logic_error("Restrictions are not valid.");
+    throw LdtException(ErrorType::kLogic, "sur", "restrictions are not valid");
 
   pY = &y;
   pX = &x;
   pR = R;
 
   if (mSigSearchMaxIter != 0 && sigSearchMaxProb == 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "sur",
         "'max_sig_search_prob' must not be zero because "
         "'max_sig_search_iter' is not zero. If you don't want a significance "
-        "search, don't set its iteration.");
+        "search, don't set its iteration");
 
   Ti p = 0;
 
@@ -404,11 +415,11 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
     if (mSigSearchMaxIter == 0) {
       // Matrix<Tv>::Diagonal(resid_var); //first, use identity as the
       // covariance Matrix
-      estim_un(N, m, work, false); // I think we get a consistent estimator even
-                                   // if we do not use the restrictions
+      estim_un(N, m, work, false); // I think we get a consistent estimator
+                                   // even if we do not use the restrictions
       estim_r(N, m,
-              work); // update by new variance Matrix. I think iterated version
-                     // does not have any statistical justification
+              work); // update by new variance Matrix. I think iterated
+                     // version does not have any statistical justification
     } else
       estim_search(N, m, work, sigSearchMaxProb);
   } else

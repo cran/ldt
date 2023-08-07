@@ -9,15 +9,18 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
   if (costMatrices != R_NilValue) {
     // don't use as.list or a vector such as c(c1,c2) will have invalid values
     if (is<List>(costMatrices) == false)
-      throw std::logic_error("'costMatrices' must be list of double matrices.");
+      throw LdtException(ErrorType::kLogic, "R-dc",
+                         "'costMatrices' must be list of double matrices");
 
     List costMatrices_ = (List)costMatrices;
     for (int i = 0; i < costMatrices_.length(); i++) {
       if (costMatrices_[i] == R_NilValue)
-        throw std::logic_error("A frequency cost matrix is null.");
+        throw LdtException(ErrorType::kLogic, "R-dc",
+                           "a frequency cost matrix is null");
       if (is<NumericMatrix>(costMatrices_[i]) == false)
-        throw std::logic_error(
-            "A frequency cost matrix must be a 'numeric matrix'.");
+        throw LdtException(
+            ErrorType::kLogic, "R-dc",
+            "a frequency cost matrix must be a 'numeric matrix'");
       NumericMatrix m = as<NumericMatrix>(costMatrices_[i]);
       result.push_back(ldt::Matrix<double>(&m[0], m.nrow(), m.ncol()));
     }
@@ -30,9 +33,10 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
               result.at(i).ColsCount);
   }
   if (costMatInMetrics && result.size() == 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "R-dc",
         "At least one frequency cost matrix is required for this type "
-        "of out-of-sample evaluation.");
+        "of out-of-sample evaluation");
 }
 
 void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
@@ -40,10 +44,11 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
   double minY = my.Minimum();
   double maxY = my.Maximum();
   if (minY != 0)
-    throw std::logic_error("Minimum value in 'y' must be zero.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "minimum value in 'y' must be zero");
   numChoices = maxY + 1;
   if (numChoices < 2)
-    stop("Invalid data. Number of choices is less than 2.");
+    stop("number of choices in 'data' is less than 2.");
 
   isBinary = numChoices == 2;
   if (isBinary == false)
@@ -60,11 +65,14 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
               List modelCheckItems, List searchItems, List searchOptions) {
 
   if (y == R_NilValue || x == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' or 'x' is null.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "invalid data: 'y' or 'x' is null");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "'y' must be a 'numeric matrix'");
   if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "'x' must be a 'numeric matrix'");
 
   int numTargets = 1;
 
@@ -125,8 +133,9 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     paramNames.push_back(std::string("Threshold") + std::to_string(i + 1));
 
   if (searchLogit == false && searchProbit == false)
-    throw std::logic_error(
-        "Model set is empty. Choose 'Logit' or 'Probit' or both.");
+    throw LdtException(
+        ErrorType::kLogic, "R-dc",
+        "model set is empty. Choose 'Logit' or 'Probit' or both");
   if (printMsg)
     Rprintf("Distribution Type=%s\n", searchLogit && searchProbit
                                           ? "Logit & Probit"
@@ -151,7 +160,8 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     W = std::unique_ptr<double[]>(new double[model->Modelset.WorkSize]);
     Wi = std::unique_ptr<int[]>(new int[model->Modelset.WorkSizeI]);
   } catch (...) {
-    throw std::logic_error("More memory is required for running the project.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "more memory is required for running the project");
   }
 
   auto alli = model->Modelset.GetExpectedNumberOfModels();
@@ -200,18 +210,22 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
              int simFixSize, double simTrainRatio, int simTrainFixSize,
              int simSeed, bool weightedEval, bool printMsg) {
   if (y == R_NilValue || x == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' or 'x' is null.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "invalid data: 'y' or 'x' is null");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "'y' must be a 'numeric matrix'");
   if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-dc",
+                       "'x' must be a 'numeric matrix'");
 
   y = as<NumericMatrix>(y);
   x = as<NumericMatrix>(x);
 
   if (newX != R_NilValue) {
     if (is<NumericMatrix>(newX) == false)
-      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-dc",
+                         "'newX' must be a 'numeric matrix'");
     newX = insert_intercept(
         newX); // Combine function does not handle adding intercept to newX
   }
@@ -236,11 +250,13 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
     simTrainFixSize = std::max(0, simTrainFixSize);
     if (simTrainFixSize == 0) {
       if (simTrainRatio <= 0 || simTrainRatio >= 1)
-        throw std::logic_error("Invalid 'simTrainRatio'. It must be in (0,1).");
+        throw LdtException(ErrorType::kLogic, "R-dc",
+                           "invalid 'simTrainRatio'. It must be in (0,1)");
     }
 
     if (simSeed < 0)
-      throw std::logic_error("Invalid 'simSeed'. It cannot be negative.");
+      throw LdtException(ErrorType::kLogic, "R-dc",
+                         "invalid 'simSeed'. It cannot be negative");
   }
 
   std::vector<ldt::Matrix<double>> costMatrices0;
@@ -251,7 +267,8 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
     if (is<List>(pcaOptionsX) == false)
-      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
+      throw LdtException(ErrorType::kLogic, "R-dc",
+                         "'pcaOptionsX' must be a 'List'");
     List pcaOptionsX_ = as<List>(pcaOptionsX);
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptions0,
                      "Exogenous PCA options");
@@ -291,7 +308,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
 
   if (printMsg)
-    Rprintf("Calculations started...");
+    Rprintf("Calculations started..");
   model.Calculate(mat, S.get(), W.get(), numChoices,
                   hasProjection ? &mnewX : nullptr, aucOptions0);
   if (printMsg)
@@ -322,7 +339,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
     Ss = std::unique_ptr<double[]>(new double[simmodel->StorageSize]);
     auto errors = std::set<const char *>();
     if (printMsg)
-      Rprintf("Calculations Started...");
+      Rprintf("Calculations Started..");
 
     bool cancel = false;
     simmodel->Calculate(mat, &costMatrices0, Ss.get(), Ws.get(), WIs.get(),
@@ -337,7 +354,8 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
       }
     }
     if (simmodel->ValidSimulationCount == 0) {
-      throw std::logic_error("no valid simulation exists.\n");
+      throw LdtException(ErrorType::kLogic, "R-dc",
+                         "no valid simulation exists.\n");
     }
   }
 

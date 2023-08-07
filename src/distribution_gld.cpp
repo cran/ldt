@@ -10,7 +10,8 @@ using namespace ldt;
 
 DistributionGld::DistributionGld(Tv d1, Tv d2, Tv d3, Tv d4) {
   if (d2 <= 0)
-    throw std::logic_error("scale parameter must be positive.");
+    throw LdtException(ErrorType::kLogic, "gld",
+                       "scale parameter must be positive");
 
   mParam1 = d1;
   mParam2 = d2;
@@ -180,7 +181,7 @@ Tv DistributionGld::GetMk(int k, Tv L3, Tv L4) {
            4.0 / (std::pow(L3, 3.0) * L4) * Math_Beta(3.0 * L3 + 1, L4 + 1.0) -
            4.0 / (L3 * std::pow(L4, 3.0)) * Math_Beta(L3 + 1, 3.0 * L4 + 1.0);
   }
-  throw std::logic_error("not implemented");
+  throw LdtException(ErrorType::kLogic, "gld", "not implemented");
 }
 
 void DistributionGld::GetMs(Tv H3, Tv H4, Tv &M1, Tv &M2, Tv &M3, Tv &M4) {

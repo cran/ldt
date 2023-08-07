@@ -1,5 +1,13 @@
 # *News*
 
+## ldt 0.3.2 (2023-07-26)
+
+### Changes
+
+* Add an option to transform back data in calculation of RMSE, MAE, etc.
+* Format text in exceptions, etc.
+* Some fixes.
+
 ## ldt 0.3.1 (2023-07-07)
 
 ### Changes

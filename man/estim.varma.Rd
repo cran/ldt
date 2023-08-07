@@ -20,6 +20,7 @@ estim.varma(
   simHorizons = NULL,
   simUsePreviousEstim = TRUE,
   simMaxConditionNumber = Inf,
+  simTransform = NULL,
   printMsg = FALSE
 )
 }
@@ -54,6 +55,8 @@ Use \link{get.options.lbfgs} function for initialization.}
 \item{simUsePreviousEstim}{If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.}
 
 \item{simMaxConditionNumber}{A number representing the maximum value for the condition number in simulation.}
+
+\item{simTransform}{Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.}
 
 \item{printMsg}{Set to \code{TRUE} to enable printing some details.}
 }

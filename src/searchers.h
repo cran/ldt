@@ -102,6 +102,9 @@ struct LDT_EXPORT SearchMetricOptions {
   /// weights are used in AUC or FrequencyCost calculations
   bool WeightedEval = false;
 
+  /// @brief Transform back data in calculation of RMSE, MAE etc.
+  std::function<void(Tv &)> TransformForMetrics;
+
   /// @brief Updates the indices, etc.
   /// @param isOutOfSampleRandom If true, the training sample is randomly
   /// generated

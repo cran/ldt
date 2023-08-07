@@ -47,7 +47,7 @@ Tw Matrix<Tw>::VectorDotVector0(const Matrix<Tw> &b) const {
   } else if constexpr (std::is_same<Tw, float>()) {
     return sdot_(&n, Data, &incx, b.Data, &incy);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?dot");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented: ?dot");
   }
 }
 
@@ -72,7 +72,8 @@ void Matrix<Tw>::DotVector0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
   } else if constexpr (std::is_same<Tw, float>()) {
     sgemv_(&transpose, &M, &N, &alpha, opA, &M, opB, &incx, &beta, C, &incy);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemv");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemv");
   }
 }
 
@@ -97,7 +98,8 @@ void Matrix<Tw>::tDotVector0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
   } else if constexpr (std::is_same<Tw, float>()) {
     sgemv_(&transpose, &M, &N, &alpha, opA, &M, opB, &incx, &beta, C, &incy);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemv");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemv");
   }
 }
 
@@ -126,7 +128,8 @@ void Matrix<Tw>::Dot0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
     sgemm_(&transpose_a, &transpose_b, &M, &N, &K, &alpha, opA, &M, opB, &K,
            &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemm");
   }
 }
 
@@ -155,7 +158,8 @@ void Matrix<Tw>::DotTr0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
     sgemm_(&transpose_a, &transpose_b, &M, &N, &K, &alpha, opA, &M, opB, &N,
            &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemm");
   }
 }
 
@@ -184,7 +188,8 @@ void Matrix<Tw>::TrDot0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
     sgemm_(&transpose_a, &transpose_b, &M, &N, &K, &alpha, opA, &K, opB, &K,
            &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemm");
   }
 }
 
@@ -213,7 +218,8 @@ void Matrix<Tw>::TrDotTr0(const Matrix<Tw> &b, Matrix<Tw> &storage, Tw alpha,
     sgemm_(&transpose_a, &transpose_b, &M, &N, &K, &alpha, opA, &K, opB, &N,
            &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?gemm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?gemm");
   }
 }
 
@@ -236,6 +242,8 @@ template <typename Tw>
 void Matrix<Tw>::Dot_AAt0(Matrix<Tw> &storage, bool setLower, Tw alpha,
                           Tw beta) const {
 
+  // A:MxN => C=AA':MxM
+
   const Tw *A = Data;
   Tw *C = storage.Data;
 
@@ -249,7 +257,8 @@ void Matrix<Tw>::Dot_AAt0(Matrix<Tw> &storage, bool setLower, Tw alpha,
   } else if constexpr (std::is_same<Tw, float>()) {
     ssyrk_(&uplo, &transpose, &M, &N, &alpha, A, &M, &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?ssyrk");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?ssyrk");
   }
 
   // set lower part of the storage
@@ -280,7 +289,8 @@ void Matrix<Tw>::Dot_AtA0(Matrix<Tw> &storage, bool setLower, Tw alpha,
   } else if constexpr (std::is_same<Tw, float>()) {
     ssyrk_(&uplo, &transpose, &N, &M, &alpha, A, &M, &beta, C, &N);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?ssyrk");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?ssyrk");
   }
 
   // set lower part of the storage
@@ -298,8 +308,8 @@ template <typename Tw>
 void Matrix<Tw>::Dot_AtA_nan0(Matrix<Tw> &storage, Matrix<Tw> &counts_storage,
                               bool set_lower) const {
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN == false) {
-    throw std::logic_error(
-        "invalid operation. no NAN for this type. Dot_AtA_nan");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "invalid operation. no NAN for this type. Dot_AtA_nan");
   } else if constexpr (true) {
     Ti c, i, j, k;
     Tw s, v;
@@ -349,7 +359,8 @@ void Matrix<Tw>::SymDot0(const Matrix<Tw> &b, Matrix<Tw> &storage,
   } else if constexpr (std::is_same<Tw, float>()) {
     ssymm_(&side, &uplo, &M, &N, &alpha, A, &M, B, &K, &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?symm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?symm");
   }
 }
 
@@ -372,7 +383,8 @@ void Matrix<Tw>::DotSym0(const Matrix<Tw> &b, Matrix<Tw> &storage,
   } else if constexpr (std::is_same<Tw, float>()) {
     ssymm_(&side, &uplo, &M, &N, &alpha, A, &N, B, &M, &beta, C, &M);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?symm");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?symm");
   }
 }
 
@@ -522,7 +534,8 @@ template <typename Tw> Ti Matrix<Tw>::Inv2x2() {
     Data[3] = static_cast<Tw>(idet * a);
     return 0;
   } else
-    throw std::logic_error("not implemented"); // integer division?!
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented"); // integer division?!
 }
 
 template <typename Tw> Tw Matrix<Tw>::Norm(const char norm) const {
@@ -540,7 +553,8 @@ template <typename Tw> Tw Matrix<Tw>::Norm(const char norm) const {
   } else if constexpr (std::is_same<Tw, float>()) {
     d = slange_(&norm, &M, &N, A, &M, WORK);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?lange");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?lange");
   }
 
   return d;
@@ -558,7 +572,8 @@ template <typename Tw> Ti Matrix<Tw>::Inv00(int *ipiv, Tw *work) {
   } else if constexpr (std::is_same<Tw, float>()) {
     sgetrf_(&M, &M, A, &M, ipiv, &info); // LU decomposition
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?getrf");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?getrf");
   }
 
   if (info != 0)
@@ -576,7 +591,8 @@ template <typename Tw> Ti Matrix<Tw>::Inv00(int *ipiv, Tw *work) {
   } else if constexpr (std::is_same<Tw, float>()) {
     sgetri_(&M, A, &M, ipiv, work, &lwork, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?getri");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?getri");
   }
 
   return info;
@@ -600,7 +616,8 @@ template <typename Tw> Ti Matrix<Tw>::Chol0(bool upper) {
   } else if constexpr (std::is_same<Tw, float>()) {
     spotrf2_(&UPLO, &N, A, &N, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?potrf2");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?potrf2");
   }
 
   if (info != 0)
@@ -624,7 +641,7 @@ template <typename Tw> Ti Matrix<Tw>::Chol0(bool upper) {
 
 template <typename Tw> Tw Matrix<Tw>::Det() {
   if (ColsCount != RowsCount)
-    throw std::logic_error("Matrix<Tw> is not square.");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "matrix is not square");
   const Ti M = static_cast<Ti>(this->RowsCount);
   Tw *A = Data;
   Ti info = (Ti)0;
@@ -636,7 +653,8 @@ template <typename Tw> Tw Matrix<Tw>::Det() {
   } else if constexpr (std::is_same<Tw, float>()) {
     sgetrf_(&M, &M, A, &M, ipiv, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented: ?pgetrf");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented: ?pgetrf");
   }
 
   if (info != 0)
@@ -653,7 +671,7 @@ template <typename Tw> Tw Matrix<Tw>::Det() {
       if (j + 1 != ipiv[j])
         res = -res;
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented");
   }
 
   return res;
@@ -675,7 +693,7 @@ template <typename Tw> Ti Matrix<Tw>::QR0(Tw *tau) {
     sgeqrf_(&M, &N, A, &M, tau, &dtemp, &lwork, &info);
 
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented");
   }
 
   if (info != 0)
@@ -690,7 +708,7 @@ template <typename Tw> Ti Matrix<Tw>::QR0(Tw *tau) {
   } else if constexpr (std::is_same<Tw, float>()) {
     sgeqrf_(&M, &N, A, &M, tau, &dtemp, &lwork, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented");
   }
 
   return info;
@@ -714,7 +732,7 @@ Ti Matrix<Tw>::SolveTrian0(Matrix<Tw> &b, bool upper, bool transpose,
   } else if constexpr (std::is_same<Tw, float>()) {
     strtrs_(&UPLO, &TRANS, &DIAG, &N, &NRHS, A, &N, B, &N, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented");
   }
   return info;
 }
@@ -732,7 +750,7 @@ template <typename Tw> Ti Matrix<Tw>::SolvePos0(Matrix<Tw> &b, bool upper) {
   } else if constexpr (std::is_same<Tw, float>()) {
     sposv_(&UPLO, &N, &NRHS, A, &N, B, &N, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "matrix-la", "not implemented");
   }
 
   return info;
@@ -759,7 +777,8 @@ Ti Matrix<Tw>::SVD0(Tw *Data, const Ti M, const Ti N, Tw *WORK, Ti lwork,
     sgesvd_(&jobU, &jobVT, &M, &N, A, &LDA, resS, resU, &LDU, resVT, &LDVT,
             WORK, &lwork, &info);
   } else if constexpr (true) {
-    throw std::logic_error("not implemented (svd type).");
+    throw LdtException(ErrorType::kLogic, "matrix-la",
+                       "not implemented (svd type)");
   }
 
   return info;

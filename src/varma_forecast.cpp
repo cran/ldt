@@ -78,7 +78,8 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
     horizon = mHorizon;
   else {
     if (horizon > mHorizon)
-      throw std::logic_error("inconsistent horizon");
+      throw LdtException(ErrorType::kLogic, "varma-forecast",
+                         "inconsistent horizon");
   }
 
   Ti g = sizes.EqsCount;
@@ -93,12 +94,13 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
   else {
     // check
     if (resid_ind < 0)
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "varma-forecast",
           "in forecast, end-sample must be larger than 'maxp+diff'");
     if (sizes.ExoCount != 0 && (exo->ColsCount < x_ind + h_armax_d))
-      throw std::logic_error(
-          "in forecasting by VARMA, length of exogenous data is "
-          "less than the requested horizon");
+      throw LdtException(ErrorType::kLogic, "varma-forecast",
+                         "in forecasting by VARMA, length of exogenous data is "
+                         "less than the requested horizon");
   }
 
   if (undiff_y == nullptr)
@@ -149,7 +151,8 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
   }
 
   if (!estimate.Result.coef.Data)
-    throw std::logic_error("Coefficient matrix is not calculated");
+    throw LdtException(ErrorType::kLogic, "varma-forecast",
+                       "coefficient matrix is not calculated");
 
   // Mean
   for (int i = 0; i < sizes.ArMax_d; i++) {
@@ -196,7 +199,8 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
     }
 
     if (mCoefUncertainty) {
-      throw std::logic_error("not implemented");
+      throw LdtException(ErrorType::kLogic, "varma-forecast",
+                         "not implemented");
       // TODO:
       /*
       auto Gs = std::vector<Matrix<Tv>*>();

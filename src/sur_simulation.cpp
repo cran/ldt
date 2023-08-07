@@ -27,16 +27,16 @@ SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
   Split = DataSplit(N, m + k);
   Split_d = std::unique_ptr<Ti[]>(new Ti[Split.WorkSizeI]);
 
-  auto doForcVariance = false;
+  mDoForecastVar = false;
   for (auto &s : metricsOut)
     if (Scoring::RequiresVariance(s)) {
-      doForcVariance = true;
+      mDoForecastVar = true;
       break;
     }
 
   Model = SurExtended(
       N0, m, k, isRestricted, false, // NANs must be removed before
-      false, N1, maxSigSearchIter, doForcVariance, pcaOptionsY, pcaOptionsX);
+      false, N1, maxSigSearchIter, mDoForecastVar, pcaOptionsY, pcaOptionsX);
 
   WorkSize = Split.StorageSize + Model.StorageSize + Model.WorkSize;
   // I have generated Split.WorkSizeI here
@@ -58,11 +58,12 @@ void SurSimulation::AddError(std::string state) {
 }
 
 Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
-             const Tv *errors, const Tv *means, const Tv *variances) {
+             const Tv *errors, const Tv *means, const Tv *stds) {
   Tv sum = 0;
   switch (e) {
   case ldt::ScoringType::kDirection:
-    throw std::logic_error("not implemented (direction)");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "not implemented (direction)");
   case ldt::ScoringType::kSign:
     for (Ti i = 0; i < length; i++)
       sum += actuals[i] * means[i] > 0 ? 1 : 0;
@@ -85,23 +86,29 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
     break;
   case ldt::ScoringType::kCrps:
     for (Ti i = 0; i < length; i++)
-      sum += Scoring::GetScoreCrpsNormal(errors[i], 0, std::sqrt(variances[i]));
+      sum += Scoring::GetScoreCrpsNormal(errors[i], 0, stds[i]);
     break;
   default:
-    throw std::logic_error("not implemented (averaging scores)");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "not implemented (averaging scores)");
   }
 
   return sum;
 }
 
-void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
-                              Matrix<Tv> *R, bool &cancel, Ti maxIteration,
-                              unsigned int seed, Tv sigSearchMaxProb,
-                              Tv maxCondNum, Ti maxInvalidSim) {
+void SurSimulation::Calculate(
+    Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R, bool &cancel,
+    Ti maxIteration, unsigned int seed, Tv sigSearchMaxProb, Tv maxCondNum,
+    Ti maxInvalidSim, const std::function<void(Tv &)> *transformForMetrics) {
   if (cancel)
     return;
   if (maxIteration <= 0)
-    throw std::logic_error("Number of iterations must be positive.");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "number of iterations must be positive");
+
+  std::function<void(Tv &)> tfm;
+  if (transformForMetrics)
+    tfm = *transformForMetrics;
 
   // Ti N = data.RowsCount;
   Ti k = data.ColsCount - m;
@@ -125,7 +132,8 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   auto model_work = &work[p];
   p += Model.WorkSize;
   auto error_work = &work[p];
-  p += Split.Sample1.RowsCount * m;
+  Ti len = Split.Sample1.RowsCount * m;
+  p += len;
 
   auto newY = Matrix<Tv>(Split.Sample1.Data, Split.Sample1.RowsCount, m);
   auto newX = Matrix<Tv>(&Split.Sample1.Data[m * Split.Sample1.RowsCount],
@@ -146,7 +154,8 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
       Model.Calculate(Split.Sample0, m, model_storage, model_work, R,
                       sigSearchMaxProb, &newX, nullptr);
       if (Model.Model.condition_number > maxCondNum)
-        throw std::logic_error("Model check failed: Maximum CN");
+        throw LdtException(ErrorType::kLogic, "sur-simulation",
+                           "model check: maximum cn");
     } catch (std::exception &ex) {
       AddError(ex.what());
       continue;
@@ -158,10 +167,39 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     if (cancel)
       return;
 
+    // convert to STD
+    if (mDoForecastVar) {
+      bool cont = false;
+      for (int i = 0; i < len; i++) {
+        if (std::isnan(Model.Projections.Variances.Data[i])) {
+          AddError("NAN in variance");
+          cont = true;
+          break;
+        }
+        Model.Projections.Variances.Data[i] =
+            std::sqrt(Model.Projections.Variances.Data[i]);
+      }
+      if (cont)
+        continue;
+    }
+
+    if (transformForMetrics) {
+      for (int i = 0; i < len; i++) {
+        tfm(newY.Data[i]);
+        tfm(Model.Projections.Means.Data[i]);
+      }
+
+      if (mDoForecastVar) { // transform STDs for CRPS too
+        for (int i = 0; i < len; i++) {
+          tfm(Model.Projections.Variances.Data[i]);
+        }
+      }
+    }
+
     newY.Subtract(Model.Projections.Means, errors);
 
-    if (errors.Any(NAN)) { // should I check variance too?
-      AddError("NAN found");
+    if (errors.Any(NAN)) {
+      AddError("NAN in errors");
       continue;
     }
 
@@ -169,7 +207,8 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     ValidIters++;
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
-      throw std::logic_error("Model check failed: Minimum Valid Simulations");
+      throw LdtException(ErrorType::kLogic, "sur-simulation",
+                         "model check: minimum valid simulations");
 
     i = -1;
     for (auto &e : *pMetricsOut) {
@@ -191,7 +230,8 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     return;
 
   if (invalidCounts > maxInvalidSim)
-    throw std::logic_error("Model check failed: Minimum Valid Simulations");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "model check: minimum valid simulations");
 
   Results.Divide_in((Tv)ValidCounts);
 

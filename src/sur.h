@@ -273,6 +273,8 @@ public:
 /// @brief A simulation class for SUR
 class LDT_EXPORT SurSimulation {
 
+  bool mDoForecastVar = true;
+
   void AddError(std::string state);
 
 public:
@@ -356,10 +358,14 @@ public:
   /// @param maxCondNum Maximum valid condition number
   /// @param maxInvalidSim Maximum number of invalid simulations before it exit
   /// the iteration loop
-  void Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R,
-                 bool &cancel, Ti maxIteration, unsigned int seed,
-                 Tv sigSearchMaxProb, Tv maxCondNum = INFINITY,
-                 Ti maxInvalidSim = INT32_MAX);
+  /// @param transformForMetrics A function to be used for transforming the data
+  /// when calculating metrics such as RMSE or MAE
+  void
+  Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R,
+            bool &cancel, Ti maxIteration, unsigned int seed,
+            Tv sigSearchMaxProb, Tv maxCondNum = INFINITY,
+            Ti maxInvalidSim = INT32_MAX,
+            const std::function<void(Tv &)> *transformForMetrics = nullptr);
 };
 
 /// @brief A searcher class for SUR

@@ -30,7 +30,8 @@ void Rank::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
   // check size
   auto temp = Rank(mat.RowsCount, mat.ColsCount);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("inconsistent arguments.");
+    throw LdtException(ErrorType::kLogic, "statistics",
+                       "inconsistent arguments");
 
   this->Result.SetData(storage, mat.RowsCount, mat.ColsCount);
 
@@ -93,14 +94,16 @@ void Ols::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   Ti m = y.ColsCount;
 
   if (x.RowsCount != N)
-    throw std::logic_error("invalid length");
+    throw LdtException(ErrorType::kLogic, "statistics", "invalid length");
   if (N < k)
-    throw std::logic_error("low degrees of freedom");
+    throw LdtException(ErrorType::kLogic, "statistics",
+                       "low degrees of freedom");
 
   // check size
   auto temp = Ols(N, m, k, mDoResid, mDoSigma);
   if (temp.WorkSize < WorkSize || temp.StorageSize < StorageSize)
-    throw std::logic_error("inconsistent arguments.");
+    throw LdtException(ErrorType::kLogic, "statistics",
+                       "inconsistent arguments");
 
   Ti p = 0;
   Beta.SetData(storage, k, m);
@@ -119,7 +122,7 @@ void Ols::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   x.TrDot0(x, xx); // kxk
   auto info = xx.Inv00(ip.get(), invW);
   if (info != 0)
-    throw std::logic_error("matrix singularity");
+    throw LdtException(ErrorType::kLogic, "statistics", "matrix singularity");
   xx.DotTr0(x, xxx); // kxk . kxN  .  kxN
   xxx.Dot0(y, Beta); // kxN . Nxm  .  kxm
 
@@ -169,14 +172,16 @@ void Gls::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Matrix<Tv> &omega,
   Ti m = y.ColsCount;
 
   if (x.RowsCount != N)
-    throw std::logic_error("invalid length");
+    throw LdtException(ErrorType::kLogic, "statistics", "invalid length");
   if (N < k)
-    throw std::logic_error("low degrees of freedom");
+    throw LdtException(ErrorType::kLogic, "statistics",
+                       "low degrees of freedom");
 
   // check size
   auto temp = Gls(N, m, k, mDoResid, mDoSigma);
   if (temp.WorkSize < WorkSize || temp.StorageSize < StorageSize)
-    throw std::logic_error("inconsistent arguments.");
+    throw LdtException(ErrorType::kLogic, "statistics",
+                       "inconsistent arguments");
 
   Ti p = 0;
   Beta.SetData(storage, k, m);
@@ -198,14 +203,14 @@ void Gls::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Matrix<Tv> &omega,
   if (mIsOmegaInv == false) {
     info = omega.Inv00(ip.get(), invW);
     if (info != 0)
-      throw std::logic_error("matrix singularity");
+      throw LdtException(ErrorType::kLogic, "statistics", "matrix singularity");
   }
 
   x.TrDot0(omega, xo); // kxN . NxN  .  kxN
   xo.Dot(x, xox);      // kxN . Nxk  .  kxk
   info = xox.Inv00(ip.get(), invW);
   if (info != 0)
-    throw std::logic_error("matrix singularity");
+    throw LdtException(ErrorType::kLogic, "statistics", "matrix singularity");
   xox.Dot(xo, xoxxo);  // kxk . kxN  .  kxN
   xoxxo.Dot0(y, Beta); // kxN . Nxm  .  kxm
 

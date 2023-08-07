@@ -12,7 +12,7 @@
 
 <meta name="author" content="Ramin Mojab" />
 
-<meta name="date" content="2023-07-07" />
+<meta name="date" content="2023-08-07" />
 
 <title>Binary Regression</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Binary Regression</h1>
 <h4 class="author">Ramin Mojab</h4>
-<h4 class="date">2023-07-07</h4>
+<h4 class="date">2023-08-07</h4>
 
 
 
@@ -729,14 +729,14 @@ models with fewer potential explanatory variables. Here is the code:</p>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                      <span class="at">metricOptions =</span> <span class="fu">get.options.metric</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>,<span class="st">&quot;sic&quot;</span>, <span class="st">&quot;auc&quot;</span>, <span class="st">&quot;brier&quot;</span>)),</span>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>                      <span class="at">searchItems =</span> <span class="fu">get.items.search</span>(<span class="at">bestK =</span> <span class="dv">10</span>))</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">.SearchDc</span>(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, <span class="sc">:</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="er">&gt;</span> Error occurred <span class="cf">in</span> the search process. See <span class="st">&#39;result$counts&#39;</span>.</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="er">&gt;</span> Error occurred <span class="cf">in</span> the search process. See <span class="st">&#39;result$counts&#39;</span></span>
 <span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>search_step_res</span>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> bin </span>
 <span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">2</span>,<span class="dv">763</span>, searched<span class="sc">:</span> <span class="dv">2</span>,<span class="dv">763</span> (<span class="dv">100</span><span class="sc">%), failed: 54 (2%</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06722522</span> minutes </span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06669846</span> minutes </span>
 <span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="er">&gt;</span> Failures<span class="sc">:</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> matrix singularity<span class="sc">:</span> <span class="dv">54</span> (<span class="dv">100</span>%)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> ldt<span class="sc">::</span>statistics<span class="ot">-&gt;</span>matrix singularity<span class="sc">:</span> <span class="dv">54</span> (<span class="dv">100</span>%)</span>
 <span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
 <span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> aic<span class="sc">:</span></span>
 <span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y</span> (<span class="at">best=</span><span class="fl">131.239</span>)</span>
@@ -799,14 +799,14 @@ we define a out-of-sample process:</p>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>                      <span class="at">searchItems =</span> <span class="fu">get.items.search</span>(<span class="at">bestK =</span> <span class="dv">10</span>),</span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>                      <span class="at">searchOptions =</span> <span class="fu">get.options.search</span>(<span class="at">printMsg =</span> <span class="cn">FALSE</span>))</span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  <span class="sc">&gt;</span> Warning <span class="cf">in</span> <span class="fu">.SearchDc</span>(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, <span class="sc">:</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="er">&gt;</span> Error occurred <span class="cf">in</span> the search process. See <span class="st">&#39;result$counts&#39;</span>.</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="er">&gt;</span> Error occurred <span class="cf">in</span> the search process. See <span class="st">&#39;result$counts&#39;</span></span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>search_step_res</span>
 <span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  <span class="sc">&gt;</span> method<span class="sc">:</span> bin </span>
 <span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="sc">&gt;</span> expected<span class="sc">:</span> <span class="dv">2</span>,<span class="dv">381</span>, searched<span class="sc">:</span> <span class="dv">2</span>,<span class="dv">381</span> (<span class="dv">100</span><span class="sc">%), failed: 54 (2.3%</span>)</span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06695981</span> minutes </span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  <span class="sc">&gt;</span> elapsed time<span class="sc">:</span> <span class="fl">0.06693642</span> minutes </span>
 <span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>  <span class="er">&gt;</span> Failures<span class="sc">:</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> matrix singularity<span class="sc">:</span> <span class="dv">54</span> (<span class="dv">100</span>%)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> ldt<span class="sc">::</span>statistics<span class="ot">-&gt;</span>matrix singularity<span class="sc">:</span> <span class="dv">54</span> (<span class="dv">100</span>%)</span>
 <span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="sc">&gt;</span> <span class="sc">--------</span></span>
 <span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="er">&gt;</span> <span class="fl">1.</span> aucOut<span class="sc">:</span></span>
 <span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="er">&gt;</span>  <span class="fu">Y</span> (<span class="at">best=</span><span class="fl">0.931</span>)</span>

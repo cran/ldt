@@ -92,11 +92,13 @@ template <HClusterLinkage method>
 void HCluster<method>::Calculate(MatrixSym<false> &distances) {
 
   if (distances.Any(NAN))
-    throw std::logic_error("NaN (invalid) distance is found.");
+    throw LdtException(ErrorType::kLogic, "hcluster",
+                       "NaN (invalid) distance is found");
 
   this->Distances = &distances;
   if (distances.length_array() != n * (n - 1) / 2)
-    throw std::logic_error("invalid length"); // invalid length
+    throw LdtException(ErrorType::kLogic, "hcluster",
+                       "invalid length"); // invalid length
 
   Tv nearest_1_distance = 0, nearest_2_distance = 0;
   Ti n_i = n, s; // 'n_i' is used to set the merged id
@@ -278,7 +280,7 @@ Tv HCluster<method>::CalculateDistance(Ti nLeft, Ti nRight, Ti nNode,
     Tv w_n = (Tv)nNode / n;
     return w_l * disLeft + w_r * disRight - w_n * leftDisRight;
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "hcluster", "not implemented");
   }
 }
 
@@ -302,7 +304,8 @@ std::unique_ptr<HClusterBase> HClusterBase::GetFromType(HClusterLinkage linkage,
     return std::unique_ptr<HClusterBase>(
         new HCluster<HClusterLinkage::kWard>(n));
   default:
-    throw std::logic_error("Not implemented (linkage type)");
+    throw LdtException(ErrorType::kLogic, "hcluster",
+                       "not implemented (linkage type)");
   }
 }
 

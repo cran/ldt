@@ -158,10 +158,11 @@ void Descriptive::FilterAr(const Matrix<Tv> *coefs, Matrix<Tv> *storage) {
   Ti k = coefs->length();
   Ti T = pArray->length();
   if (storage->length() < T)
-    throw std::logic_error(
-        "invalid storage length"); // invalid length for storage
+    throw LdtException(ErrorType::kLogic, "descriptive",
+                   "invalid storage length"); // invalid length for storage
   if (k > T)
-    throw std::logic_error("invalid length"); // invalid length
+    throw LdtException(ErrorType::kLogic, "descriptive",
+                   "invalid length"); // invalid length
 
   for (Ti i = 0; i < coefs->length(); i++)
     storage->Data[i] = pArray->Data[i];
@@ -180,7 +181,7 @@ void Descriptive::FilterMa(const Matrix<Tv> &coefs, bool centered,
   Ti k = static_cast<Ti>(coefs.length());
   Ti T = static_cast<Ti>(pArray->length());
   if (static_cast<Ti>(storage.length()) < T)
-    throw std::logic_error("invalid storage length");
+    throw LdtException(ErrorType::kLogic, "descriptive", "invalid storage length");
 
   storage.SetValue(NAN);
 
@@ -208,7 +209,8 @@ void Descriptive::SeasonalDecompositionMa(Matrix<Tv> &storage_trend,
 
   bool del = false;
   if (!trendcoefs) {
-    throw std::logic_error("not implemented"); // fix new
+    throw LdtException(ErrorType::kLogic, "descriptive",
+                   "not implemented"); // fix new
 
     del = true;
     double sc = static_cast<double>(seasonCount);
@@ -298,7 +300,7 @@ void Descriptive::RegressionTrend(double *storage2) {
   auto mat = Matrix<Tv>(data, 2, 2);
   int info = mat.Inv2x2();
   if (info != 0)
-    throw std::logic_error("matrix singularity");
+    throw LdtException(ErrorType::kLogic, "descriptive", "matrix singularity");
 
   auto b0 = pArray->Sum();
   double b1 = 0.0;

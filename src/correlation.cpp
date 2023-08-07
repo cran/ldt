@@ -18,7 +18,8 @@ Correlation<checkNaN, type, method>::Correlation(Ti rows, Ti cols,
   this->mByColumn = byColumn;
 
   if (byColumn == false)
-    throw std::logic_error("By column is not implemented."); // not implemented
+    throw LdtException(ErrorType::kLogic, "correlation",
+                       "by column is not implemented"); // not implemented
 
   auto len = this->mByColumn ? this->mCols : this->mRows;
 
@@ -200,10 +201,12 @@ void Correlation<checkNaN, type, method>::Calculate(const Matrix<Tv> &mat,
   auto temp = Correlation<checkNaN, type, method>(mat.RowsCount, mat.ColsCount,
                                                   this->mByColumn);
   if (temp.WorkSize > this->WorkSize || temp.StorageSize > this->StorageSize)
-    throw std::logic_error("inconsistent arguments");
+    throw LdtException(ErrorType::kLogic, "correlation",
+                       "inconsistent arguments");
 
   if (mByColumn == false)
-    throw std::logic_error("By Column is not implemented.");
+    throw LdtException(ErrorType::kLogic, "correlation",
+                       "by Column is not implemented");
 
   auto len = this->mByColumn ? mat.ColsCount : mat.RowsCount;
 
@@ -229,7 +232,7 @@ void Correlation<checkNaN, type, method>::Calculate(const Matrix<Tv> &mat,
     spearman(mat, work, storage, adjustDoF,
              setLower); // I send all the storage to override
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "correlation", "not implemented");
   }
 }
 

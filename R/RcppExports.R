@@ -61,15 +61,15 @@
     .Call('_ldt_SearchSur', PACKAGE = 'ldt', y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions, modelCheckItems, searchItems, searchOptions)
 }
 
-.EstimSur <- function(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, printMsg) {
-    .Call('_ldt_EstimSur', PACKAGE = 'ldt', y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, printMsg)
+.EstimSur <- function(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg) {
+    .Call('_ldt_EstimSur', PACKAGE = 'ldt', y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg)
 }
 
 .SearchVarma <- function(y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions) {
     .Call('_ldt_SearchVarma', PACKAGE = 'ldt', y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions)
 }
 
-.EstimVarma <- function(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, printMsg) {
-    .Call('_ldt_EstimVarma', PACKAGE = 'ldt', y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, printMsg)
+.EstimVarma <- function(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg) {
+    .Call('_ldt_EstimVarma', PACKAGE = 'ldt', y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg)
 }
 

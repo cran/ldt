@@ -137,7 +137,7 @@ combineSearch <- function(list, type1Name = "coefs") {
       added <- FALSE
       for (f0 in result$counts$failedDetails){
         j <- j + 1
-        if (f$message == f0$message){
+        if (identical(f$message, f0$message)){
           added <- TRUE
           result$counts$failedDetails[[j]]$count = f0$count + f$count
           break
@@ -239,7 +239,7 @@ combineSearch <- function(list, type1Name = "coefs") {
             for (item0 in tar0[[type1Name]]$bests) {
               item0 <- item0[lengths(item0) != 0]
               o <- o + 1
-              if (item1$name == item0$name) {
+              if (identical(item1$name, item0$name)) {
                 found <- TRUE
                 # combine, sort by weights and select a subset
                 b_count <- length(item0)
@@ -290,7 +290,9 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   # dots <- list(...)
   # if (dots$searchItems)
   if (length(sizes) != length(counts)) {
-    stop("Invalid number of elements in 'counts'.")
+    stop(paste0("Invalid number of elements in 'counts' (sizes=",
+                paste0(sizes, collapse=", "), "; counts=",
+                paste0(counts, collapse = ", ") ,")"))
   }
 
   if (is.null(colnames(data))) {
@@ -326,18 +328,16 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       count_i <- ncol(data)
     }
 
-    if (i == 1) {
-      if (count_i < ncol(data)) {
-        warning(paste0("First ", count_i, " variables are selected in the first step."))
-        if (printMsg) {
-          cat(paste0("Selected Variables: First", count_i, "Variables.\n"))
-        }
-      } else if (printMsg) {
-        cat(paste0("Selected Variables: All Variables.\n"))
-      }
-      data_i <- data[, c(1:count_i)] # however, the first one should
-      # be NA such that no arbitrary selection happens here
-    } else { # use previous to select
+    if (count_i == ncol(data)){ # use all data
+      data_i <- data
+      if (printMsg)
+        cat(paste0("Selected variables: All available variables.\n"))
+    }
+    else if (i == 1){
+      data_i = data[,1:count_i]
+      warning("Some variables are excluded in the first step.")
+    }
+    else { # use previous best models to select
       est <- estims[[i - 1]]
       x_i_names <- colnames(data_i)
 
@@ -380,11 +380,12 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       # first we should determine which metric or target to use ?!
 
       if (printMsg) {
-        cat(paste0("Selected Variables: ", paste0(vars, sep = ";", collapse = ""), "\n"))
+        cat(paste0("Selected variables: ", paste0(vars, sep = ";", collapse = ""), "\n"))
       }
 
       data_i <- data_i[, vars, drop = FALSE]
     }
+
     if (any(ncol(data_i) < size_i)) {
       warning("There are not enough variables in this step. Increase the value of
       'bestK' or if you have fix variables, adjust the sizes. Search is stoped.")
@@ -407,16 +408,21 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
     if (printMsg)
       cat("\n=================\n")
 
-    if (estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount) {
+    lastStep = i == length(sizes)
+    allFailed = estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount
+    if (lastStep == FALSE && allFailed) {
       if (printMsg){
-         print("......Failures.......")
-         print(estims[[i]]$counts$failedDetails)
+        print("......Failures.......")
+        print(estims[[i]]$counts$failedDetails)
       }
       stop("all estimations failed")
+
+      #TODO: an argument for moving to the next step without reducing the size.
     }
 
     if (is.null(savePre) == FALSE) {
       saveRDS(list(estim = estims[[i]], data = data_i), paste0(savePre, i, ".RData"))
+      print(paste0("Data saved: ", file.path(getwd(), paste0(savePre, i, ".RData"))))
     }
 
     if (printMsg) {
@@ -441,7 +447,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   }
 
   result$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(result$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
-                                               as.POSIXct(result$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+                                                  as.POSIXct(result$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
 
 
   return(result)

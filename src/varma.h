@@ -433,6 +433,9 @@ struct VarmaSimulationDetail {
 };*/
 
 class LDT_EXPORT VarmaSimulation {
+
+  bool mDoForecastVar = true;
+
   void AddError(std::string state);
 
 public:
@@ -484,15 +487,19 @@ public:
       bool checkNan = true, PcaAnalysisOptions *pcaOptionsY = nullptr,
       PcaAnalysisOptions *pcaOptionsX = nullptr);
 
-  void Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
-                 Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
-                 const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
-                 Tv maxCondNum = 1e12, Tv stdMultipler = 2,
-                 bool coefUncer = false, Ti maxInvalidSim = INT32_MAX);
+  void
+  Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
+            Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
+            const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
+            Tv maxCondNum = 1e12, Tv stdMultipler = 2, bool coefUncer = false,
+            Ti maxInvalidSim = INT32_MAX,
+            const std::function<void(Tv &)> *transformForMetrics = nullptr);
 
-  void CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
-                  Tv stdMultipler = 2, bool coefUncer = false,
-                  bool usePreviousEstim = false);
+  void
+  CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
+             Tv stdMultipler = 2, bool coefUncer = false,
+             bool usePreviousEstim = false,
+             const std::function<void(Tv &)> *transformForMetrics = nullptr);
 };
 
 class LDT_EXPORT VarmaSearcher : public Searcher {

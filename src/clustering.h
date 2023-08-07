@@ -69,7 +69,8 @@ inline DistanceMethod FromString_DistanceMethod(const char *v) {
   else if (StartsWith("cor", v))
     return DistanceMethod::kCorrelation;
 
-  throw std::logic_error("Invalid enum name: 'DistanceMethod'.");
+  throw LdtException(ErrorType::kLogic, "clustering.h",
+                 "invalid or not implemented distance method");
 }
 
 /// @brief A base class for calculating distance
@@ -186,7 +187,8 @@ inline HClusterLinkage FromString_HClusterLinkage(const char *v) {
   else if (StartsWith("war", v))
     return HClusterLinkage::kWard;
 
-  throw std::logic_error("Invalid enum name: 'HClusterLinkage'.");
+  throw LdtException(ErrorType::kLogic, "clustering.h",
+                 "invalid or not implemented h-cluster linkage");
 }
 
 /// @brief A cluster node

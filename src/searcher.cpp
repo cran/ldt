@@ -15,8 +15,9 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
                    Ti fixFirstGroups, Ti fixFirstItems) {
 
   if (fixFirstGroups > SizeG)
-    throw std::logic_error(
-        "Fixed number of groups cannot be larger than Size in the searcher.");
+    throw LdtException(
+        ErrorType::kLogic, "searcher",
+        "fixed number of groups cannot be larger than Size in the searcher");
 
   pOptions = &searchOptions;
   pItems = &searchItems;
@@ -46,11 +47,13 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
   InnerIndexes.SetValue(0);
 
   if (searchItems.LengthEvals == 0 || searchItems.LengthTargets == 0)
-    throw std::logic_error("No evaluation or target is given.");
+    throw LdtException(ErrorType::kLogic, "searcher",
+                       "no evaluation or target is given");
   if (searchItems.KeepModelEvaluations == false && searchItems.Length1 == 0 &&
       searchItems.Length2 == 0)
-    throw std::logic_error(
-        "Nothing is saved in the searcher. Check the searchItems.");
+    throw LdtException(
+        ErrorType::kLogic, "searcher",
+        "nothing is saved in the searcher. Check the searchItems");
 
   Summaries0 =
       std::vector<std::vector<SearcherSummary>>(searchItems.LengthEvals);
@@ -126,14 +129,15 @@ void Searcher::UpdateCurrent() {
 
 void Searcher::CheckStart() {
   if (mIsFinished)
-    throw std::logic_error(
-        "You cannot reuse this class. The search is finished.");
+    throw LdtException(ErrorType::kLogic, "searcher",
+                       "you cannot reuse this class: search is finished");
   if ((Ti)pGroupIndexMap->size() < SizeG)
-    throw std::logic_error(
-        std::string("Invalid number of groups. It is not enough to build the "
+    throw LdtException(
+        ErrorType::kLogic, "searcher",
+        std::string("number of groups is not enough to build the "
                     "model with the given size. Size of model=") +
-        std::to_string(SizeG) + std::string(", Number of groups=") +
-        std::to_string((Ti)pGroupIndexMap->size()));
+            std::to_string(SizeG) + std::string(", Number of groups=") +
+            std::to_string((Ti)pGroupIndexMap->size()));
 }
 
 std::string Searcher::Start(Tv *work, Ti *workI) {
@@ -264,11 +268,12 @@ Ti Searcher::GetCount(bool effective) const {
   // simulate indexation in groups and multiply sizes
 
   if ((Ti)pGroupIndexMap->size() < SizeG)
-    throw std::logic_error(
-        std::string("Invalid number of groups. It is not enough to build the "
+    throw LdtException(
+        ErrorType::kLogic, "searcher",
+        std::string("invalid number of groups. It is not enough to build the "
                     "model with the given size. Size of model=") +
-        std::to_string(SizeG) + std::string(", Number of groups=") +
-        std::to_string((Ti)pGroupIndexMap->size()));
+            std::to_string(SizeG) + std::string(", Number of groups=") +
+            std::to_string((Ti)pGroupIndexMap->size()));
 
   Ti count;
   if (mFixFirstItems == 0) {

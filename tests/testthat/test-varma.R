@@ -188,6 +188,18 @@ test_that("VARMA simulation works", {
 
 })
 
+
+test_that("VARMA simulation with transform works", {
+  Z = x[,1:2]
+  res1 = estim.varma(Z, params = c(1,0,1,0,0,0), maxHorizon = 3,
+                    simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg)
+  res2 = estim.varma(Z, params = c(1,0,1,0,0,0), maxHorizon = 3,
+                     simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg,
+                     simTransform = "id")
+  expect_equal(res1$simulation,res2$simulation)
+  expect_equal(res1$metrics,res2$metrics)
+})
+
 test_that("VARMA estimation works", {
   p1=matrix(c(0.2,-0.6,0.3,1.1),2,2)
   sig=matrix(c(4,0.8,0.8,1),2,2)

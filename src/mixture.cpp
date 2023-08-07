@@ -39,12 +39,14 @@ DistributionMixtureType gettype(std::vector<DistributionBase *> *dists) {
 DistributionMixture::DistributionMixture(
     std::vector<Tv> &weights, std::vector<DistributionBase *> &dists) {
   if (weights.size() != dists.size())
-    throw std::logic_error("inconsistent size.");
+    throw LdtException(ErrorType::kLogic, "mixture", "inconsistent size");
   for (auto &w : weights)
     if (w <= 0.0)
-      throw std::logic_error("Zero/negative weight in mixture distribution");
+      throw LdtException(ErrorType::kLogic, "mixture",
+                         "zero/negative weight in mixture distribution");
   if (weights.size() == 0)
-    throw std::logic_error("zero number of distributions.");
+    throw LdtException(ErrorType::kLogic, "mixture",
+                       "zero number of distributions");
 
   pWeights = &weights;
   pDistributions = &dists;
@@ -273,9 +275,11 @@ void DistributionMixture::GetPmfSupport(Tv *x, Tv *Value, bool log, Ti length,
                                         bool for_continuous_plot, Tv min,
                                         Tv max) {
   if (length <= 0)
-    throw std::logic_error("invalid length for support of distribution.");
+    throw LdtException(ErrorType::kLogic, "mixture",
+                       "invalid length for support of distribution");
   if (pType != DistributionMixtureType::kDiscrete)
-    throw std::logic_error("Use it when all distributions are discrete.");
+    throw LdtException(ErrorType::kLogic, "mixture",
+                       "use it when all distributions are discrete");
 
   // TODO: check increment
 
@@ -308,7 +312,8 @@ void DistributionMixture::GetPmfSupport(Tv *x, Tv *Value, bool log, Ti length,
 Tv DistributionMixture::GetPdfOrPmf(Tv x) {
 
   if (pType == DistributionMixtureType::kBoth)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "mixture",
         "PDF/PMF of a mixture of discrete and continuous distributions is "
         "not supported");
 

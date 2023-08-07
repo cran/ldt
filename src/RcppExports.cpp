@@ -248,8 +248,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // EstimSur
-SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP newX, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, bool printMsg);
-RcppExport SEXP _ldt_EstimSur(SEXP ySEXP, SEXP xSEXP, SEXP addInterceptSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP newXSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
+SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP newX, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, SEXP simTransform, bool printMsg);
+RcppExport SEXP _ldt_EstimSur(SEXP ySEXP, SEXP xSEXP, SEXP addInterceptSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP newXSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP simTransformSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -267,8 +267,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type simTrainFixSize(simTrainFixSizeSEXP);
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type simTransform(simTransformSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimSur(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimSur(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -300,8 +301,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // EstimVarma
-SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount, bool addIntercept, List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber, bool printMsg);
-RcppExport SEXP _ldt_EstimVarma(SEXP ySEXP, SEXP xSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP addInterceptSEXP, SEXP lbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP, SEXP printMsgSEXP) {
+SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount, bool addIntercept, List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber, SEXP simTransform, bool printMsg);
+RcppExport SEXP _ldt_EstimVarma(SEXP ySEXP, SEXP xSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP addInterceptSEXP, SEXP lbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP, SEXP simTransformSEXP, SEXP printMsgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -320,8 +321,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type simHorizons(simHorizonsSEXP);
     Rcpp::traits::input_parameter< bool >::type simUsePreviousEstim(simUsePreviousEstimSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type simTransform(simTransformSEXP);
     Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimVarma(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimVarma(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -342,9 +344,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_CombineStats4", (DL_FUNC) &_ldt_CombineStats4, 2},
     {"_ldt_GetPca", (DL_FUNC) &_ldt_GetPca, 4},
     {"_ldt_SearchSur", (DL_FUNC) &_ldt_SearchSur, 13},
-    {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 15},
+    {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 16},
     {"_ldt_SearchVarma", (DL_FUNC) &_ldt_SearchVarma, 17},
-    {"_ldt_EstimVarma", (DL_FUNC) &_ldt_EstimVarma, 16},
+    {"_ldt_EstimVarma", (DL_FUNC) &_ldt_EstimVarma, 17},
     {NULL, NULL, 0}
 };
 

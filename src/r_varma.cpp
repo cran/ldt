@@ -13,13 +13,16 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                  List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' is null.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "invalid data: 'y' is null");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'y' must be a 'numeric matrix'");
   y = as<NumericMatrix>(y);
 
   if (numTargets < 1)
-    throw std::logic_error("Number of targets must be positive.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "number of targets must be positive");
 
   bool printMsg = false;
   auto options = SearchOptions();
@@ -28,12 +31,14 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
 
   if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
-      throw std::logic_error("'x' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-varma",
+                         "'x' must be a 'numeric matrix'");
     x = as<NumericMatrix>(x);
   }
   if (newX != R_NilValue) {
     if (is<NumericMatrix>(newX) == false)
-      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-varma",
+                         "'newX' must be a 'numeric matrix'");
     newX = as<NumericMatrix>(newX);
   }
 
@@ -48,8 +53,9 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                      R_NilValue, newX, false, false, 1, 0, 0, maxHorizon, true);
 
   if (numTargets > my.ColsCount)
-    throw std::logic_error("'numTargets' cannot be larger than the number of "
-                           "endogenous variables (i.e., columns of 'y').");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'numTargets' cannot be larger than the number of "
+                       "endogenous variables (i.e., columns of 'y')");
 
   mat.Transpose();
 
@@ -57,7 +63,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
   dataset0->Data(mat);
   if (dataset0->HasMissingData)
-    throw std::logic_error("Missing observation exists.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "missing observation exists");
 
   std::vector<int> ySizes_;
   GetSizes(printMsg, ySizes_, ySizes, my.ColsCount, false);
@@ -73,7 +80,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
     maxParams = IntegerVector({1, 0, 0, 0, 0, 0});
   auto maxParams_ = as<std::vector<int>>(IntegerVector(maxParams));
   if (maxParams_.size() < 6)
-    throw std::logic_error("'maxParams_' must have 6 parameters.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'maxParams_' must have 6 parameters");
   if (printMsg) {
     Rprintf("Max Parameters:%s(p,d,q)[P,D,Q]s=(%i,%i,%i)[%i,%i,%i]\n",
             my.ColsCount == 1 ? "ARMA" : "VARMA", maxParams_.at(0),
@@ -101,9 +109,10 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   std::vector<std::string> type1Names;
   if (items.Length1 > 0) {
     if (maxHorizon == 0)
-      throw std::logic_error(
+      throw LdtException(
+          ErrorType::kLogic, "R-varma",
           "Inconsistent argument and option: If 'type1' is enabled in "
-          "'searchItems', 'maxHorizon' cannot be zero.");
+          "'searchItems', 'maxHorizon' cannot be zero");
     checks.Prediction = true;
     for (int i = 0; i < items.Length1; i++)
       type1Names.push_back(std::string("Horizon") + std::to_string(i + 1));
@@ -121,7 +130,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   try {
     W = std::unique_ptr<double[]>(new double[model.Modelset.WorkSize]);
   } catch (...) {
-    throw std::logic_error("More memory is required for running the project.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "more memory is required for running the project");
   }
 
   auto alli = model.Modelset.GetExpectedNumberOfModels();
@@ -170,23 +180,28 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
                 bool addIntercept, List lbfgsOptions, double olsStdMultiplier,
                 SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX,
                 int simFixSize, SEXP simHorizons, bool simUsePreviousEstim,
-                double simMaxConditionNumber, bool printMsg) {
+                double simMaxConditionNumber, SEXP simTransform,
+                bool printMsg) {
 
   if (y == R_NilValue)
-    throw std::logic_error("Invalid data: 'y' is null.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "invalid data: 'y' is null");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be a 'numeric matrix'.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'y' must be a 'numeric matrix'");
   y = as<NumericMatrix>(y);
 
   if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
-      throw std::logic_error("'x' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-varma",
+                         "'x' must be a 'numeric matrix'");
     x = as<NumericMatrix>(x);
   }
 
   if (newX != R_NilValue) {
     if (is<NumericMatrix>(newX) == false)
-      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+      throw LdtException(ErrorType::kLogic, "R-varma",
+                         "'newX' must be a 'numeric matrix'");
   }
   if (addIntercept && maxHorizon > 0) {
     if (newX == R_NilValue) {
@@ -215,7 +230,8 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     params = IntegerVector({1, 0, 0, 0, 0, 0});
   auto params_ = as<std::vector<int>>(IntegerVector(params));
   if (params_.size() < 6)
-    throw std::logic_error("'params' must have 6 parameters.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'params' must have 6 parameters");
   if (printMsg) {
     Rprintf("Model:%s(p,d,q)[P,D,Q]s=(%i,%i,%i)[%i,%i,%i]\n",
             my.ColsCount == 1 ? "ARMA" : "VARMA", params_.at(0), params_.at(1),
@@ -223,8 +239,8 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     Rprintf("Number of Seasons=%i\n", seasonsCount);
   }
   if (maxHorizon < 0)
-    throw std::logic_error(
-        "Invalid argument: 'maxHorizon' cannot be negative.");
+    throw LdtException(ErrorType::kLogic, "R-varma",
+                       "'maxHorizon' cannot be negative");
   if (printMsg)
     Rprintf("Prediction Horizon=%i\n", maxHorizon);
 
@@ -265,7 +281,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
 
   if (printMsg)
-    Rprintf("Starting Calculations ...");
+    Rprintf("Starting Calculations ..");
 
   model.Calculate(mat, S.get(), W.get(), false, maxHorizon, 0, -1,
                   olsStdMultiplier);
@@ -296,21 +312,64 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
         simHorizons_.push_back(i + 1);
     } else if (simHorizons != R_NilValue) {
       if (is<IntegerVector>(simHorizons) == false)
-        throw std::logic_error("'simHorizons' must be an 'integer vector'.");
+        throw LdtException(ErrorType::kLogic, "R-varma",
+                           "'simHorizons' must be an 'integer vector'");
       auto hors = as<IntegerVector>(simHorizons);
       for (int i = 0; i < hors.length(); i++) {
         if (hors[i] <= 0)
-          throw std::logic_error("Zero or negative value in 'simHorizons'.");
+          throw LdtException(ErrorType::kLogic, "R-varma",
+                             "zero or negative value in 'simHorizons'");
         simHorizons_.push_back(hors[i]);
       }
     } else
-      throw std::logic_error("Simulation horizons are missing.");
+      throw LdtException(ErrorType::kLogic, "R-varma",
+                         "simulation horizons are missing");
 
     if (printMsg) {
       Rprintf("Simulation Horizons:%s\n",
               VectorToCsv(simHorizons_, ',').c_str());
       Rprintf("Maximum Condition Number=%f\n", simMaxConditionNumber);
     }
+
+    std::function<void(double &)> transform = nullptr;
+    if (printMsg)
+      Rprintf("    - Metric Transform = ");
+
+    if (simTransform == R_NilValue) {
+      // do nothing
+      if (printMsg)
+        Rprintf("none");
+    } else if (is<Function>(simTransform)) {
+
+      auto F = as<Function>(simTransform);
+      transform = [&F](double &x) { x = as<double>(F(wrap(x))); };
+      if (printMsg)
+        Rprintf("Custom function");
+
+    } else if (TYPEOF(simTransform) == STRSXP) {
+
+      auto funcType = FromString_FunctionType(as<const char *>(simTransform));
+
+      if (printMsg)
+        Rprintf(ToString(funcType));
+
+      if (funcType == FunctionType::kId) { // for tests
+        transform = [](double &x) { };
+      } else if (funcType == FunctionType::kExp) {
+        transform = [](double &x) { x = std::exp(x); };
+      } else if (funcType == FunctionType::kPow2) {
+        transform = [](double &x) { x = x * x; };
+      } else {
+        throw LdtException(ErrorType::kLogic, "R-varma",
+                           "this type of transformation is not available");
+      }
+    } else {
+      throw LdtException(
+          ErrorType::kLogic, "R-varma",
+          "invalid 'transform'. It can be null, string or function");
+    }
+    if (printMsg)
+      Rprintf("\n");
 
     simModel =
         VarmaSimulation(sizes, simFixSize, simHorizons_, metrics, &optim, true,
@@ -324,10 +383,11 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
         new double[simModel.StorageSize]); // don't override S
 
     if (printMsg)
-      Rprintf("Starting Simulation ...");
+      Rprintf("Starting Simulation ..");
 
     simModel.CalculateE(S0.get(), W0.get(), mat, simMaxConditionNumber,
-                        olsStdMultiplier, false, simUsePreviousEstim);
+                        olsStdMultiplier, false, simUsePreviousEstim,
+                        transform ? &transform : nullptr);
 
     if (printMsg)
       Rprintf("Simulation Finished.\n");
@@ -367,7 +427,8 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     for (const auto &[k, v] : simModel.Errors) {
       h++;
       fcount += v;
-      simFails[h] = List::create(_["message"] = wrap(k), _["count"] = wrap(v));
+      simFails[h - 1] =
+          List::create(_["message"] = wrap(k), _["count"] = wrap(v));
     }
     if (fcount > 0) {
       if (printMsg)
@@ -468,8 +529,10 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Forecasts.Forecast,
                                            &endoNames_pca, nullptr),
-                    _["vars"] = as_matrix(model.Forecasts.Variance,
-                                          &endoNames_pca, nullptr),
+                    _["vars"] = model.Forecasts.mDoVariance
+                                    ? (SEXP)as_matrix(model.Forecasts.Variance,
+                                                      &endoNames_pca, nullptr)
+                                    : R_NilValue,
                     _["startIndex"] = wrap(model.Forecasts.StartIndex + 1)),
       _["simulation"] = simFixSize == 0
                             ? R_NilValue

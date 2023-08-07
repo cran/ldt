@@ -50,7 +50,8 @@ inline CorrelationMethod FromString_CorrelationMethod(const char *v) {
   else if (StartsWith("spe", v))
     return CorrelationMethod::kSpearman;
 
-  throw std::logic_error("Invalid enum name: 'CorrelationMethod'.");
+  throw LdtException(ErrorType::kLogic, "correlation.h",
+                 "invalid or not implemented correlation method");
 }
 
 /// @brief A base class for correlation

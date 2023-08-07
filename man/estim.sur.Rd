@@ -19,6 +19,7 @@ estim.sur(
   simTrainRatio = 0.75,
   simSeed = 0,
   simMaxConditionNumber = Inf,
+  simTransform = NULL,
   printMsg = FALSE
 )
 }
@@ -50,6 +51,8 @@ estim.sur(
 \item{simSeed}{A seed for the random number generator. Use zero for a random value.}
 
 \item{simMaxConditionNumber}{A number for the maximum value for the condition number in the simulation.}
+
+\item{simTransform}{Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.}
 
 \item{printMsg}{Set to \code{TRUE} to enable printing some details.}
 }

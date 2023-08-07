@@ -21,7 +21,8 @@ using namespace ldt;
 template <typename Tw>
 Dataset<Tw>::Dataset(Ti rows, Ti cols, bool hasNan, bool selectColumn) {
   if (cols <= 0 || rows <= 0)
-    throw std::logic_error("invalid size in 'dataset'");
+    throw LdtException(ErrorType::kLogic, "dataset",
+                       "invalid size in 'dataset'");
   mHasNaN = hasNan;
   mSelectColumn = selectColumn;
 
@@ -65,7 +66,8 @@ void Dataset<Tw>::Calculate(const Matrix<Tw> &data, std::vector<Ti> *colIndexes,
 template <bool byRow, typename Tw>
 DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
   if (cols <= 0 || rows <= 0)
-    throw std::logic_error("invalid size in 'datasetT'.");
+    throw LdtException(ErrorType::kLogic, "dataset",
+                       "invalid size in 'datasetT'");
   mHasNaN = hasNan;
   mSelect = select;
 
@@ -73,7 +75,8 @@ DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
 
   if (hasNan) {
     if constexpr (std::numeric_limits<Tw>::has_quiet_NaN == false) {
-      throw std::logic_error("invalid type. Cannot check NAN.");
+      throw LdtException(ErrorType::kLogic, "dataset",
+                         "invalid type. Cannot check NAN");
     }
   }
 }
@@ -108,7 +111,8 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
 
     for (auto &r : Ranges)
       if (r.IsNotValid())
-        throw std::logic_error("Data is not valid. Check missing data points.");
+        throw LdtException(ErrorType::kLogic, "dataset",
+                           "data is not valid. Check missing data points");
   }
 }
 
@@ -191,7 +195,8 @@ template <typename Tw>
 MatrixStandardized<Tw>::MatrixStandardized(Ti rows, Ti cols, bool removeZeroVar,
                                            bool center, bool scale) {
   if (cols <= 0 || rows <= 0)
-    throw std::logic_error("invalid size in 'MatrixStandardized'.");
+    throw LdtException(ErrorType::kLogic, "dataset",
+                       "invalid size in 'MatrixStandardized'");
   if (scale == false)
     removeZeroVar = false;
 
@@ -222,7 +227,8 @@ void MatrixStandardized<Tw>::Calculate(const Matrix<Tw> &mat, Tw *storage,
   Ti rows = mat.RowsCount;
   auto temp = MatrixStandardized(rows, cols, mRemoveZeroVar, mCenter, mScale);
   if (temp.StorageSize > StorageSize)
-    throw std::logic_error("inconsistent size in 'MatrixStandardized'");
+    throw LdtException(ErrorType::kLogic, "dataset",
+                       "inconsistent size in 'MatrixStandardized'");
 
   Ti q = 0;
   Result.SetData(&storage[q], rows, cols);

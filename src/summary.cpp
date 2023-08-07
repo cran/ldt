@@ -15,7 +15,8 @@ void SearchItems::Update(const SearchMetricOptions metrics, Ti targetCount,
                          Ti DepenCount, Ti exoCount) {
   LengthEvals = (Ti)(metrics.MetricsIn.size() + metrics.MetricsOut.size());
   if (targetCount <= 0)
-    throw std::logic_error("Number of targets must be positive.");
+    throw LdtException(ErrorType::kLogic, "searcher-summary",
+                       "number of targets must be positive");
   LengthTargets = targetCount;
 }
 
@@ -29,25 +30,29 @@ void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
 
   bool hasOut = SimFixSize > 0; // || (supportsSimRatio && SimRatio > 0);
   if (hasOut == false && MetricsOut.size() > 0)
-    throw std::logic_error("Out-of-Sample metrics is given, but the number of "
-                           "simulations is zero.");
+    throw LdtException(ErrorType::kLogic, "searcher-summary",
+                       "out-of-sample metrics is given, but the number of "
+                       "simulations is zero");
   if (hasOut && MetricsOut.size() == 0)
-    throw std::logic_error(
-        "The number of simulations is positive but out-of-sample metrics "
-        "are missing.");
+    throw LdtException(
+        ErrorType::kLogic, "searcher-summary",
+        "number of simulations is positive but out-of-sample metrics "
+        "are missing");
 
   if (TrainFixSize > 0)
     TrainRatio = 0;                   // ignore it
   if (hasOut && isTimeSeries == false // for time prediction, everything is
                                       // determined by simulation size
       && TrainFixSize == 0 && TrainRatio == 0)
-    throw std::logic_error("Training sample is empty.");
+    throw LdtException(ErrorType::kLogic, "searcher-summary",
+                       "training sample is empty");
 
   if (isTimeSeries) {
     if ((Horizons.size() == 0 && MetricsOut.size() > 0) ||
         (Horizons.size() > 0 && MetricsOut.size() == 0))
-      throw std::logic_error(
-          "Invalid number of horizons (or out-of-sample metrics) is found.");
+      throw LdtException(
+          ErrorType::kLogic, "searcher-summary",
+          "invalid number of horizons (or out-of-sample metrics) is found");
   }
 
   // indexes
@@ -83,9 +88,10 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
     Estimation = true;
 
   if (metrics.SimFixSize > 0 && MinOutSim > metrics.SimFixSize)
-    throw std::logic_error(
-        "Minimum number of simulations cannot be larger than the number of "
-        "simulations.");
+    throw LdtException(
+        ErrorType::kLogic, "searcher-summary",
+        "minimum number of simulations cannot be larger than the number of "
+        "simulations");
 
   auto checkN = MinObsCount > 0;
   auto checkDof = MinDof > 0;

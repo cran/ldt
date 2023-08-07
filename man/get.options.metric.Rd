@@ -12,7 +12,8 @@ get.options.metric(
   trainFixSize = 0,
   seed = 0,
   horizons = c(1L),
-  weightedEval = FALSE
+  weightedEval = FALSE,
+  transform = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ get.options.metric(
 \item{horizons}{An array of integers representing the prediction horizons to be used in out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.}
 
 \item{weightedEval}{If \code{TRUE}, weights are used in evaluating discrete-choice models.}
+
+\item{transform}{Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.}
 }
 \value{
 A list with the given options.

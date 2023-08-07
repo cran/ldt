@@ -43,7 +43,8 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
                          CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented (correlation method)");
+        throw LdtException(ErrorType::kLogic, "distance",
+                           "not implemented (correlation method)");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -59,11 +60,13 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
                          CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented (correlation method)");
+        throw LdtException(ErrorType::kLogic, "distance",
+                           "not implemented (correlation method)");
       }
 
     default:
-      throw std::logic_error("not implemented (distance method)");
+      throw LdtException(ErrorType::kLogic, "distance",
+                         "not implemented (distance method)");
     }
   } else {
     switch (distMethod) {
@@ -95,7 +98,8 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
                          CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented (correlation method)");
+        throw LdtException(ErrorType::kLogic, "distance",
+                           "not implemented (correlation method)");
       }
 
     case ldt::DistanceMethod::kAbsCorrelation:
@@ -111,11 +115,13 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
                          CorrelationMethod::kSpearman>(rows, cols));
 
       default:
-        throw std::logic_error("not implemented (correlation method)");
+        throw LdtException(ErrorType::kLogic, "distance",
+                           "not implemented (correlation method)");
       }
 
     default:
-      throw std::logic_error("not implemented (distance method)");
+      throw LdtException(ErrorType::kLogic, "distance",
+                         "not implemented (distance method)");
     }
   }
 }
@@ -145,7 +151,7 @@ void Distance<checkNan, method, corrMethod>::Calculate(const Matrix<Tv> &data,
   auto temp =
       Distance<checkNan, method, corrMethod>(data.RowsCount, data.ColsCount);
   if (temp.StorageSize > this->StorageSize || temp.WorkSize > this->WorkSize)
-    throw std::logic_error("Inconsistent arguments");
+    throw LdtException(ErrorType::kLogic, "distance", "inconsistent arguments");
 
   this->Result.SetData(storage);
 

@@ -244,6 +244,21 @@ test_that("estim.sur simulation works", {
 
 })
 
+test_that("estim.sur transform in simulation works", {
+
+  exo <- x[,c(5,6)]
+  exo[[1,1]] <- NA
+  exo[[1,2]] <- NaN
+  res1 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, printMsg = printMsg, simSeed = 340 )
+  expect_equal(res1$simulation$validIter, 10)
+
+  res2 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, printMsg = printMsg, simSeed = 340
+                   , simTransform = "id")
+  expect_equal(res1$simulation, res2$simulation)
+  expect_equal(res1$metrics, res2$metrics)
+
+})
+
 test_that("search.sur works for insample", {
   skip_on_cran()
 

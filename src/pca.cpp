@@ -56,8 +56,8 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
   if (Xforecast) {
     numForecast = Xforecast->RowsCount;
     if (Xforecast->ColsCount != cols)
-      throw std::logic_error(
-          "Invalid 'Xforecast'. Different number of columns.");
+      throw LdtException(ErrorType::kLogic, "pca",
+                         "invalid 'Xforecast'. Different number of columns");
   }
 
   bool removeZeroVar = false;
@@ -71,7 +71,8 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
   auto temp = PcaAnalysis(rows, cols, numForecast, mDoPcs, removeZeroVar,
                           center, scale);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
-    throw std::logic_error("Inconsistent size in 'PcaAnalysis'.");
+    throw LdtException(ErrorType::kLogic, "pca",
+                       "Inconsistent size in 'PcaAnalysis'");
 
   Ti q = 0;
   Ti p = 0;
@@ -107,9 +108,11 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
     Stds.Data[i] *= r;
 
   // cumulative
-  Stds.Apply([](Tv x) -> Tv { return x * x; }, Stds2Ratios);
+  std::function<Tv(Tv)> f = [](Tv x) -> Tv { return x * x; };
+  Stds.Apply(f, Stds2Ratios);
   auto varsum = Stds2Ratios.Sum();
-  Stds2Ratios.Apply_in([&varsum](Tv x) -> Tv { return x / varsum; });
+  std::function<Tv(Tv)> g = [&varsum](Tv x) -> Tv { return x / varsum; };
+  Stds2Ratios.Apply_in(g);
 
   // Calculate PCs
   if (mDoPcs) {
@@ -138,7 +141,7 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
 
 Ti PcaAnalysis::GetCutoffColumn(Tv CutoffRate) const {
   if (CutoffRate <= 0 || CutoffRate >= 1)
-    throw std::logic_error("invalid cutoff rate");
+    throw LdtException(ErrorType::kLogic, "pca", "invalid cutoff rate");
   Ti col_cut;
   Tv cumsum = 0;
   for (col_cut = 1; col_cut <= Stds2Ratios.length(); col_cut++) {
@@ -160,13 +163,15 @@ void PcaAnalysisOptions::CalculateForModel(PcaAnalysis &model, Matrix<Tv> &data,
   // Ti numObs = data.RowsCount;
   Ti numExo = data.ColsCount;
   if (xForecast && xForecast->ColsCount != numExo)
-    throw std::logic_error(
-        "inconsistent number of variables in X and Forecast in PCA for a "
-        "Model.");
+    throw LdtException(
+        ErrorType::kLogic, "pca",
+        "inconsistent number of variables in X and forecast in PCA for a "
+        "model");
 
   if (IgnoreFirstCount >= numExo)
-    throw std::logic_error("Invalid 'IgnoreFirstCount' in PCA options. It is "
-                           ">= number of exogenous variables.");
+    throw LdtException(ErrorType::kLogic, "pca",
+                       "invalid 'IgnoreFirstCount' in PCA options. It is "
+                       ">= number of exogenous variables");
   auto start = IgnoreFirstCount;
   auto pcaMat = Matrix<Tv>(&data.Data[start * data.RowsCount], data.RowsCount,
                            numExo - IgnoreFirstCount);
@@ -177,7 +182,8 @@ void PcaAnalysisOptions::CalculateForModel(PcaAnalysis &model, Matrix<Tv> &data,
   model.Calculate(pcaMat, work, storage, xForecast ? &pcaFor : nullptr);
 
   if (throwIfConstant && model.DataS.RemovedZeroVar.size() > 0)
-    throw std::logic_error("constant variable is found in PCA analysis.");
+    throw LdtException(ErrorType::kLogic, "pca",
+                       "constant variable is found in PCA analysis");
 
   // copy required number of columns to the useMat
   auto cutoff_col = this->GetFinalCount(model);
@@ -203,19 +209,21 @@ void PcaAnalysisOptions::CheckValidity() {
     return;
 
   if (IgnoreFirstCount < 0)
-    throw std::logic_error(
-        "invalid number of variables to ignore in PCA options.");
+    throw LdtException(ErrorType::kLogic, "pca",
+                       "invalid number of variables to ignore in PCA options");
 
   if (ExactCount > 0) {
     // everthing is OK
   } else {
     if (CutoffRate != 0) {
       if (CutoffRate <= 0 || CutoffRate >= 1)
-        throw std::logic_error("cutoff rate is not in [0,1]");
+        throw LdtException(ErrorType::kLogic, "pca",
+                           "cutoff rate is not in [0,1]");
       if (CutoffCountMax == 0)
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "pca",
             "components are selected by the give cutoff rate, but it is "
-            "restricted to 0 (param-name='CutoffCountMax').");
+            "restricted to 0 (param-name='CutoffCountMax')");
     }
   }
 }

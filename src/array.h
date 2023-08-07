@@ -38,7 +38,128 @@ public:
   Ti Count() const;
 };
 
-/// @brief Correlation type
+/// @brief Function Types
+enum class FunctionType {
+
+  /// @brief Identity function
+  kId,
+  kPow2,
+  kPow3,
+  kPow4,
+  kExp,
+  kLog,
+  kLog10,
+  kSqrt,
+  kSin,
+  kCos,
+  kTan,
+  kAsin,
+  kAcos,
+  kAtan,
+  kSinh,
+  kCosh,
+  kTanh,
+  kAbs,
+  kCeil,
+  kFloor
+};
+
+inline const char *ToString(FunctionType type) {
+
+  switch (type) {
+  case FunctionType::kId:
+    return "Identity";
+  case FunctionType::kPow2:
+    return "Power2";
+  case FunctionType::kPow3:
+    return "Power3";
+  case FunctionType::kPow4:
+    return "Power4";
+  case FunctionType::kExp:
+    return "Exponential";
+  case FunctionType::kLog:
+    return "Natural Logarithm";
+  case FunctionType::kLog10:
+    return "Base-10 Logarithm";
+  case FunctionType::kSqrt:
+    return "Square Root";
+  case FunctionType::kSin:
+    return "Sine";
+  case FunctionType::kCos:
+    return "Cosine";
+  case FunctionType::kTan:
+    return "Tangent";
+  case FunctionType::kAsin:
+    return "Inverse Sine";
+  case FunctionType::kAcos:
+    return "Inverse Cosine";
+  case FunctionType::kAtan:
+    return "Inverse Tangent";
+  case FunctionType::kSinh:
+    return "Hyperbolic Sine";
+  case FunctionType::kCosh:
+    return "Hyperbolic Cosine";
+  case FunctionType::kTanh:
+    return "Hyperbolic Tangent";
+  case FunctionType::kAbs:
+    return "Absolute Value";
+  case FunctionType::kCeil:
+    return "Ceiling";
+  case FunctionType::kFloor:
+    return "Floor";
+  default:
+    return "[Unknown FunctionType]";
+  }
+}
+
+inline FunctionType FromString_FunctionType(const char *name) {
+
+  if (std::strcmp(name, "id") == 0) {
+    return FunctionType::kId;
+  } else if (std::strcmp(name, "pow2") == 0) {
+    return FunctionType::kPow2;
+  } else if (std::strcmp(name, "pow3") == 0) {
+    return FunctionType::kPow3;
+  } else if (std::strcmp(name, "pow4") == 0) {
+    return FunctionType::kPow4;
+  } else if (std::strcmp(name, "exp") == 0) {
+    return FunctionType::kExp;
+  } else if (std::strcmp(name, "log") == 0) {
+    return FunctionType::kLog;
+  } else if (std::strcmp(name, "log10") == 0) {
+    return FunctionType::kLog10;
+  } else if (std::strcmp(name, "sqrt") == 0) {
+    return FunctionType::kSqrt;
+  } else if (std::strcmp(name, "sin") == 0) {
+    return FunctionType::kSin;
+  } else if (std::strcmp(name, "cos") == 0) {
+    return FunctionType::kCos;
+  } else if (std::strcmp(name, "tan") == 0) {
+    return FunctionType::kTan;
+  } else if (std::strcmp(name, "asin") == 0) {
+    return FunctionType::kAsin;
+  } else if (std::strcmp(name, "acos") == 0) {
+    return FunctionType::kAcos;
+  } else if (std::strcmp(name, "atan") == 0) {
+    return FunctionType::kAtan;
+  } else if (std::strcmp(name, "sinh") == 0) {
+    return FunctionType::kSinh;
+  } else if (std::strcmp(name, "cosh") == 0) {
+    return FunctionType::kCosh;
+  } else if (std::strcmp(name, "tanh") == 0) {
+    return FunctionType::kTanh;
+  } else if (std::strcmp(name, "abs") == 0) {
+    return FunctionType::kAbs;
+  } else if (std::strcmp(name, "ceil") == 0) {
+    return FunctionType::kCeil;
+  } else if (std::strcmp(name, "floor") == 0) {
+    return FunctionType::kFloor;
+  } else {
+    throw LdtException(ErrorType::kLogic, "array.h", "invalid function type");
+  }
+}
+
+/// @brief Descriptive type
 enum class DescriptiveType {
 
   kMin,
@@ -94,7 +215,7 @@ inline const char *ToString(DescriptiveType v) {
     return "Last";
 
   default:
-    return "[Unknown DescriptiveType Method]";
+    return "[Unknown DescriptiveType]";
   }
 }
 
@@ -102,6 +223,7 @@ inline const char *ToString(DescriptiveType v) {
 /// @param v The string
 /// @return The value
 inline DescriptiveType FromString_DescriptiveType(const char *v) {
+
   if (StartsWith("min", v))
     return DescriptiveType::kMin;
   else if (StartsWith("max", v))
@@ -133,7 +255,7 @@ inline DescriptiveType FromString_DescriptiveType(const char *v) {
   else if (StartsWith("firs", v))
     return DescriptiveType::kFirst;
 
-  throw std::logic_error("Invalid enum name: 'DescriptiveType'.");
+  throw LdtException(ErrorType::kLogic, "array.h", "invalid descriptive type");
 }
 
 /// @brief A class for static array operations, that are for example needed both
@@ -176,6 +298,106 @@ public:
   static void PartitionEqual(const std::vector<Tw> &data,
                              std::vector<std::vector<Tw>> &result, Ti size,
                              bool fromEnd);
+
+  // MATH FUNCTIONS
+
+  /// @brief Applies a function on a scalar
+  /// @tparam T The function
+  /// @param x The scalar
+  template <FunctionType T> void Function(Tw &x) {
+    if constexpr (T == FunctionType::kId) {
+      // x = x;
+    } else if constexpr (T == FunctionType::kPow2) {
+      x = std::pow(x, 2);
+    } else if constexpr (T == FunctionType::kPow3) {
+      x = std::pow(x, 3);
+    } else if constexpr (T == FunctionType::kPow4) {
+      x = std::pow(x, 4);
+    } else if constexpr (T == FunctionType::kExp) {
+      x = std::exp(x);
+    } else if constexpr (T == FunctionType::kLog) {
+      x = std::log(x);
+    } else if constexpr (T == FunctionType::kLog10) {
+      x = std::log10(x);
+    } else if constexpr (T == FunctionType::kSqrt) {
+      x = std::sqrt(x);
+    } else if constexpr (T == FunctionType::kSin) {
+      x = std::sin(x);
+    } else if constexpr (T == FunctionType::kCos) {
+      x = std::cos(x);
+    } else if constexpr (T == FunctionType::kTan) {
+      x = std::tan(x);
+    } else if constexpr (T == FunctionType::kAsin) {
+      x = std::asin(x);
+    } else if constexpr (T == FunctionType::kAcos) {
+      x = std::acos(x);
+    } else if constexpr (T == FunctionType::kAtan) {
+      x = std::atan(x);
+    } else if constexpr (T == FunctionType::kSinh) {
+      x = std::sinh(x);
+    } else if constexpr (T == FunctionType::kCosh) {
+      x = std::cosh(x);
+    } else if constexpr (T == FunctionType::kTanh) {
+      x = std::tanh(x);
+    } else if constexpr (T == FunctionType::kAbs) {
+      x = std::abs(x);
+    } else if constexpr (T == FunctionType::kCeil) {
+      x = std::ceil(x);
+    } else if constexpr (T == FunctionType::kFloor) {
+      x = std::floor(x);
+    }
+  }
+
+  /// @brief Applies a function on the elements of an array
+  /// @tparam T The function
+  /// @param data The array
+  /// @param length Length of the array
+  template <FunctionType T> void Function(Tw *data, const Ti &length) {
+
+    for (Ti i = 0; i < length; i++) {
+      if constexpr (T == FunctionType::kId) {
+        // data[i] = data[i];
+      } else if constexpr (T == FunctionType::kPow2) {
+        data[i] = std::pow(data[i], 2);
+      } else if constexpr (T == FunctionType::kPow3) {
+        data[i] = std::pow(data[i], 3);
+      } else if constexpr (T == FunctionType::kPow4) {
+        data[i] = std::pow(data[i], 4);
+      } else if constexpr (T == FunctionType::kExp) {
+        data[i] = std::exp(data[i]);
+      } else if constexpr (T == FunctionType::kLog) {
+        data[i] = std::log(data[i]);
+      } else if constexpr (T == FunctionType::kLog10) {
+        data[i] = std::log10(data[i]);
+      } else if constexpr (T == FunctionType::kSqrt) {
+        data[i] = std::sqrt(data[i]);
+      } else if constexpr (T == FunctionType::kSin) {
+        data[i] = std::sin(data[i]);
+      } else if constexpr (T == FunctionType::kCos) {
+        data[i] = std::cos(data[i]);
+      } else if constexpr (T == FunctionType::kTan) {
+        data[i] = std::tan(data[i]);
+      } else if constexpr (T == FunctionType::kAsin) {
+        data[i] = std::asin(data[i]);
+      } else if constexpr (T == FunctionType::kAcos) {
+        data[i] = std::acos(data[i]);
+      } else if constexpr (T == FunctionType::kAtan) {
+        data[i] = std::atan(data[i]);
+      } else if constexpr (T == FunctionType::kSinh) {
+        data[i] = std::sinh(data[i]);
+      } else if constexpr (T == FunctionType::kCosh) {
+        data[i] = std::cosh(data[i]);
+      } else if constexpr (T == FunctionType::kTanh) {
+        data[i] = std::tanh(data[i]);
+      } else if constexpr (T == FunctionType::kAbs) {
+        data[i] = std::abs(data[i]);
+      } else if constexpr (T == FunctionType::kCeil) {
+        data[i] = std::ceil(data[i]);
+      } else if constexpr (T == FunctionType::kFloor) {
+        data[i] = std::floor(data[i]);
+      }
+    }
+  }
 
   // ................ DESCRIPTIVES
 
@@ -229,8 +451,8 @@ public:
     } break;
 
     default:
-      throw std::logic_error(
-          "Invalid or not-implemented type of descriptive statistics.");
+      throw LdtException(ErrorType::kLogic, "array.h",
+                     "invalid or not-implemented descriptive statistics");
     }
   }
 
@@ -436,7 +658,8 @@ public:
 
     if constexpr (isWeighted) {
       if (!weights)
-        throw std::logic_error("Weights are missing!");
+        throw LdtException(ErrorType::kLogic, "array.h, moments",
+                       "weights are missing");
     }
 
     Tw sumW = 0, m2 = 0, m3 = 0, m4 = 0, w = 1;
