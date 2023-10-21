@@ -2,146 +2,92 @@
 % Please edit documentation in R/varma.R
 \name{search.varma}
 \alias{search.varma}
-\title{Search for Best VARMA Models}
+\title{Create Model Set for VARMA Models}
 \usage{
 search.varma(
-  y,
-  x = NULL,
-  numTargets = 1,
-  ySizes = NULL,
-  yPartitions = NULL,
-  xGroups = NULL,
+  data = get.data(),
+  combinations = get.combinations(),
+  metrics = get.search.metrics(),
+  modelChecks = get.search.modelchecks(),
+  items = get.search.items(),
+  options = get.search.options(),
   maxParams = c(1, 0, 0, 0, 0, 0),
   seasonsCount = 0,
   maxHorizon = 0,
-  newX = NULL,
-  simUsePreviousEstim = TRUE,
+  simUsePreviousEstim = FALSE,
   olsStdMultiplier = 2,
-  lbfgsOptions = get.options.lbfgs(),
-  metricOptions = get.options.metric(),
-  modelCheckItems = get.items.modelcheck(),
-  searchItems = get.items.search(),
-  searchOptions = get.options.search()
+  lbfgsOptions = get.options.lbfgs()
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variables in the columns.}
+\item{data}{A list that determines data and other required information for the search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
-\item{x}{A matrix of exogenous data with variables in the columns. It can be \code{NULL}.}
+\item{combinations}{A list that determines the combinations of endogenous and exogenous variables in the search process.
+Use \code{\link[=get.combinations]{get.combinations()}} function to define it.}
 
-\item{numTargets}{An integer representing the number of target variables.
-For example, if 2, the first two variables in the first columns of \code{y} will be targets.
-Information is saved just for the target variables.
-It must be positive and cannot be larger than the number of endogenous variables.}
+\item{metrics}{A list of options for measuring performance. Use \link{get.search.metrics} function to get them.}
 
-\item{ySizes}{An integer vector specifying the number of endogenous variables in the regressions.
-For example, \code{c(1,2)} means the model set contains all regressions with 1 and 2 endogenous variables.
-If \code{NULL}, \code{c(1)} is used.}
+\item{modelChecks}{A list of options for excluding a subset of the model set. Use \link{get.search.modelchecks} function to get them.}
 
-\item{yPartitions}{A list of integer vectors that partition the indexes of the endogenous variables.
-No regression is estimated with two variables in the same partition.
-If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.}
+\item{items}{A list of options for specifying the purpose of the search. Use \link{get.search.items} function to get them.}
 
-\item{xGroups}{A list of integer vectors that determine different combinations of the indexes of the exogenous variables to be used as exogenous variables in the SUR regressions.}
+\item{options}{A list of extra options for performing the search. Use \link{get.search.options} function to get them.}
 
 \item{maxParams}{An integer vector that determines the maximum values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(2,0,0,0,0,0)} is used.}
 
 \item{seasonsCount}{An integer value representing the number of observations per unit of time.}
 
-\item{maxHorizon}{An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelCheckItems} argument. Also, it is used as the maximum prediction horizon in checking predictions.}
-
-\item{newX}{A matrix of new exogenous data for out-of-sample prediction. It must have the same number of columns as the \code{x} argument.}
+\item{maxHorizon}{An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelChecks} argument. Also, it is used as the maximum prediction horizon in checking predictions.}
 
 \item{simUsePreviousEstim}{If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.}
 
 \item{olsStdMultiplier}{A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.}
 
-\item{lbfgsOptions}{A list containing L-BFGS optimization options.
-Use \link{get.options.lbfgs} function for initialization.}
-
-\item{metricOptions}{A list of options for measuring performance.
-Use \link{get.options.metric} function to get them.}
-
-\item{modelCheckItems}{A list of options for excluding a subset of the model set.
-See and use \link{get.items.modelcheck} function to get them.}
-
-\item{searchItems}{A list of options for specifying the purpose of the search.
-See and use \link{get.items.search} function to get them.}
-
-\item{searchOptions}{A list of extra options for performing the search.
-See and use \link{get.options.search} function to get them.}
+\item{lbfgsOptions}{A list containing L-BFGS optimization options. Use \link{get.options.lbfgs} function for initialization.}
 }
 \value{
 A nested list with the following members:
 \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-\item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
-\item{info}{General information about the search process, some arguments, elapsed time, etc.}
+\item{results}{A data frame with requested information in \code{items} list.}
+\item{info}{The arguments and some general information about the search process such as the elapsed time.}
 
-Note that the output does not contain any estimation results,
-but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 }
 \description{
 Use this function to create a Vector Autoregressive Moving Average model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 }
 \examples{
 # We simulate some data for this example:
-
-# sample data:
-n = 50 # number of observations
-num_x_r <- 3L # number of relevant explanatory variables
-num_x_ir <-
-  20 # (relatively large) number of irrelevant explanatory variables
 set.seed(340)
-sample <- sim.bin(num_x_r, n)
-x_ir <- lapply(1:num_x_ir, function(x) rnorm(n))
+n = 100
+num_eq <- 3L
+num_ar <- 2L
+num_ma <- 1L
+num_ma <- 1L
+num_exo <- 2L
+sample <- sim.varma(num_eq, arList = num_ar, maList = num_ma, exoCoef = num_exo, nObs = n)
+
+# (relatively large) number of irrelevant explanatory variables:
+num_y_ir <- 10
+y_ir <- lapply(1:num_y_ir, function(x) rnorm(n))
 
 # prepare data:
-data <- data.frame(sample$y, sample$x, x_ir)
-colnames(data) <- c("Y", colnames(sample$x), paste0("z", 1:num_x_ir))
+data <- data.frame(sample$y, y_ir, sample$x)
+colnames(data) <- c(colnames(sample$y), paste0("w", 1:num_y_ir), colnames(sample$x))
 
-# Use glm function to estimate and analyse:
-model1 <- glm(Y ~ . - Y, data = data, family = binomial())
-summary(model1)
 
-# You can also use this package estimation function:
-model2 <- estim.bin(sample$y, data[, 3:ncol(data), drop = FALSE])
-# format and print coefficients:
-coefs2 <- data.frame(model2$estimations[1:4])
-colnames(coefs2) <- names(model2$estimations)[1:4]
-print(coefs2)
+# Create a VARMA model set:
+y_sizes = 3 # assuming we know the number of relevant endogenous variables
+metric_options <- get.search.metrics(typesIn = c("aic")) # We use SIC for searching
+search_res <- search.varma(data = get.data(data, endogenous = num_eq + num_y_ir),
+                           combinations = get.combinations(sizes = y_sizes,
+                                                           numTargets = 3),
+                           metrics = metric_options)
+print(search_res)
 
-# Alternatively, You can define a search process:
-x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
-metric_options <-
-  get.options.metric(typesIn = c("sic")) # We use SIC for searching
-search_res <- search.bin(sample$y, data[, 3:ncol(data)],
-                        xSizes = x_sizes, metricOptions = metric_options)
-print(search_res$sic$target1$model$bests$best1$exoIndices) # print best model's explanatory indexes
 
-# Use summary function to estimate the best model:
-search_sum <-
-  summary(search_res, y = sample$y, x = data[, 3:ncol(data)])
-# format and print coefficients:
-model3 <- search_sum$sic$target1$model$bests$best1
-coefs3 <- data.frame(model3$estimations[1:4])
-colnames(coefs3) <- names(model3$estimations)[1:4]
-print(coefs3)
-
-# Try a step-wise search (you can estimate larger models, faster):
-x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
-counts_steps = c(NA, 10, 9)
-search_items <- get.items.search(bestK = 10)
-search_step_res <- search.bin.stepwise(
-  sample$y,
-  data[, 3:ncol(data)],
-  xSizeSteps = x_sizes_steps,
-  countSteps = counts_steps,
-  metricOptions = metric_options,
-  searchItems = search_items
-)
-print(search_step_res$sic$target1$model$bests$best1$exoIndices)
-# Use summary like before.
 }
 \seealso{
-\link{estim.varma}, \link{search.varma.stepwise}
+\link{estim.varma}
 }

@@ -5,42 +5,32 @@
 \title{Estimate a SUR Model}
 \usage{
 estim.sur(
-  y,
-  x,
-  addIntercept = TRUE,
+  data,
   searchSigMaxIter = 0,
   searchSigMaxProb = 0.1,
   restriction = NULL,
-  newX = NULL,
   pcaOptionsY = NULL,
   pcaOptionsX = NULL,
   simFixSize = 0,
   simTrainFixSize = 0,
   simTrainRatio = 0.75,
   simSeed = 0,
-  simMaxConditionNumber = Inf,
-  simTransform = NULL,
-  printMsg = FALSE
+  simMaxConditionNumber = Inf
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variables in the columns.}
-
-\item{x}{A matrix of exogenous data with variables in the columns.}
-
-\item{addIntercept}{If \code{TRUE}, intercept is added automatically to \code{x}.}
+\item{data}{A list that determines data and other required information for the search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
 \item{searchSigMaxIter}{An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.}
 
 \item{searchSigMaxProb}{A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.}
 
-\item{restriction}{A \code{km x q} matrix of restrictions where \code{m=ncols(y)}, \code{k=ncols(x)} and \code{q} is the number of unrestricted coefficients.}
+\item{restriction}{A \code{km x q} matrix of restrictions where \code{m} is the number of endogenous data, \code{k} is the number of exogenous data, and \code{q} is the number of unrestricted coefficients.}
 
-\item{newX}{A matrix with new exogenous data to be used in the projections. Its number of columns must be equal to \code{x}. It can be \code{NULL}.}
+\item{pcaOptionsY}{A list of options to use principal components of the endogenous data, instead of the actual values. Set \code{NULL} to disable. Use \code{\link[=get.options.pca]{get.options.pca()}} for initialization.}
 
-\item{pcaOptionsY}{A list of options to use principal components of the \code{y}, instead of the actual values. Set \code{NULL} to disable. Use \code{\link[=get.options.pca]{get.options.pca()}} for initialization.}
-
-\item{pcaOptionsX}{A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use \code{\link[=get.options.pca]{get.options.pca()}} for initialization.}
+\item{pcaOptionsX}{A list of options to use principal components of the exogenous data, instead of the actual values. Set \code{NULL} to disable. Use \code{\link[=get.options.pca]{get.options.pca()}} for initialization.}
 
 \item{simFixSize}{An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.}
 
@@ -51,66 +41,98 @@ estim.sur(
 \item{simSeed}{A seed for the random number generator. Use zero for a random value.}
 
 \item{simMaxConditionNumber}{A number for the maximum value for the condition number in the simulation.}
-
-\item{simTransform}{Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.}
-
-\item{printMsg}{Set to \code{TRUE} to enable printing some details.}
-}
-\value{
-A nested list with the following items:
-\item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
-\item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-\item{metrics}{Value of different goodness of fit and out-of-sample performance metrics. }
-\item{projections}{Information on the projected values, if \code{newX} is provided.}
-\item{info}{Some other general information.}
 }
 \description{
 Use this function to estimate a Seemingly Unrelated Regression model.
 }
 \details{
-Seemingly Unrelated Regression (SUR) is a type of statistical model that includes multiple regression equations.
-The general form of an SUR model with m equations can be written as: \eqn{y_i=X_i\beta_i+\epsilon_i}, where $i=1\ldots m$ determines the index of the equation.
-In this model, each equation may have different sets of independent variables and it is assumed that the disturbances between the equations are correlated.
-The OLS estimator is a consistent estimator for this model, but it is not generally asymptotically efficient (except when disturbances are uncorrelated between equations or each equation contains exactly the same set of regressors).
-The OLS variance matrix is used to calculate the Feasible Generalized Least Squares (FGLS) estimator, which is both consistent and asymptotically efficient (under regularity conditions).
+As described in section 10.2 in \insertCite{greene2020econometric;textual}{ldt}, this type of statistical model consists of multiple regression equations, where each equation may have a different set of exogenous variables and the disturbances between the equations are assumed to be correlated. The general form with \eqn{m} equations can be written as \eqn{y_i=z_i'\gamma_i+v_i} and \eqn{E(v_i v_j)=\sigma_{ij}^2} for \eqn{i=1,\ldots m}. Assuming that a sample of \eqn{N} independent observations is available, we can stack the observations and use the following system for estimation:
+\deqn{
+Y = X B + V, \quad \operatorname{vec}B = R\gamma,
+}
 
-In the current implementation, this function focuses on zero restrictions and/or significance search.
-Therefore, there is a common \code{x} argument for all equations.
-In fact, the main purpose of exporting this method is to show the inner calculations of the search process in \link{search.sur} function.
+where the columns of \eqn{Y:N \times m} contain the endogenous variables for each equation and the columns of \eqn{X: N\times k} contain the explanatory variables, with \eqn{k} being the number of unique explanatory variables in all equations. Note that $X$ combines the \eqn{z_i} variables, and the restrictions imposed by \eqn{R:mk\times q} and \eqn{\gamma:q\times 1} determine a set of zero constraints on \eqn{B: k \times m}, resulting in a system of equations with different sets of exogenous variables.
+
+Imposing restrictions on the model using the \eqn{R} matrix is not user-friendly, but it is suitable for use in this package, as users are not expected to specify such restrictions, but only to provide a list of potential regressors. Note that in this package, most procedures, including significance search, are supposed to be automated.
+
+The unrestricted estimators (i.e., \eqn{\hat{B}=(X'X)^{-1}X'Y}, and \eqn{\hat{\Sigma}=(\hat{V}'\hat{V})/N} where \eqn{\hat{V}=Y-X\hat{B}}) are used to initialize the feasible GLS estimators:
+
+\deqn{
+    \tilde{B} = RW^{-1}R'[\hat{V}-1 \otimes x']\operatorname{vec}Y, \quad \tilde{\Sigma}=(\tilde{V}'\tilde{V})/N,
+}
+where \eqn{W = R'[\hat{V}^{-1} \otimes X'X]R} and \eqn{\tilde{V}=Y-X\tilde{B}}. The properties of these estimators are discussed in proposition 5.3 in \insertCite{lutkepohl2005new;textual}{ldt}. See also section 10.2 in \insertCite{greene2020econometric;textual}{ldt}. The maximum likelihood value is calculated by \eqn{-\frac{N}{2}(m(\ln 2\pi+1)+\ln|\tilde{\Sigma}|)}. The condition number is calculated by multiplying 1-norm of $W$ and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given an out-of-sample observation such as \eqn{x:k\times 1}, the prediction is \eqn{y^f = \tilde{B}'x}, and its variance is estimated by the following formula:
+
+\deqn{
+     \operatorname{var}y^f = \tilde{V} + (x' \otimes I_m)R W^{-1}R'(x \otimes I_m).
+}
+
 Note that the focus in \code{ldt} is model uncertainty and for more sophisticated implementations of the FGLS estimator, you may consider using other packages such as \code{systemfit}.
+
+Finally, note that the main purpose of exporting this method is to show the inner calculations of the search process in \link{search.sur} function.
 }
 \examples{
 # Example 1 (simulation, small model):
+set.seed(123)
 sample <- sim.sur(sigma = 2L, coef = 3L, nObs = 100)
+print(sample$coef)
+print(sample$sigma)
+
+data <- data.frame(sample$y, sample$x)
+
 #    Use systemfit to estimate:
 exp_names <- paste0(colnames(sample$x), collapse = " + ")
 fmla <- lapply(1:ncol(sample$y), function(i) as.formula(paste0("Y", i, " ~ -1 +", exp_names)))
-fit <- systemfit::systemfit(fmla, data = data.frame(sample$y, sample$x), method = "SUR")
-#    Use estim.sur function in this package:
-fit2 <- estim.sur(sample$y, sample$x, addIntercept = FALSE)
-coefs <- fit2$estimations$coefs # coefficient matrix
-table <- coefs.table(fit2)
+fit <- systemfit::systemfit(fmla, data = data, method = "SUR")
+print(fit)
+
+#    Use 'ldt::estim.sur' function
+fit <- estim.sur(data = get.data(cbind(sample$y, sample$x),
+                                  endogenous = ncol(sample$y),
+                                  addIntercept = FALSE))
+
+# or, by using formula list:
+fit <- estim.sur(data = get.data(data = data,
+                                 equations = fmla,
+                                 addIntercept = FALSE))
+
+print(fit)
+print(fit$estimations$sigma)
+plot_data <- plot(fit, equation = 1)
 
 
 # Example 2 (simulation, large model with significancy search):
 num_obs <- 100
-num_x_ir <- 20
 sample <- sim.sur(sigma = 2L, coef = 3L, nObs = num_obs)
-x_ir <- matrix(rnorm(num_obs * num_x_ir), ncol = num_x_ir) # irrelevant sample
+print(sample$coef)
+
+#   create irrelevant data:
+num_x_ir <- 20
+x_ir <- matrix(rnorm(num_obs * num_x_ir), ncol = num_x_ir)
 data_x <- data.frame(sample$x, x_ir)
 colnames(data_x) <- c(colnames(sample$x), paste0("z", 1:num_x_ir))
 
-fit3 <- estim.sur(sample$y, data_x, addIntercept = FALSE,
-                  searchSigMaxIter = 100, searchSigMaxProb = 0.05)
-coefs <- fit2$estimations$coefs # coefficient matrix, probably with lots of zero restrictions
+fit <- estim.sur(data = get.data(cbind(sample$y, data_x),
+                                 endogenous = ncol(sample$y),
+                                 addIntercept = FALSE),
+                 searchSigMaxIter = 100,
+                 searchSigMaxProb = 0.05)
+
+print(fit$estimations$coefs)
+# coefficient matrix, with lots of zero restrictions
 
 # Example 3 (simulation, large model with PCA):
-# I use the previous example's data
-fit3 <- estim.sur(sample$y, data_x, addIntercept = FALSE,
-                  pcaOptionsX = get.options.pca(2,4))
-coefs <- fit3$estimations$coefs # has intercept and the first exogenous variable and 4 PCs
-table <- coefs.table(fit3, expList = 2) # doesn't display PC coefficients
+#   by using data of the previous example
+fit <- estim.sur(data = get.data(cbind(sample$y, data_x),
+                                 endogenous = ncol(sample$y),
+                                 addIntercept = FALSE),
+                 pcaOptionsX = get.options.pca(2,4))
+print(fit$estimations$coefs)
+#  coefficients are: intercept and the first exogenous variable and 4 PCs
+
+}
+\references{
+\insertAllCited{}
 }
 \seealso{
-\link{search.sur}, \link{search.sur.stepwise}
+\link{search.sur}
 }

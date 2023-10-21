@@ -142,4 +142,40 @@ void Array<Tw>::PartitionEqual(const std::vector<Tw> &data,
   }
 }
 
+template <typename Tw> void Array<Tw>::BoxCox0(Tw &value, const Tw &lambda) {
+  if (std::isnan(lambda))
+    return;
+  if (lambda != 0) {
+    value = (std::pow(value, lambda) - 1) / lambda;
+  } else {
+    value = std::log(value);
+  }
+}
+
+template <typename Tw> void Array<Tw>::BoxCoxInv0(Tw &value, const Tw &lambda) {
+  if (std::isnan(lambda))
+    return;
+  if (lambda != 0) {
+    value = std::exp(lambda * value + 1);
+  } else {
+    value = std::exp(value);
+  }
+}
+
+template <typename Tw>
+void Array<Tw>::BoxCox(Tw *data, const Ti &length, const Tw &lambda) {
+  if (std::isnan(lambda))
+    return;
+  for (Ti i = 0; i < length; i++)
+    Array<Tw>::BoxCox0(data[i], lambda);
+}
+
+template <typename Tw>
+void Array<Tw>::BoxCoxInv(Tw *data, const Ti &length, const Tw &lambda) {
+  if (std::isnan(lambda))
+    return;
+  for (Ti i = 0; i < length; i++)
+    Array<Tw>::BoxCox0(data[i], lambda);
+}
+
 template class ldt::Array<Tv>;

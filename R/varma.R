@@ -1,148 +1,165 @@
 
-#' Search for Best VARMA Models
+#' Create Model Set for VARMA Models
 #'
 #' Use this function to create a Vector Autoregressive Moving Average model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns. It can be \code{NULL}.
-#' @param numTargets An integer representing the number of target variables.
-#' For example, if 2, the first two variables in the first columns of \code{y} will be targets.
-#' Information is saved just for the target variables.
-#' It must be positive and cannot be larger than the number of endogenous variables.
-#' @param ySizes An integer vector specifying the number of endogenous variables in the regressions.
-#' For example, \code{c(1,2)} means the model set contains all regressions with 1 and 2 endogenous variables.
-#' If \code{NULL}, \code{c(1)} is used.
-#' @param yPartitions A list of integer vectors that partition the indexes of the endogenous variables.
-#' No regression is estimated with two variables in the same partition.
-#' If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.
-#' @param xGroups A list of integer vectors that determine different combinations of the indexes of the exogenous variables to be used as exogenous variables in the SUR regressions.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
+#' @param combinations A list that determines the combinations of endogenous and exogenous variables in the search process.
+#' Use [get.combinations()] function to define it.
+#' @param metrics A list of options for measuring performance. Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set. Use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search. Use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search. Use [get.search.options] function to get them.
 #' @param maxParams An integer vector that determines the maximum values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(2,0,0,0,0,0)} is used.
 #' @param seasonsCount An integer value representing the number of observations per unit of time.
-#' @param maxHorizon An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelCheckItems} argument. Also, it is used as the maximum prediction horizon in checking predictions.
-#' @param newX A matrix of new exogenous data for out-of-sample prediction. It must have the same number of columns as the \code{x} argument.
+#' @param maxHorizon An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelChecks} argument. Also, it is used as the maximum prediction horizon in checking predictions.
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
-#' @param lbfgsOptions A list containing L-BFGS optimization options.
-#' Use [get.options.lbfgs] function for initialization.
-#' @param metricOptions A list of options for measuring performance.
-#' Use [get.options.metric] function to get them.
-#' @param modelCheckItems A list of options for excluding a subset of the model set.
-#' See and use [get.items.modelcheck] function to get them.
-#' @param searchItems A list of options for specifying the purpose of the search.
-#' See and use [get.items.search] function to get them.
-#' @param searchOptions A list of extra options for performing the search.
-#' See and use [get.options.search] function to get them.
+#' @param lbfgsOptions A list containing L-BFGS optimization options. Use [get.options.lbfgs] function for initialization.
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
-#' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
+#' \item{results}{A data frame with requested information in \code{items} list.}
+#' \item{info}{The arguments and some general information about the search process such as the elapsed time.}
 #'
-#' Note that the output does not contain any estimation results,
-#' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+#' Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
 #' @example man-roxygen/ex-search.varma.R
-#' @seealso [estim.varma], [search.varma.stepwise]
-search.varma <- function(y, x = NULL, numTargets = 1,
-                         ySizes = NULL, yPartitions = NULL,
-                         xGroups = NULL, maxParams = c(1,0,0,0,0,0),
-                         seasonsCount = 0, maxHorizon = 0,
-                         newX = NULL, simUsePreviousEstim = TRUE,
-                         olsStdMultiplier = 2.0, lbfgsOptions = get.options.lbfgs(),
-                         metricOptions = get.options.metric(),
-                         modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
-                         searchOptions = get.options.search()){
-  y = as.matrix(y)
-  x = if (is.null(x)) NULL else as.matrix(x)
-  numTargets = as.integer(numTargets)
-  ySizes = if (is.null(ySizes)) c(1L) else as.integer(ySizes)
-  maxParams = if (is.null(maxParams)) c(2L,0L,0L,0L,0L,0L) else as.integer(maxParams)
-  seasonsCount = as.integer(seasonsCount)
-  maxHorizon = as.integer(maxHorizon)
-  newX = if (is.null(newX)) NULL else as.matrix(newX)
-  simUsePreviousEstim = as.logical(simUsePreviousEstim)
-  olsStdMultiplier = as.numeric(olsStdMultiplier)
+#' @seealso [estim.varma]
+search.varma <- function(data = get.data(),
+                         combinations = get.combinations(),
+                         metrics = get.search.metrics(),
+                         modelChecks = get.search.modelchecks(),
+                         items = get.search.items(),
+                         options = get.search.options(),
+                         maxParams = c(1,0,0,0,0,0),
+                         seasonsCount = 0,
+                         maxHorizon = 0,
+                         simUsePreviousEstim = FALSE,
+                         olsStdMultiplier = 2.0,
+                         lbfgsOptions = get.options.lbfgs()){
+  stopifnot(is.list(data))
+  stopifnot(is.list(combinations))
 
-  if (is.null(yPartitions) == FALSE){
-    yPartitions = as.list(yPartitions)
-    for (i in c(1:length(yPartitions)))
-      yPartitions[[i]] = as.integer(yPartitions[[i]])
-  }
+  if (data$hasWeight)
+    stop("VARMA search does not support weighted observations.")
 
-  if (is.null(xGroups) == FALSE){
-    xGroups = as.list(xGroups)
-    for (i in c(1:length(xGroups)))
-      xGroups[[i]] = as.integer(xGroups[[i]])
-  }
+  data <- get.data.append.newX(data, maxHorizon = maxHorizon)
+
+  combinations <- get.indexation(combinations, data, TRUE) # it also check for inconsistencies, etc.
+
+  if (is.null(metrics))
+    metrics = get.search.metrics()
+  else
+    stopifnot(is.list(metrics))
+  metrics <- get.search.metrics.update(metrics, combinations$numTargets)
+
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
+  else
+    stopifnot(is.list(modelChecks))
+  if (is.null(items))
+    items = get.search.items()
+  else
+    stopifnot(is.list(items))
+  if (is.null(options))
+    options = get.search.options()
+  else
+    stopifnot(is.list(options))
+
+
+  stopifnot(is.numeric(maxParams) && length(maxParams) <= 6)
+  if (length(maxParams) < 6)
+    maxParams <- c(maxParams, rep(0, 6 - length(maxParams)))
+  maxParams <- as.integer(maxParams)
+  stopifnot(all(maxParams>=0)) #handles NA case
+
+  stopifnot(is.zero.or.positive.number(seasonsCount))
+  seasonsCount <- as.integer(seasonsCount)
+  if (seasonsCount < 2 && any(maxParams[4:6] != 0))
+    stop("Invalid 'maxParams' argument. Seasonal part (at indices 4:6) must be zero for non-seasonal model.")
+
+  stopifnot(is.zero.or.positive.number(maxHorizon))
+  maxHorizon <- as.integer(maxHorizon)
+  if (items$type1 && maxHorizon == 0)
+    stop("If 'items$type1' is TRUE, 'maxHorizon' argument cannot be zero.")
+  if (maxHorizon > 0)
+    modelChecks$prediction = TRUE # should I warn?
+
+  stopifnot(is.logical(simUsePreviousEstim) && length(simUsePreviousEstim) == 1)
+  stopifnot(is.positive.number(olsStdMultiplier))
 
   if (is.null(lbfgsOptions))
     lbfgsOptions = get.options.lbfgs()
   else
-    lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
-
-  if (is.null(metricOptions))
-    metricOptions = get.options.metric()
-  else
-    metricOptions <- CheckmetricOptions(metricOptions)
-
-  if (is.null(modelCheckItems))
-    modelCheckItems = get.items.modelcheck()
-  else
-    modelCheckItems <- CheckModelCheckItems(modelCheckItems)
-
-  if (is.null(searchItems))
-    searchItems = get.items.search()
-  else
-    searchItems <- CheckSearchItems(searchItems)
-
-  if (is.null(searchOptions))
-    searchOptions = get.options.search()
-  else
-    searchOptions <- CheckSearchOptions(searchOptions)
+    stopifnot(is.list(lbfgsOptions))
 
 
-  startTime <- Sys.time()
+  if (is.list(combinations$sizes)){ # use steps
+    # steps will re-call this function with modified combinations in which sizes is no longer a list
+    res <- search.steps("varma", isInnerExogenous = TRUE, data = data, combinations = combinations,
+                        metrics = metrics, modelChecks = modelChecks, items = items, options = options,
+                        maxParams = maxParams,
+                        seasonsCount = seasonsCount,
+                        maxHorizon = maxHorizon,
+                        simUsePreviousEstim = simUsePreviousEstim,
+                        olsStdMultiplier = olsStdMultiplier,
+                        lbfgsOptions = lbfgsOptions)
+    res
+  }
+  else {
+    startTime <- Sys.time()
+    res <- .SearchVarma(data, combinations, metrics, modelChecks, items, options,
+                        maxParams,
+                        seasonsCount, maxHorizon,
+                        simUsePreviousEstim,
+                        olsStdMultiplier, lbfgsOptions)
+    endTime <- Sys.time()
 
-  res <- .SearchVarma(y, x, numTargets, ySizes, yPartitions,
-                      xGroups, maxParams, seasonsCount, maxHorizon,
-                      newX, simUsePreviousEstim,
-                      olsStdMultiplier, lbfgsOptions,
-                      metricOptions,modelCheckItems,searchItems,searchOptions)
+    res$info$data <- data
+    res$info$combinations <- combinations
+    res$info$metrics <- metrics
+    res$info$options <- options
+    res$info$modelChecks <- modelChecks
+    res$info$items <- items
+    res$info$startTime <- startTime
+    res$info$endTime <- endTime
 
-  endTime <- Sys.time()
+    res$info$maxParams = maxParams
+    res$info$seasonsCount = seasonsCount
+    res$info$maxHorizon = maxHorizon
+    res$info$simUsePreviousEstim = simUsePreviousEstim
+    res$info$olsStdMultiplier = olsStdMultiplier
+    res$info$lbfgsOptions = lbfgsOptions
 
-  res$info$startTime <- startTime
-  res$info$endTime <- endTime
+    #res$info$startFrequency <- attr(y, "ldtf") ???? move to data
 
-  res$info$startFrequency <- attr(y, "ldtf")
-
-  res
+    class(res) <- c("ldt.search.varma", "ldt.search", "list")
+    attr(res, "method") <- "VARMA"
+    res
+  }
 }
 
 #' Estimate a VARMA Model
 #'
 #' Use this function to estimate a Vector Autoregressive Moving Average model.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns. It can be \code{NULL}.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
 #' @param params An integer vector that determines the values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(1,0,0,0,0,0)} is used.
 #' @param seasonsCount An integer value representing the number of observations per unit of time.
-#' @param addIntercept If \code{TRUE}, an intercept is automatically added to x.
-#' @param lbfgsOptions A list containing L-BFGS optimization options.
-#' Use [get.options.lbfgs] function for initialization.
+#' @param lbfgsOptions A list containing L-BFGS optimization options. Use [get.options.lbfgs] function for initialization.
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
 #' @param pcaOptionsY A list of options to use principal components of \code{y}, instead of the actual values. Set to \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param pcaOptionsX A list of options to use principal components of \code{x}, instead of the actual values. Set to \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param maxHorizon An integer representing the maximum prediction horizon. Set to zero to disable prediction.
-#' @param newX A matrix containing new exogenous variables to be used in predictions. Its columns must be the same as \code{x}.
 #' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable simulation.
-#' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.options.metric()].
+#' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.search.metrics()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
-#' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
-#'
+#' 
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
@@ -152,378 +169,228 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' Seasonal Integrated Vector Autoregressive Moving-Average is used for predicting time series variables.
-#' Its formula is:
+#' The VARMA model can be used to analyze multivariate time series data with seasonal or non-seasonal patterns. According to \insertCite{lutkepohl2005new;textual}{ldt}, it considers interdependencies between the series, making it a powerful tool for prediction. The specification of this model is given by:
 #' \deqn{
-#' \Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} +
-#'                               \sum_{i=1}^q B_i \epsilon_{t-i}  +
-#'                               C x_t  +
-#'                               \sum_{i=1}^P A_{is} y_{t-is} +
-#'                               \sum_{i=1}^Q B_{is} \epsilon_{t-is} +
-#'                               \epsilon_t,
+#' \Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} + \sum_{i=1}^q B_i \epsilon_{t-i} + C x_t + \sum_{i=1}^P A_{is} y_{t-is} + \sum_{i=1}^Q B_{is} v_{t-is} + v_t,
 #' }
-#' where \eqn{y_t} is the vector of endogenous variables, \eqn{x_t} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} are the lag structure of the model.
-#' Furthermore, \eqn{c,\;C,\;A_i} and \eqn{B_i} for all available \eqn{i} are the parameters of the model.
-#' We use maximum likelihood estimator to estimate the parameters of the model.
-#' If \eqn{B_i} coefficients are not zero, identification restrictions are necessary to ensure that the model is uniquely identifiable.
-#' In the current implementation, this function restricts \eqn{B_i} coefficients to be diagonal.
+#' where \eqn{y_t:m\times 1} is the vector of endogenous variables, \eqn{x_t:k\times 1} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} determines the lag structure of the model. Furthermore, \eqn{c,C,A_i} and \eqn{B_i} for all available \eqn{i} determines the model’s parameters. \eqn{v_t} is the disturbance vector and is contemporaneously correlated between different equations, i.e., \eqn{E(v_tv_t')=\Sigma}.
+#' Given a sample of size \eqn{T}, the model can be estimated using maximum likelihood estimation. However, to ensure identifiability, it is necessary to impose additional constraints on the parameters (see chapter 12 in \insertCite{lutkepohl2005new;textual}{ldt}). In this function, diagonal MA equation form is used (see \insertCite{dufour2022practical;textual}{ldt}).
+#' In this function, the feasible GLS estimator is used to initialize the maximum likelihood, and the OLS estimator is used to calculate the initial value of the variance matrix of the error term. The condition number is calculated similar to the other models (see [estim.sur] or e.g., page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given a prediction horizon and required exogenous data, prediction is performed in a recursive schema, in which the actual estimated errors are used if available and zero otherwise. The variance of the predictions is also calculated recursively. Note that this function does not incorporate the coefficients uncertainty in calculation of the variance (see section 3.5 in \insertCite{lutkepohl2005new;textual}{ldt}).
 #'
-#' Note that the main purpose of exporting this method is to show the inner calculations of the search process in [search.varma] function.
+#' Finally, note that the main purpose of exporting this method is to show the inner calculations of the search process in [search.varma] function.
 #'
+#' @references
+#'   \insertAllCited{}
+#' @importFrom Rdpack reprompt
 #' @export
 #' @example man-roxygen/ex-estim.varma.R
-#' @seealso [search.varma], [search.varma.stepwise]
-estim.varma <- function(y, x = NULL, params = NULL,
-                        seasonsCount = 0, addIntercept = TRUE,
-                        lbfgsOptions = get.options.lbfgs(), olsStdMultiplier = 2,
-                        pcaOptionsY = NULL, pcaOptionsX = NULL,
-                        maxHorizon = 0, newX = NULL, simFixSize = 0,
-                        simHorizons = NULL, simUsePreviousEstim = TRUE,
-                        simMaxConditionNumber = Inf, simTransform = NULL,
-                        printMsg = FALSE){
+#' @seealso [search.varma]
+estim.varma <- function(data,
+                        params = NULL,
+                        seasonsCount = 0,
+                        lbfgsOptions = get.options.lbfgs(),
+                        olsStdMultiplier = 2,
+                        pcaOptionsY = NULL,
+                        pcaOptionsX = NULL,
+                        maxHorizon = 0,
+                        simFixSize = 0,
+                        simHorizons = NULL,
+                        simUsePreviousEstim = FALSE,
+                        simMaxConditionNumber = Inf){
+  stopifnot(is.list(data))
 
-  y = as.matrix(y)
-  x = if (is.null(x)) NULL else as.matrix(x)
-  params = if (is.null(params)) c(1L,0L,0L,0L,0L,0L) else as.integer(params)
+  if (data$hasWeight)
+    stop("VARMA estimation does not support weighted observations.")
+
+  data <- get.data.append.newX(data, maxHorizon = maxHorizon)
+
+
+  stopifnot(is.numeric(params) && length(params) <= 6)
+  if (length(params) < 6)
+    params <- c(params, rep(0, 6 - length(params)))
+  params <- as.integer(params)
+  stopifnot(all(params>=0)) #handles NA case
+
+  stopifnot(is.zero.or.positive.number(seasonsCount))
   seasonsCount = as.integer(seasonsCount)
-  addIntercept = as.logical(addIntercept)
-  olsStdMultiplier = as.numeric(olsStdMultiplier)
-  maxHorizon = as.integer(maxHorizon)
-  newX = if (is.null(newX)) NULL else as.matrix(newX)
-  simFixSize = as.integer(simFixSize)
-  simHorizons = if (is.null(simHorizons)) NULL else as.integer(simHorizons)
-  simUsePreviousEstim = as.logical(simUsePreviousEstim)
-  simMaxConditionNumber = as.numeric(simMaxConditionNumber)
-  printMsg = as.logical(printMsg)
+  if (seasonsCount < 2 && any(params[4:6] != 0))
+    stop("Invalid 'params' argument. Seasonal part (at indices 4:6) must be zero for non-seasonal model.")
 
-  if (is.null(simTransform) == FALSE && is.character(simTransform) == FALSE && is.function(simTransform) == FALSE)
-    stop("Invalid 'simTransform'. It should be a character string or a function.")
+  stopifnot(is.zero.or.positive.number(maxHorizon))
+  maxHorizon <- as.integer(maxHorizon)
+  stopifnot(is.logical(simUsePreviousEstim) && length(simUsePreviousEstim) == 1)
+  stopifnot(is.positive.number(olsStdMultiplier))
+
+  stopifnot(is.zero.or.positive.number(simFixSize))
+  simFixSize <- as.integer(simFixSize)
+  stopifnot(is.number(simMaxConditionNumber))
+  if (!is.null(simHorizons)){
+    stopifnot(is.numeric(simHorizons) && all(simHorizons >= 1))
+    simHorizons <- as.integer(simHorizons)
+  }
 
   if (is.null(lbfgsOptions))
     lbfgsOptions = get.options.lbfgs()
   else
-    lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
+    stopifnot(is.list(lbfgsOptions))
 
-  if (is.null(pcaOptionsY) == FALSE)
-    pcaOptionsY = CheckPcaOptions(as.list(pcaOptionsY))
-  if (is.null(pcaOptionsX) == FALSE)
-    pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
+  if (!is.null(pcaOptionsX))
+    stopifnot(is.list(pcaOptionsX))
+  if (!is.null(pcaOptionsY))
+    stopifnot(is.list(pcaOptionsY))
 
-  res <- .EstimVarma(y, x, params, seasonsCount, addIntercept,
+  res <- .EstimVarma(data, params, seasonsCount,
                      lbfgsOptions, olsStdMultiplier,
                      pcaOptionsY, pcaOptionsX,
-                     maxHorizon, newX, simFixSize, simHorizons,
-                     simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg)
+                     maxHorizon, simFixSize, simHorizons,
+                     simUsePreviousEstim, simMaxConditionNumber)
 
-  # other information
+  res$info$data = data
+  res$info$params = params
+  res$info$seasonsCount = seasonsCount
+  res$info$lbfgsOptions = lbfgsOptions
+  res$info$olsStdMultiplier = olsStdMultiplier
+  res$info$pcaOptionsY = pcaOptionsY
+  res$info$pcaOptionsX = pcaOptionsX
+  res$info$maxHorizon = maxHorizon
+  res$info$simFixSize = simFixSize
+  res$info$simHorizons = simHorizons
+  res$info$simUsePreviousEstim = simUsePreviousEstim
+  res$info$ simMaxConditionNumber = simMaxConditionNumber
 
-  res$info$startFrequency <- attr(y, "ldtf")
-
-
-  if (is.null(res$prediction$means) == FALSE &&
-      is.null(res$info$startFrequency) == FALSE){   # update predictions
-
-    hasVar = is.null(res$prediction$vars) == FALSE
-    predStart = tdata::next.freq(res$info$startFrequency, res$counts$obs - res$prediction$startIndex + 1)
-    labs <- tdata::get.seq0(predStart, ncol(res$prediction$means), by = 1)
-    colnames(res$prediction$means) <- labs
-    if (hasVar)
-      colnames(res$prediction$vars) <- labs
-  }
+  class(res) <- c("ldt.estim.varma", "ldt.estim", "list")
+  attr(res, "method") <- "VARMA"
 
   res
 }
 
+estim.varma.from.search <- function(searchResult, endogenous, exogenous, extra, ...){
+  search_data <- searchResult$info$data
+  data <- get.data(search_data$data[,c(endogenous, exogenous), drop = FALSE],
+                   endogenous = length(endogenous),
+                   newData = searchResult$info$data$newX,
+                   weights = NULL,
+                   lambdas = search_data$lambdas,
+                   addIntercept = FALSE,...)
 
-# get estimation from search result
-GetEstim_varma <- function(searchRes, endoIndices,
-                           exoIndices, y, x, printMsg,
-                           params, newX = NULL, ...) {
-  M <- estim.varma(y[, endoIndices, drop = FALSE],
-                   x = if (is.null(exoIndices) || is.null(x)) {
-                     NULL
-                   } else {
-                     x[, exoIndices, drop = FALSE]
-                   },
-                   params = params,
-                   seasonsCount = searchRes$info$seasonsCount,
-                   addIntercept = FALSE,
-                   lbfgsOptions = searchRes$info$lbfgsOptions,
-                   olsStdMultiplier = searchRes$info$olsStdMultiplier,
-                   pcaOptionsY = NULL,
-                   pcaOptionsX = NULL,
-                   maxHorizon = searchRes$info$maxHorizon,
-                   newX = if (is.null(exoIndices) || is.null(newX)) {
-                     NULL
-                   } else {
-                     as.matrix(newX[, exoIndices])
-                   },
-                   simFixSize = searchRes$info$metricOptions$simFixSize,
-                   simHorizons = searchRes$info$metricOptions$simHorizons,
-                   simUsePreviousEstim = searchRes$info$simUsePreviousEstim,
-                   simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
-                   simTransform = searchRes$info$metricOptions$transform,
-                   printMsg = printMsg
+
+  estim.varma(
+    data = data,
+    params = extra,
+    seasonsCount = searchResult$info$seasonsCount,
+    lbfgsOptions = searchResult$info$lbfgsOptions,
+    olsStdMultiplier = searchResult$info$olsStdMultiplier,
+    pcaOptionsY = NULL,
+    pcaOptionsX = NULL,
+    maxHorizon = searchResult$info$maxHorizon,
+    simFixSize = searchResult$info$metrics$simFixSize,
+    simHorizons = searchResult$info$metrics$horizons,
+    simUsePreviousEstim = searchResult$info$simUsePreviousEstim,
+    simMaxConditionNumber = searchResult$info$modelChecks$maxConditionNumber
   )
-
-  return(M)
 }
 
-
-#' Step-wise Search for Best VARMA Models
+#' Get the Specification of an \code{ldt.estim.varma} Model
 #'
-#' For a large model set, use this function to find the best Vector Autoregressive Moving Average models.
-#' It selects a subset of variables from smaller models and moves to the bigger ones.
+#' Use this function to get the name of a VARMA model, such that:
+#' If It is multivariate, it will be VAR, otherwise AR;
+#' If moving average terms are present, it will be ARMA or VARMA;
+#' If it is seasonal, it will be S-ARMA or S-VARMA;
+#' If it is integrated, it will be S-ARMA (D=?,d=?); ..., and any possible combination.
+#' Parameters will be reported in parenthesis after the name of the model.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param ySizeSteps A list of model dimensions to be estimated in each step.
-#' Its size determines the number of steps.
-#' @param countSteps An integer vector to determine the number of variables to be used in each step.
-#' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
-#' Select an appropriate value for \code{bestK} in the options.
-#' @param savePre A directory for saving and loading the progress.
-#' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
-#' @param ... other arguments to pass to [search.varma] function such as the \code{x} argument.
-#' Note that \code{ySizes} is ineffective here.
+#' @param obj AN object of class \code{ldt.estim.varma}.
 #'
-#' @return Similar to [search.varma] function.
+#' @return A character string representing the specification of the model.
 #' @export
-#'
-#' @examples
-#' # See the example in the 'search.varma' function.
-#'
-#' @seealso [search.varma], [estim.varma]
-search.varma.stepwise <- function(y, ySizeSteps = list(c(1,2), c(3)),
-                                  countSteps = c(NA, 10),
-                                  savePre = NULL, ...) {
+estim.varma.model.string <- function(obj){
+  if (is.null(obj))
+    stop("argument is null.")
+  if (!inherits(obj, "ldt.estim.varma"))
+    stop("Invalid class. An 'ldt.estim.varma' object is expected.")
 
-  if (length(ySizeSteps[[1]]) == 1)
-    stop("First element in 'ySizeSteps' must contain at lease two elements.")
+  y <- obj$info$data$data[,1:obj$info$data$numEndo, drop = FALSE]
+  nms <- paste(colnames(y), collapse = ", ")
+  params <- obj$info$params[1:6]
 
-  # or it will never find another potential variables to move to the next step
-  # this is specific to VARMA, because targets are in this list.
-  #TODO: check for the relationship between the length of this first element and the number of targets
+  ar <- params[1]
+  d <- params[2]
+  ma <- params[3]
+  sar <- params[4]
+  D <- params[5]
+  sma <- params[6]
 
-  Search_s("varma", y, ySizeSteps, countSteps, savePre, ...)
-}
-
-
-varma.to.latex.mat <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
-
-  #TODO: add breaks based on the number of equations and lags
-  #TODO: add three vertical dots for large vectors similar to SUR
-
-  numEq <- nrow(sigma)
-  numAR <- ifelse(is.null(arList), 0 , length(arList))
-  numMA <- ifelse(is.null(maList), 0 , length(maList))
-  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
-
-  # Initialize the LaTeX string
-  latex_str <- ""
-
-  delta <- ""
-  if (d == 1)
-    delta <- paste0(delta, "\\Delta")
-  else if (d > 1)
-    delta <- paste0(delta, "\\Delta^", d)
-  if (D == 1)
-    delta <- paste0(delta, "\\Delta_", s)
-  else if (D > 1)
-    delta <- paste0(delta, "\\Delta_", s, "^", D)
-
-  # Add the dependent variable vector
-  latex_str <- paste0(latex_str, " \\begin{bmatrix}", paste(paste0(delta, " Y_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
-
-  # Add the equal sign
-  latex_str <- paste0(latex_str, " = ")
-
-  # Add the intercept vector
-  if (!is.null(int) && any(as.numeric(int) != 0)) {
-    latex_str <- paste0(latex_str, "\\begin{bmatrix}", paste(sprintf(numFormat, int), collapse = "\\\\"), "\\end{bmatrix}")
-
-    # Add a plus sign if there are more terms
-    if (numAR > 0 || numExo > 0 || numMA > 0) {
-      latex_str <- paste0(latex_str, " + ")
+  if (ar == 0 && ma == 0 && sar == 0 && sma == 0){# ordinary linear model
+    if (d == 0 && D == 0){
+      if (ncol(y) == 1)
+        paste0("OLM")
+      else
+        paste0("OLM: ", nms)
+    }
+    else if (D == 0){
+      if (ncol(y) == 1)
+        paste0("OLM (d=",d,")")
+      else
+        paste0("OLM (d=",d,"): ", nms)
+    }
+    else if (d == 0){
+      if (ncol(y) == 1)
+        paste0("OLM (D=",D,")")
+      else
+        paste0("OLM (D=",D,"): ", nms)
+    }
+    else {
+      if (ncol(y) == 1)
+        paste0("OLM (d=",d,"D=",D,")")
+      else
+        paste0("OLM (d=",d,"D=",D,"): ", nms)
     }
   }
-
-  # Add the AR matrices
-  for (lag in seq_len(numAR)) {
-    if (all(as.numeric(arList[[lag]])== 0))
-      next
-    ar_mat <- matrix(sprintf(numFormat, arList[[lag]]), nrow = nrow(arList[[lag]]), ncol = ncol(arList[[lag]]))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(ar_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the lagged dependent variable vector
-    latex_str <- paste0(latex_str,
-      " \\begin{bmatrix}",
-      paste(paste0(delta, " Y_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add a plus sign if there are more terms
-    if (lag < numAR || numExo > 0 || numMA > 0) {
-      latex_str <- paste0(latex_str, " + ") #break
+  else if (ncol(y) == 1){
+    if (sar == 0 && D == 0 && sma == 0){
+      if (d == 0){
+        if (ma == 0){
+          paste0("AR", "(", ar, ")")
+        }
+        else if (ar == 0){
+          paste0("MA", "(", ma, ")")
+        }
+        else{
+          paste0("ARMA", "(", paste(c(ar,ma), collapse = ", "), ")")
+        }
+      }
+      else{ # write full params
+        paste0("ARIMA", "(", paste(c(ar,d,ma), collapse = ", "), ")")
+      }
+    } else{ # seasonal
+      paste0("S-ARIMA", "(", paste(params, collapse = ", "), ")")
     }
   }
-
-  if (numExo > 1){
-    latex_str <- paste0(latex_str, "\\\\") #break
-  }
-
-  # Add the exogenous matrix
-  if (numExo > 0 && any(as.numeric(exoCoef) != 0)) {
-    exo_mat <- matrix(sprintf(numFormat, exoCoef), nrow = nrow(exoCoef), ncol = ncol(exoCoef))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(exo_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the exogenous variable vector
-    if (numExo > 0){
-      latex_str <- paste0(
-        latex_str,
-        "\\begin{bmatrix}",
-        paste(paste0("X_", seq_len(numExo)), collapse = "\\\\"),
-        "\\end{bmatrix}"
-      )
-    }
-
-    # Add a plus sign if there are more terms
-    if (numMA > 0) {
-      latex_str <- paste0(latex_str, "+ ")
-    }
-  }
-
-  if (numMA > 0){
-    latex_str <- paste0(latex_str, "\\\\") #break
-  }
-
-  # Add the MA matrices
-  for (lag in seq_len(numMA)) {
-    if (all(as.numeric(maList[[lag]])== 0))
-      next
-    ma_mat <- matrix(sprintf(numFormat, maList[[lag]]), nrow = nrow(maList[[lag]]), ncol = ncol(maList[[lag]]))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(ma_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the lagged error vector
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(paste0("E_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add a plus sign if there are more terms
-    if (lag < numMA) {
-      latex_str <- paste0(latex_str, " + ")
-    }
-  }
-
-  # Add the error vector
-  latex_str <- paste0(latex_str, " + \\begin{bmatrix}", paste(paste0("E_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
-
-  s_mat <- latex.matrix(mat = sigma, numFormat = numFormat)
-  latex_str <- paste0(latex_str, ",\\\\ \\Sigma = ", s_mat)
-
-  return(latex_str)
-}
-
-varma.to.latex.eqs <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
-
-  #TODO: handle zero coefficients
-
-  numEq <- nrow(sigma)
-  numAR <- ifelse(is.null(arList), 0 , length(arList))
-  numMA <- ifelse(is.null(maList), 0 , length(maList))
-  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
-
-  # Initialize the LaTeX string
-  latex_str <- ""
-
-  delta <- ""
-  if (d == 1)
-    delta <- paste0(delta, "\\Delta")
-  else if (d > 1)
-    delta <- paste0(delta, "\\Delta^", d)
-  if (D == 1)
-    delta <- paste0(delta, "\\Delta_", s)
-  else if (D > 1)
-    delta <- paste0(delta, "\\Delta_", s, "^", D)
-
-  # Add the equations
-  for (eq in seq_len(numEq)) {
-    # Add the dependent variable
-    latex_str <- paste0(latex_str, delta," Y_{", eq, "t}")
-
-    # Add the intercept
-    if (!is.null(int) && int[eq] != 0) {
-      latex_str <- paste0(latex_str, " = ", sprintf0(numFormat, int[eq]))
-    }
-
-    # Add the AR terms
-    for (lag in seq_len(numAR)) {
-      coefs <- arList[[lag]][eq, ]
-      if (all(as.numeric(coefs) == 0))
-        next
-      signs <- ifelse(coefs >= 0, " + ", " - ")
-      coefs <- sprintf0(numFormat, abs(coefs))
-
-      terms <- paste0(signs, coefs, delta, " Y_{", seq_len(numEq), "t-", lag, "}")
-      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
-    }
-
-    # Add the exogenous terms
-    if (numExo > 0){
-      for (exo in seq_len(numExo)) {
-        coef <- exoCoef[eq, exo]
-        if (all(as.numeric(coefs) == 0))
-          next
-        sign <- ifelse(coef >= 0, " + ", " - ")
-        coef <- sprintf0(numFormat, abs(coef))
-        term <- paste0(sign, coef, " X_", exo)
-        latex_str <- paste0(latex_str, term)
+  else {
+    if (sar == 0 && D == 0 && sma == 0){
+      if (d == 0){
+        if (ma == 0){
+          paste0("VAR", "(", ar, "): ", nms)
+        }
+        else if (ar == 0){
+          paste0("VMA", "(", ma, "): ", nms)
+        }
+        else{
+          paste0("VARMA", "(", paste(c(ar,ma), collapse = ", "), "): ", nms)
+        }
+      }
+      else{ # write full params
+        paste0("VARIMA", "(", paste(c(ar,d,ma), collapse = ", "), "): ", nms)
       }
     }
-
-    # Add break
-    latex_str <- paste0(latex_str, "\\\\")
-
-    # Add the MA terms
-    for (lag in seq_len(numMA)) {
-      coefs <- maList[[lag]][eq, ]
-      if (all(as.numeric(coefs) == 0))
-        next
-      signs <- ifelse(coefs >= 0, " + ", " - ")
-      coefs <- sprintf0(numFormat, abs(coefs))
-      terms <- paste0(signs, coefs, " E_{", seq_len(numEq), "t-", lag, "}")
-      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
+    else { # seasonal
+      paste0("S-VARIMA",
+             "(", paste(params, collapse = ", "), "): ", nms)
     }
-
-    # Add the error term
-    latex_str <- paste0(latex_str, " + E_{", eq, "t},\\quad \\sigma_", eq,"^2 = ",
-                        sprintf0(numFormat, sigma[[eq,eq]]))
-
-    # Add a line break if this is not the last equation
-    if (eq < numEq)
-      latex_str <- paste0(latex_str, "\\\\")
   }
 
-  return(latex_str)
 }
+
 
 seasonal_cumsum_row <- function(x, n_seasons) {
   n <- nrow(x)
@@ -543,9 +410,9 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
   if (p != 0 || P != 0){
     for (i in seq_len(p))
       ar_poly[[i]] = 1
-  if (numS > 1 && P > 0)
-    for (i in seq(numS, numS*P, numS))
-      ar_poly[[i]] = 1
+    if (numS > 1 && P > 0)
+      for (i in seq(numS, numS*P, numS))
+        ar_poly[[i]] = 1
   }
 
   ma_poly <- integer(max(q,Q)*numS)
@@ -572,8 +439,6 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #' @param nBurn An integer representing the number of burn-in observations to remove from the generated time series.
 #' @param intercept A numeric vector representing the intercept of the VARMA model or a logical value indicating whether to generate a random intercept.
 #' @param d An integer representing the order of integration.
-#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-#' If \code{NULL}, conversion to latex or html representations are disabled.
 #' @param startFrequency The frequency of the first observation in the data.
 #' @param seasonalCoefs An integer vector of size 4: \code{(P,D,Q,s)} where
 #' \code{P} is the number of random seasonal AR coefficients to generate,
@@ -595,8 +460,6 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #'   \item{seasonalCoefs}{The argument \code{seasonalCoefs} }
 #'   \item{nObs}{The number of observations generated.}
 #'   \item{nBurn}{The number of burn-in observations removed.}
-#'   \item{eqsLatex}{character string, Latex representation of the equations of the system.}
-#'   \item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 #'
 #'
 #' @export
@@ -605,7 +468,7 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #'
 sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
                       exoCoef = 0L, nObs = 100, nBurn = 10,
-                      intercept = TRUE, d = 0, numFormat = "%.2f",
+                      intercept = TRUE, d = 0,
                       startFrequency = NULL,
                       seasonalCoefs = NULL) {
 
@@ -815,13 +678,7 @@ sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
               d = d,
               seasonalCoefs = seasonalCoefs,
               nObs = nObs,
-              nBurn = nBurn,
-              eqsLatex = ifelse(is.null(numFormat), NULL,
-                                varma.to.latex.eqs(sigma, arList, intercept,
-                                                   exoCoef, maList, d, D, s, as.character(numFormat))),
-              eqsLatexSys = ifelse(is.null(numFormat), NULL,
-                                   varma.to.latex.mat(sigma, arList, intercept,
-                                                      exoCoef, maList, d, D, s, as.character(numFormat)))))
+              nBurn = nBurn))
 }
 
 
@@ -853,7 +710,7 @@ sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
 #' @seealso [estim.varma]
 get.varma.params <- function(coef, numAR = 1, numMA = 0,
                              numExo = 0, intercept = TRUE, numAR_s = 0, numMA_s = 0, numSeasons = 1) {
-  coef <- as.matrix(coef)
+  coef <- t(as.matrix(coef))
   numEq <- nrow(coef)
   numAR <- as.integer(numAR)
   numExo <- as.integer(numExo)
@@ -884,7 +741,7 @@ get.varma.params <- function(coef, numAR = 1, numMA = 0,
 
   expected_ncol <- numNon0Ar * numEq + numNon0Ma * numEq + numExo + ifelse(intercept, 1, 0)
   if (ncol(coef) != expected_ncol) {
-    stop("The number of columns of 'coef' is not consistent with the other arguments")
+    stop("The number of rows of 'coef' is not consistent with the other arguments")
   }
 
   start <- 1

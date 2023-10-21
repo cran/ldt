@@ -11,7 +11,6 @@ sim.bin(
   maxWeight = 1,
   pPos = 0.5,
   sampleFactor = 4,
-  numFormat = "\%.2f",
   toNumeric = TRUE
 )
 }
@@ -29,7 +28,7 @@ If \code{1}, observations are not weighted.
 If larger than \code{1}, a vector of weights is generated and included in the return list. The weights are drawn from a discrete uniform distribution with a maximum value determined by \code{maxWeight}.
 If weighted, a larger sample is created (\code{nObs * sampleFactor * maxWeight}) and a subset of them is randomly selected, where the probability of selection is determined by the weight.}
 
-\item{pPos}{The percentage of positive observations (\code{y=1}) in the dependent variable y.
+\item{pPos}{The percentage of positive observations (\code{y=1}) in the endogenous variable y.
 Must be between 0 and 1.
 In the current implementation, this is independent of the weights, if \code{maxWeight} is larger than 1.}
 
@@ -37,22 +36,18 @@ In the current implementation, this is independent of the weights, if \code{maxW
 A larger value generates a larger initial sample, which can increase the accuracy
 of the generated sample but also takes more time and memory.}
 
-\item{numFormat}{A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-If \code{NULL}, conversion to latex or html representations are disabled.}
-
 \item{toNumeric}{If \code{TRUE}, \code{y} and \code{w} are transformed to have numeric vector.
 Otherwise, they contain an integer vector.}
 }
 \value{
 A list with the following items:
-\item{y}{The dependent variable.}
-\item{x}{The independent variables.}
-\item{w}{The weights of the observations. It is null if \code{weighted} is \code{FALSE}.}
+\item{y}{The endogenous variable.}
+\item{x}{The exogenous variables.}
+\item{w}{The weights of the observations. It is \code{NULL} if \code{weighted} is \code{FALSE}.}
 \item{p1}{Prob(Y=1)}
 \item{coef}{The coefficients of the regression.}
 \item{probit}{Logical value indicating whether data was generated from a probit model.}
 \item{pPos}{The percentage of negative observations in y.}
-\item{eqLatex}{Latex representation of the model formula.}
 }
 \description{
 This function generates a random sample from an discrete choice regression model.
@@ -61,28 +56,7 @@ This function generates a random sample from an discrete choice regression model
 # Generate data from a logit model with 3 variables
 sample <- sim.bin(3L, 100)
 
-data <- data.frame(sample$y, sample$x)
-colnames(data) <- c(colnames(sample$y),colnames(sample$x))
-
-# Estimate using glm
-fit <- glm(Y ~ X1 + X2, data = data, family = binomial())
-# you can compare fit$coefficients and sample$coef
-
-# Estimate using estim.bin in this package
-fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], linkFunc = "logit",
-                 newX = sample$x[,2:3, drop=FALSE])
-
-# Generate data from a probit model with specified coefficients
-sample1 <- sim.bin(c(-1, 0.5, 2), 100, probit = TRUE)
-data <- data.frame(sample1$y, sample1$x)
-colnames(data) <- c(colnames(sample1$y),colnames(sample1$x))
-
-# Estimate the probit model using glm
-fit <- glm(Y ~ X1 + X2, data = data, family = binomial( link = "probit"))
-
-# Estimate using estim.bin in this package
-fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], linkFunc = "probit")
-
+# see the examples in 'estim.bin' or 'search.bin' functions
 }
 \seealso{
 \link{estim.bin}, \link{search.bin}

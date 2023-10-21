@@ -2,40 +2,34 @@
 % Please edit documentation in R/bin.R
 \name{estim.bin}
 \alias{estim.bin}
-\title{Estimate a Discrete Choice Model}
+\title{Estimate a Binary Choice Model}
 \usage{
 estim.bin(
-  y,
-  x,
-  w = NULL,
+  data,
   linkFunc = c("logit", "probit"),
-  newX = NULL,
   pcaOptionsX = NULL,
   costMatrices = NULL,
+  optimOptions = get.options.newton(),
   aucOptions = get.options.roc(),
   simFixSize = 0,
   simTrainFixSize = 0,
   simTrainRatio = 0.75,
   simSeed = 0,
   weightedEval = FALSE,
-  printMsg = FALSE
+  simMaxConditionNumber = Inf
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variable in the column.}
-
-\item{x}{A matrix of exogenous data with variables in the columns.}
-
-\item{w}{Weights of the observations in \code{y}.
-\code{NULL} means equal weights for all observations.}
+\item{data}{A list that determines data and other required information for the model search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
 \item{linkFunc}{A character string that shows the probability assumption. It can be \code{logit} or \code{probit}.}
-
-\item{newX}{A numeric matrix where for each row in it, probabilities are projected and reported. It can be \code{NULL}.}
 
 \item{pcaOptionsX}{A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use \code{\link[=get.options.pca]{get.options.pca()}} for initialization.}
 
 \item{costMatrices}{A list of numeric matrices where each one determines how to score the calculated probabilities. See and use \link{search.bin} for more information and initialization.}
+
+\item{optimOptions}{A list for Newton optimization options. Use \link{get.options.newton} function to get the options.}
 
 \item{aucOptions}{A list of options for AUC calculation. See and use \code{[get.options.roc()]} for more information and initialization.}
 
@@ -49,49 +43,61 @@ estim.bin(
 
 \item{weightedEval}{If \code{TRUE}, weights will be used in evaluations.}
 
-\item{printMsg}{Set to \code{TRUE} to enable printing some details.}
-}
-\value{
-A nested list with the following items:
-\item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
-\item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-\item{metrics}{Value of different goodness of fit and out-of-sample performance metrics.}
-\item{projections}{Information on the projected values, if \code{newX} is provided.}
-\item{info}{Some other general information.}
+\item{simMaxConditionNumber}{A number for the maximum value for the condition number in the simulation.}
 }
 \description{
-Use this function to estimate a discrete choice model.
+Use this function to estimate a binary choice model.
 }
 \details{
-Binary regression is a statistical technique used to estimate the probability of one of two possible outcomes, represented by a binary dependent variable that takes on two values, such as 0 and 1.
-This is achieved by modeling the relationship between one or more independent variables and the binary dependent variable.
-The most commonly used binary regression models are the logit model, also known as logistic regression, and the probit model, also known as probit regression.
-In general, a binary regression model can be written as \eqn{f(p) = \beta_0 + \beta_1x_1 + \ldots + \beta_kx_k}, where \eqn{p} is the probability that \eqn{y} is 1 and \eqn{f} is the link function.
-For logistic regression, the logit function is used as the link function: \eqn{f(p) = \ln{\frac{p}{1-p}}}.
-For probit regression, the probit function is used as the link function: \eqn{f(p) = \Phi^{-1}(p)}, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
-The parameters of the binary regression model are estimated using maximum likelihood estimation.
+As documented in chapter 12 in \insertCite{greene2010modeling;textual}{ldt}, binary regression is a statistical technique used to estimate the probability of one of two possible outcomes for a variable such as \eqn{y}, i.e., \eqn{p=P(y=1)} and \eqn{q=P(y=0)}. The most commonly used binary regression models are the logit and probit models. In general, a binary regression model can be written as \eqn{f(p) = z'\gamma+v}, where the first element in \eqn{\gamma} is the intercept and \eqn{f(p)} is a link function. For logit and probit models we have \eqn{f(p) = \ln{\frac{p}{1-p}}} and \eqn{f(p) = \Phi^{-1}(p)} respectively, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
+
+Given an independent sample of length \eqn{N}, the parameters of the binary regression model are estimated using maximum likelihood estimation. Assuming that some observations are more reliable or informative than others and \eqn{w_i} for \eqn{i=1,\ldots,N} reflects this fact, the likelihood function is given by:
+
+\deqn{
+L(\gamma) = \prod_{i=1}^N (p_i)^{w_i y_i} (1-p_i)^{w_i (1-y_i)},
+}
+
+where \eqn{p_i=\frac{\exp{\gamma z_i}}{1+\exp{\gamma z_i}}} for logit model and \eqn{p_i=\Phi(\gamma z_i)} for probit model. \code{ldt} uses feasible GLS to calculate the initial value of the coefficients and a weighted least squares estimator to calculate the initial variance matrix of the error terms (see page 781 in \insertCite{greene2020econometric;textual}{ldt}). The condition number of the estimation is calculated by multiplying 1-norm of the observed information matrix at the maximum likelihood estimator and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, if \eqn{x} is a new observations for the explanatory variables, the predicted probability of the positive class is estimated by \eqn{p_i=\frac{\exp{\gamma x}}{1+\exp{\gamma x}}} for logit model and \eqn{p_i=\Phi(\gamma x)} for probit model.
 
 Note that the focus in \code{ldt} is model uncertainty and the main purpose of exporting this method is to show the inner calculations of the search process in \link{search.bin} function.
 }
 \examples{
 # Example 1 (simulation, small model):
+set.seed(123)
 sample <- sim.bin(3L, 100)
+print(sample$coef)
+
 data <- data.frame(sample$y, sample$x)
+
 #   Estimate using glm
 fit <- glm(Y ~ X1 + X2, data = data, family = binomial())
-#   Estimate using estim.bin in this package
-fit1 <- estim.bin(sample$y, sample$x[,2:ncol(sample$x), drop=FALSE], linkFunc = "logit",
-                 newX = sample$x[,2:3, drop=FALSE])
+print(fit)
+
+#   Estimate using 'ldt::estim.bin'
+fit <- estim.bin(data = get.data(data = data,
+                                 equations = list(Y ~ X1 + X2)),
+                  linkFunc = "logit")
+print(fit)
+plot_data <- plot(fit, type = 1)
+#   See 'plot.ldt.estim()' function documentation
+
 
 # Example 2 (simulation, large model with PCA analysis):
 sample <- sim.bin(30L, 100, probit = TRUE)
 data <- data.frame(sample$y, sample$x)
 colnames(data) <- c(colnames(sample$y),colnames(sample$x))
 pca_options <- get.options.pca(ignoreFirst = 1, exactCount = 3)
-fit1 <- estim.bin(sample$y, sample$x[,2:ncol(sample$x), drop=FALSE], linkFunc = "probit",
-                 pcaOptionsX = pca_options)
-
+fit <- estim.bin(data = get.data(cbind(sample$y, sample$x),
+                                  endogenous = ncol(sample$y),
+                                  addIntercept = FALSE),
+                  linkFunc = "probit",
+                  pcaOptionsX = pca_options)
+print(fit)
+plot_data <- plot(fit, type = 2)
+}
+\references{
+\insertAllCited{}
 }
 \seealso{
-\link{search.bin}, \link{search.bin.stepwise}
+\link{search.bin}
 }

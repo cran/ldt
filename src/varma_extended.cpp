@@ -160,9 +160,9 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
 
   // restrictions
 
-  auto res = VarmaRestriction(Sizes, mRestriction);
-  res.Calculate(&storage[p]);
-  p += res.StorageSize;
+  Restriction = VarmaRestriction(Sizes, mRestriction);
+  Restriction.Calculate(&storage[p]);
+  p += Restriction.StorageSize;
 
   // Transpose
   Y.Transpose();
@@ -172,9 +172,9 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
 
   // Estimate
   Model.EstimateMl(Y, Sizes.ExoCount > 0 ? &X : nullptr, work, estimStorage,
-                   res.IsRestricted ? &res.R : nullptr,
-                   res.r.Data ? &res.r : nullptr, sampleEnd, useCurrentEstime,
-                   stdMultiplier);
+                   Restriction.IsRestricted ? &Restriction.R : nullptr,
+                   Restriction.r.Data ? &Restriction.r : nullptr, sampleEnd,
+                   useCurrentEstime, stdMultiplier);
 
   if (maxCn > 0) { // otherwise we do not check it
     if (Model.Result.cn > maxCn)

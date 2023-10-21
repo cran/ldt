@@ -141,7 +141,7 @@ test_that("Auc works for binary and no weights", {
   y = c(1, 0, 1, 0, 1, 1)
   scores = c(0.1, 0.9, 0.1, 0.9, 0.1, 0.9)
 
-  res = s.roc(y,scores,NULL, printMsg = FALSE)
+  res = s.roc(y,scores,NULL)
   #resR = pROC::roc(y,scores[,1])
   expect_equal(res$auc, 0.875, tolerance = 1e-14)
 
@@ -149,14 +149,14 @@ test_that("Auc works for binary and no weights", {
   y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
   scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
   opt <- get.options.roc(0.2,0.8)
-  res = s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
+  res = s.roc(y,scores,NULL,options = opt)
   expect_equal(res$auc, 0.44 / 0.6, tolerance = 1e-14)
 
   # weighted
   y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1) # zero weight for the last observation
   scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1, 0.8)
   weights <- c(1,1,1,1,1,1,1,1,1,1,0)
-  res = s.roc(y,scores,weights,options = opt, printMsg = FALSE)
+  res = s.roc(y,scores,weights,options = opt)
   expect_equal(res$auc, 0.44 / 0.6, tolerance = 1e-14)
 
   # varying cost
@@ -165,7 +165,7 @@ test_that("Auc works for binary and no weights", {
   costs <- c(1,1,1,1,1,1,1,1,1,1)
   costMatrix = matrix(c(0.02,-1,-10,10),2,2)
   opt <- get.options.roc(costs = costs, costMatrix = costMatrix)
-  res = s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
+  res = s.roc(y,scores,NULL,options = opt)
   #expect_equal(res$AUC, ?, tolerance = 1e-14) TODO
 
 })

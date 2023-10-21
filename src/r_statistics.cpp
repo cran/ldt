@@ -11,9 +11,10 @@ using namespace Rcpp;
 using namespace ldt;
 
 // [[Rcpp::export(.GetWeightFromMetric)]]
-SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
+SEXP GetWeightFromMetric(SEXP value, SEXP metricName, SEXP minValue) {
 
   double value0 = as<double>(value);
+  double minValue0 = as<double>(minValue);
   std::string metricName0 = as<std::string>(metricName);
   boost::algorithm::to_lower(metricName0);
 
@@ -21,11 +22,11 @@ SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
 
   try {
     auto type = FromString_GoodnessOfFitType(metricName0.c_str());
-    v = GoodnessOfFit::ToWeight(type, value0);
+    v = GoodnessOfFit::ToWeight(type, value0, minValue0);
   } catch (...) {
     try {
       auto type1 = FromString_ScoringType(metricName0.c_str());
-      v = Scoring::ToWeight(type1, value0);
+      v = Scoring::ToWeight(type1, value0, minValue0);
     } catch (...) {
       throw LdtException(
           ErrorType::kLogic, "R-statistics",
@@ -37,19 +38,20 @@ SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
 }
 
 // [[Rcpp::export(.GetMetricFromWeight)]]
-SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
+SEXP GetMetricFromWeight(SEXP value, SEXP metricName, SEXP minValue) {
   double value0 = as<double>(value);
+  double minValue0 = as<double>(minValue);
   std::string metricName0 = as<std::string>(metricName);
   boost::algorithm::to_lower(metricName0);
 
   double v = NAN;
   try {
     auto type = FromString_GoodnessOfFitType(metricName0.c_str());
-    v = GoodnessOfFit::FromWeight(type, value0);
+    v = GoodnessOfFit::FromWeight(type, value0, minValue0);
   } catch (...) {
     try {
       auto type1 = FromString_ScoringType(metricName0.c_str());
-      v = Scoring::FromWeight(type1, value0);
+      v = Scoring::FromWeight(type1, value0, minValue0);
     } catch (...) {
       throw LdtException(
           ErrorType::kLogic, "R-statistics",
@@ -61,7 +63,7 @@ SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
 }
 
 // [[Rcpp::export(.GetRoc)]]
-List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
+List GetRoc(SEXP y, SEXP scores, SEXP weights, List options) {
   if (y == R_NilValue || is<NumericVector>(y) == FALSE)
     throw LdtException(ErrorType::kLogic, "R-statistics",
                        "'y' should be a numeric vector");
@@ -70,8 +72,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                        "'scores' should be a numeric vector");
   NumericVector y0 = as<NumericVector>(y);
   auto N = y0.length();
-  if (printMsg)
-    Rprintf("Number of observations = %i\n", N);
 
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
@@ -94,8 +94,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                          "unequal number of observations in 'y' and 'weights'");
     mweights.SetData(&weights0[0]);
   }
-  if (printMsg)
-    Rprintf("Is Weighted = %s\n", hasWeight ? "TRUE" : "FALSE");
 
   auto min_y = min(y0);
   if (min_y != 0)
@@ -107,7 +105,7 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                        "maximum in 'y' vector must be 1");
 
   ldt::RocOptions options_;
-  UpdateRocOptions(printMsg, options, options_, "Options: ");
+  UpdateRocOptions(options, options_);
 
   std::unique_ptr<RocBase> auc0;
   if (hasWeight) {
@@ -134,8 +132,9 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
     points.Set0(i, 1, std::get<1>(auc0->Points.at(i)));
   }
 
-  List L = List::create(_["n"] = wrap(N), _["auc"] = wrap(auc->Result),
-                        _["points"] = as_matrix(points, nullptr, &colnames));
+  List L = List::create(
+      _["n"] = wrap(N), _["auc"] = wrap(auc->Result),
+      _["points"] = as_matrix(points, std::vector<std::string>(), colnames));
 
   L.attr("class") = std::vector<std::string>({"ldtroc", "list"});
 
@@ -145,14 +144,7 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
 // [[Rcpp::export(.GetGldFromMoments)]]
 NumericVector GetGldFromMoments(double mean, double variance, double skewness,
                                 double excessKurtosis, int type, double s1,
-                                double s2, List nelderMeadOptions,
-                                bool printMsg) {
-  if (printMsg) {
-    Rprintf("Moments=%f, %f, %f, %f\n", mean, variance, skewness,
-            excessKurtosis);
-    Rprintf("Type=%i\n", type); // TODO: convert to string
-    Rprintf("Start (L3, L4)=(%f, %f)\n", s1, s2);
-  }
+                                double s2, List nelderMeadOptions) {
 
   auto optim = NelderMead(2);
   optim.ParamContraction = nelderMeadOptions["contraction"];
@@ -167,14 +159,6 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
 
   if (optim.Iter == optim.MaxIteration)
     Rf_warning("Maximum number of iteration reached in GLD estimation");
-
-  if (printMsg) {
-    Rprintf("....\n");
-    Rprintf("Iteration=%i\n", optim.Iter);
-    Rprintf("Objective Minimum=%i\n", optim.Min);
-    Rprintf("Parameters=%f, %f, %f, %f\n", std::get<0>(ps), std::get<1>(ps),
-            std::get<2>(ps), std::get<3>(ps));
-  }
 
   NumericVector result = {std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),
                           std::get<3>(ps), (double)optim.Iter};

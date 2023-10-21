@@ -25,99 +25,127 @@
 // #include <Rinternals.h>
 
 using namespace Rcpp;
+using namespace ldt;
 
-std::unique_ptr<double[]>
-CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
-               std::vector<std::string> &colNames, ldt::Matrix<double> &my,
-               ldt::Matrix<double> &mx, ldt::Matrix<double> &mw,
-               ldt::Matrix<double> &mnewX, SEXP &y, SEXP &x, SEXP &w,
-               SEXP &newX, bool removeNan, bool addIntercept, int minExpectedY,
-               int minExpectedX, int minExpectedW, int minExpectedNewX = 0,
-               bool appendNewX = false);
+/// @brief A searcher class for general R functions
+class LDT_EXPORT RFuncSearcher : public SearcherReg {
 
-void GetSizes(bool printMsg, std::vector<int> &result, SEXP &sizes,
-              int variableCount, bool isX);
+  Nullable<Function> mFunc = R_NilValue;
 
-void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
-                   SEXP &partitions, int variableCount, int adjustPos = 0,
-                   bool isX = true);
+  std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                             VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
+                             VMatrix<Ti> &extra) override;
 
-void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
-               SEXP &groups, int variableCount, int adjustPos, bool isX);
+public:
+  RFuncSearcher(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, const SearchItems &items,
+                const SearchMetricOptions &metrics,
+                const SearchModelChecks &checks, const Ti &numPartitions,
+                const std::vector<Ti> &innerIndices,
+                const bool &isInnerExogenous, const std::string &rFuncName);
 
-void UpdateOptions(bool printMsg, List &searchItems, List &metricOptions,
-                   List &modelCheckItems, ldt::SearchMetricOptions &res_metric,
-                   ldt::SearchItems &res_items,
-                   ldt::SearchModelChecks &res_checks,
-                   std::vector<std::string> &metricsNames, int length1,
-                   int exoCount, int numTargets, int numDependents,
-                   bool isTimeSeries = false, bool type1NeedsModelEstim = true,
-                   const char *length1Informtion = "Coefficients",
-                   bool isDc = false);
+  std::function<void()> ReportProgress;
 
-NumericMatrix insert_intercept(NumericMatrix a);
+  SEXP DataR = R_NilValue;
 
-NumericMatrix cbind_matrix(NumericMatrix a, NumericMatrix b);
+  SEXP MetricsR = R_NilValue;
 
-NumericMatrix cbind_vectormatrix(NumericVector a, NumericMatrix b,
-                                 std::string vectorName);
+  SEXP ItemsR = R_NilValue;
 
-NumericMatrix as_matrix(ldt::Matrix<double> &mat,
-                        std::vector<std::string> *rowNames = nullptr,
-                        std::vector<std::string> *colNames = nullptr);
+  SEXP ModelChecksR = R_NilValue;
+};
 
-NumericVector as_vector(ldt::Matrix<double> &vec,
-                        std::vector<std::string> *names = nullptr);
+/// @brief A model set with no estimation (for R)
+class LDT_EXPORT RFuncModelset {
+public:
+  /// @brief The inner model set
+  ModelSet Modelset;
 
-IntegerMatrix as_imatrix(ldt::Matrix<int> &mat,
-                         std::vector<std::string> *rowNames = nullptr,
-                         std::vector<std::string> *colNames = nullptr);
+  /// @brief List of searchers
+  std::vector<Searcher *> Searchers;
 
-IntegerVector as_ivector(ldt::Matrix<int> &vec,
-                         std::vector<std::string> *names = nullptr);
+  /// @brief Initializes a new instance of this class
+  RFuncModelset(){};
 
-std::vector<std::string> GetDefaultColNames(std::string pre, int length);
+  RFuncModelset(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, SearchItems &items,
+                SearchMetricOptions &metrics, SearchModelChecks &checks,
+                bool isTimeSeries, bool isOutOfSampleRandom,
+                const bool &isInnerExogenous, const std::string &rFuncName);
 
-void UpdateRocOptions(bool printMsg, List &rocOptionsR,
-                      ldt::RocOptions &options, const char *startMsg);
+  ~RFuncModelset() {
+    for (auto s : Searchers)
+      delete s;
+  }
+};
 
-void UpdatePcaOptions(bool printMsg, List pcaOptionsR, bool hasPca,
-                      ldt::PcaAnalysisOptions &options, const char *startMsg);
+void UpdateSearchData(List &dataR, ldt::SearchData &data);
 
-void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
-                        ldt::LimitedMemoryBfgsbOptions &options);
+void UpdateSearchCombinations(List combinationsR,
+                              ldt::SearchCombinations &combinations);
 
-void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
+void UpdateSearchOptions(List &optionsR, ldt::SearchOptions &options);
 
-void UpdateSearchItems(bool printMsg, List &searchItems,
-                       ldt::SearchItems &items, Ti length1, Ti length2,
-                       const char *length1Informtion,
+void UpdateSearchItems(List &itemsR, ldt::SearchItems &items, Ti length1,
+                       Ti length2, const char *length1Informtion,
                        const char *length2Informtion, bool type1NeedsModelEstim,
                        bool type2NeedsModelEstim);
 
-void UpdateSearchOptions(List &searchOptions, ldt::SearchOptions &options,
-                         int &reportInterval, bool &printMsg);
-
-void UpdateModelCheckItems(bool printMsg, List &checkOptions,
-                           ldt::SearchModelChecks &checks,
+void UpdateModelCheckItems(List &checksR, ldt::SearchModelChecks &checks,
                            const ldt::SearchMetricOptions &metrics,
                            const ldt::SearchItems &items);
 
-void UpdatemetricOptions(bool printMsg, List &metricOptions,
-                         ldt::SearchMetricOptions &metrics,
+void UpdatemetricOptions(List &metricsR, ldt::SearchMetricOptions &metrics,
                          std::vector<std::string> &metricNames,
-                         bool isTimeSeries, bool isDc);
+                         bool isTimeSeries, bool isDc, int numTargets);
 
-void ReportProgress(bool pringMsg, int reportInterval, ldt::ModelSet &model,
-                    bool &estimating, ldt::SearchOptions &options,
-                    int allCount);
+void UpdateOptions(List &itemsR, List &metricsR, List &modelChecksR,
+                   SearchMetricOptions &res_metric, SearchItems &res_items,
+                   SearchModelChecks &res_checks,
+                   std::vector<std::string> &metricsNames, int length1,
+                   int exoCount, int numTargets, int numEndogenous,
+                   bool isTimeSeries, bool type1NeedsModelEstim,
+                   const char *length1Informtion, bool isDc);
 
-List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &searchItems,
-                        std::vector<std::string> &metricNames, int length1,
-                        const char *extra1Label,
-                        std::vector<std::string> *extra1Names,
-                        int exoIndexesPlus,
-                        std::vector<std::string> &length1Names,
-                        std::vector<std::string> &inclusionNames,
-                        const char *length1Label,
-                        const char *length1_itemlabel);
+void UpdatePcaOptions(List optionsR, ldt::PcaAnalysisOptions &options);
+
+void ReportProgressInner(
+    const ModelSet &model, SearchOptions &options, const int &allCount,
+    double &prePecentage, int &i,
+    const std::chrono::time_point<std::chrono::system_clock> &start,
+    const bool &printMsg, const bool &sleep1 = true);
+void ReportProgress(const ldt::ModelSet &model, bool &estimating,
+                    ldt::SearchOptions &options, const int &allCount);
+
+NumericMatrix as_matrix(
+    const ldt::Matrix<double> &mat,
+    const std::vector<std::string> &rowNames = std::vector<std::string>(),
+    const std::vector<std::string> &colNames = std::vector<std::string>());
+
+NumericVector
+as_vector(const ldt::Matrix<double> &vec,
+          const std::vector<std::string> &names = std::vector<std::string>());
+
+IntegerMatrix as_imatrix(
+    const ldt::Matrix<int> &mat,
+    const std::vector<std::string> &rowNames = std::vector<std::string>(),
+    const std::vector<std::string> &colNames = std::vector<std::string>());
+
+IntegerVector
+as_ivector(const ldt::Matrix<int> &vec,
+           const std::vector<std::string> &names = std::vector<std::string>());
+
+void UpdateRocOptions(List &rocOptionsR, ldt::RocOptions &options);
+
+void UpdateLbfgsOptions(List &optionsR, LimitedMemoryBfgsbOptions &options);
+
+void UpdateNewtonOptions(List &newtonR, ldt::Newton &newton);
+
+List GetModelSetResults(const ModelSet &model, const SearchItems &items,
+                        const std::vector<std::string> &metricNames,
+                        const std::vector<std::string> &colNames,
+                        const std::vector<std::string> &targetNames,
+                        const std::vector<std::string> &extra1Names,
+                        const std::vector<std::string> &length1Names,
+                        const std::vector<std::string> &inclusionNames,
+                        const std::string length1Label, const bool &printMsg);

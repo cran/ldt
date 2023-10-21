@@ -11,8 +11,7 @@ s.gld.from.moments(
   excessKurtosis = 0,
   type = 0,
   start = NULL,
-  nelderMeadOptions = get.options.neldermead(),
-  printMsg = FALSE
+  nelderMeadOptions = get.options.neldermead()
 )
 }
 \arguments{
@@ -29,8 +28,6 @@ s.gld.from.moments(
 \item{start}{A numeric vector of size 2 for the starting value.}
 
 \item{nelderMeadOptions}{A list of options for Nelder-Mead algorithm. Use \link{get.options.neldermead} for initialization.}
-
-\item{printMsg}{Set to \code{TRUE} to enable printing some details.}
 }
 \value{
 A vector of length 5. The first 4 elements are the parameters of the GLD distribution.

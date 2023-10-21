@@ -13,7 +13,6 @@ sim.varma(
   nBurn = 10,
   intercept = TRUE,
   d = 0,
-  numFormat = "\%.2f",
   startFrequency = NULL,
   seasonalCoefs = NULL
 )
@@ -34,9 +33,6 @@ sim.varma(
 \item{intercept}{A numeric vector representing the intercept of the VARMA model or a logical value indicating whether to generate a random intercept.}
 
 \item{d}{An integer representing the order of integration.}
-
-\item{numFormat}{A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-If \code{NULL}, conversion to latex or html representations are disabled.}
 
 \item{startFrequency}{The frequency of the first observation in the data.}
 
@@ -61,8 +57,6 @@ A list with the following items:
 \item{seasonalCoefs}{The argument \code{seasonalCoefs} }
 \item{nObs}{The number of observations generated.}
 \item{nBurn}{The number of burn-in observations removed.}
-\item{eqsLatex}{character string, Latex representation of the equations of the system.}
-\item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 }
 \description{
 This function generates a multivariate time series using a VARMA process.
@@ -81,4 +75,6 @@ sample2 <- sim.varma(Sigma, list(ar1, ar2), list(ma1), exoCoef = B ,
 
 # Plot the y series
 matplot(sample2$y,type = "l")
+
+# see the examples in 'estim.varma' or 'search.varma' functions
 }

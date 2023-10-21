@@ -2,46 +2,42 @@
 % Please edit documentation in R/bin.R
 \name{search.bin}
 \alias{search.bin}
-\title{Search for Best Discrete-Choice Models}
+\title{Create a Model Set for Binary Choice Models}
 \usage{
 search.bin(
-  y,
-  x,
-  w = NULL,
-  xSizes = NULL,
-  xPartitions = NULL,
+  data,
+  combinations,
+  metrics = get.search.metrics(),
+  modelChecks = get.search.modelchecks(),
+  items = get.search.items(),
+  options = get.search.options(),
   costMatrices = NULL,
   searchLogit = TRUE,
   searchProbit = FALSE,
   optimOptions = get.options.newton(),
-  aucOptions = get.options.roc(),
-  metricOptions = get.options.metric(),
-  modelCheckItems = get.items.modelcheck(),
-  searchItems = get.items.search(),
-  searchOptions = get.options.search()
+  aucOptions = get.options.roc()
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variable in the column.}
+\item{data}{A list that determines data and other required information for the search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
-\item{x}{A matrix of exogenous data with variables in the columns.}
+\item{combinations}{A list that determines the combinations of the exogenous variables in the search process.
+Use \code{\link[=get.combinations]{get.combinations()}} function to define it.}
 
-\item{w}{Weights of the observations in \code{y}.
-\code{NULL} means equal weights for all observations.}
+\item{metrics}{A list of options for measuring performance. Use \link{get.search.metrics} function to get them.}
 
-\item{xSizes}{An integer vector specifying the number of exogenous variables in the regressions.
-E.g., \code{c(1,2)} means the model set contains all regressions with 1 and 2 exogenous variables.
-If \code{NULL}, \code{c(1)} is used.}
+\item{modelChecks}{A list of options for excluding a subset of the model set. Use \link{get.search.modelchecks} function to get them.}
 
-\item{xPartitions}{A list of integer vectors that partition the indexes of the exogenous variables.
-No regression is estimated with two variables in the same partition.
-If \code{NULL}, each variable is placed in its own group, and the size of the model set is maximized.}
+\item{items}{A list of options for specifying the purpose of the search. Use \link{get.search.items} function to get them.}
+
+\item{options}{A list of extra options for performing the search. Use \link{get.search.options} function to get them.}
 
 \item{costMatrices}{A list of numeric matrices where each one determines how to score the calculated probabilities.
 Given the number of choices \code{n}, a frequency cost matrix is an \code{m x n+1} matrix.
 The first column determines the thresholds.
 Elements in the \code{j}-th column determine the costs corresponding to the \code{j-1}-th choice in \code{y}.
-It can be \code{NULL} if it is not selected in \code{metricOptions}.}
+It can be \code{NULL} if it is not selected in \code{metrics}.}
 
 \item{searchLogit}{If \code{TRUE}, logit regressions are added to the model set.}
 
@@ -52,30 +48,17 @@ Use \link{get.options.newton} function to get the options.}
 
 \item{aucOptions}{A list for AUC calculation options.
 Use \link{get.options.roc} function to get the options.}
-
-\item{metricOptions}{A list of options for measuring performance.
-Use \link{get.options.metric} function to get them.}
-
-\item{modelCheckItems}{A list of options for excluding a subset of the model set.
-See and use \link{get.items.modelcheck} function to get them.}
-
-\item{searchItems}{A list of options for specifying the purpose of the search.
-See and use \link{get.items.search} function to get them.}
-
-\item{searchOptions}{A list of extra options for performing the search.
-See and use \link{get.options.search} function to get them.}
 }
 \value{
 A nested list with the following members:
 \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-\item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
-\item{info}{General information about the search process, some arguments, elapsed time, etc.}
+\item{results}{A data frame with requested information in \code{items} list.}
+\item{info}{The arguments and some general information about the search process such as the elapsed time.}
 
-Note that the output does not contain any estimation results,
-but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 }
 \description{
-Use this function to create a discrete-choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
+Use this function to create a binary choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 }
 \examples{
 # We simulate some data for this example:
@@ -92,43 +75,44 @@ data <- data.frame(sample$y, sample$x, x_ir)
 colnames(data) <- c("Y", colnames(sample$x), paste0("z", 1:num_x_ir))
 
 # Use glm function to estimate and analyse:
-model1 <- glm(Y ~ . - Y, data = data, family = binomial())
-summary(model1)
+fit <- glm(Y ~ . - Y, data = data, family = binomial())
+summary(fit)
 
 # You can also use this package estimation function:
-model2 <- estim.bin(sample$y, data[,3:ncol(data), drop = FALSE])
+data0 <- get.data(data,
+                equations = list(Y ~ . - Y),
+                addIntercept = FALSE)
+fit <- estim.bin(data = data0)
 # format and print coefficients:
-coefs2 <- data.frame(model2$estimations[1:4])
-colnames(coefs2) <- names(model2$estimations)[1:4]
-print(coefs2)
+print(fit)
 
-# Alternatively, You can define a search process:
-x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
-metric_options <- get.options.metric(typesIn = c("sic")) # We use SIC for searching
-search_res <- search.bin(sample$y, data[,3:ncol(data)],
-                        xSizes = x_sizes, metricOptions = metric_options)
-print(search_res$sic$target1$model$bests$best1$exoIndices) # print best model's explanatory indexes
+# Alternatively, You can define a binary choice model set:
+x_sizes = c(1:3) # assuming we know the number of relevant explanatory variables is less than 3
+metric_options <- get.search.metrics(typesIn = c("sic")) # We use SIC for searching
+search_res <- search.bin(data = data0,
+                         combinations = get.combinations(sizes = x_sizes),
+                         metrics = metric_options)
+print(search_res)
 
 # Use summary function to estimate the best model:
 search_sum <- summary(search_res, y = sample$y, x = data[,3:ncol(data)])
-# format and print coefficients:
-model3 <- search_sum$sic$target1$model$bests$best1
-coefs3 <- data.frame(model3$estimations[1:4])
-colnames(coefs3) <- names(model3$estimations)[1:4]
-print(coefs3)
 
-# Try a step-wise search (you can estimate larger models, faster):
-x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
-counts_steps = c(NA, 10, 9)
-search_items <- get.items.search(bestK = 10)
-search_step_res <- search.bin.stepwise(sample$y, data[,3:ncol(data)],
-                                      xSizeSteps = x_sizes_steps, countSteps = counts_steps,
-                                      metricOptions = metric_options,
-                                      searchItems = search_items)
-print(search_step_res$sic$target1$model$bests$best1$exoIndices)
+# format and print coefficients:
+s_fit <- summary(search_res)
+print(s_fit$results[[1]]$value)
+
+# Try a step-wise search for creating a larger model set:
+search_res <- search.bin(data = data0,
+                         combinations = get.combinations(
+                           sizes = list(c(1, 2, 3), c(4)),
+                           stepsNumVariables = c(NA, 7)),
+                         metrics = metric_options)
+# combinations argument is different
+
+print(search_res)
 # Use summary like before.
 
 }
 \seealso{
-\link{estim.bin}, \link{search.bin.stepwise}
+\link{estim.bin}
 }

@@ -12,37 +12,29 @@ using namespace ldt;
 // #pragma region Searcher
 
 VarmaSearcher::VarmaSearcher(
-    SearchOptions &searchOptions, const SearchItems &searchItems,
+    const SearchData &data, const SearchCombinations &combinations,
+    SearchOptions &options, const SearchItems &items,
     const SearchMetricOptions &metrics, const SearchModelChecks &checks,
-    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
-    DatasetTs<true> &source, const VarmaSizes sizes,
-    const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
-    Matrix<Tv> *forUpperBounds, LimitedMemoryBfgsbOptions *optimOptions,
-    Tv stdMultiplier, bool usePreviousEstim, Ti maxHorizonCheck)
-    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, sizeG,
-                         groupIndexMap, fixFirstG, 0) {
-  Source = source; // copy for parallel (It uses the indexes)
-  pExoIndexes = &exoIndexes;
-  this->mFixFirstItems =
-      searchItems.LengthTargets; // don't estimate models without targets
+    const Ti &numPartitions, const DatasetTs<true> &source,
+    const VarmaSizes &sizes, const std::vector<Ti> &exoIndexes,
+    const Matrix<Tv> *forLowerBounds, const Matrix<Tv> *forUpperBounds,
+    LimitedMemoryBfgsbOptions *optimOptions, const Tv &stdMultiplier,
+    const bool &usePreviousEstim, const Ti &maxHorizonCheck)
+    : SearcherReg::SearcherReg(data, combinations, options, items, metrics,
+                               checks, numPartitions, true, exoIndexes, 6),
+      UsePreviousEstim(usePreviousEstim), StdMultiplier(stdMultiplier),
+      mMaxHorizonCheck(maxHorizonCheck), pForLowerBounds(forLowerBounds),
+      pForUpperBounds(forUpperBounds), Sizes(sizes), Source(source) {
+  // copy source for parallel (It uses the indexes)
 
-  UsePreviousEstim = usePreviousEstim;
-  StdMultiplier = stdMultiplier;
-  mMaxHorizonCheck = maxHorizonCheck;
+  // TODO: how should we treat number of fixed partitions if we want to always
+  // estimate a model with a target.
+  //  Note that targets might all be in the first partition
+  // if (this->mFixFirstItems == 0)
+  //  throw LdtException(ErrorType::kLogic, "varma-modelset", "At least .");
 
-  pForLowerBounds = forLowerBounds;
-  pForUpperBounds = forUpperBounds;
-
-  Sizes = sizes; //  copy
-  Params = Matrix<Ti>(new Ti[7]{Sizes.ArP, Sizes.ArD, Sizes.ArQ, Sizes.MaP,
-                                Sizes.MaD, Sizes.MaQ, Sizes.SeasonsCount},
-                      (Ti)7, 1);
-  if (exoIndexes.size() > 0) {
-    ExoIndexes =
-        Matrix<Ti>(new Ti[exoIndexes.size()], (Ti)exoIndexes.size(), 1);
-    for (Ti i = 0; i < (Ti)exoIndexes.size(); i++)
-      ExoIndexes.Data[i] = exoIndexes.at(i);
-  }
+  Params = VMatrix<Ti>(
+      {Sizes.ArP, Sizes.ArD, Sizes.ArQ, Sizes.MaP, Sizes.MaD, Sizes.MaQ}, 6, 1);
 
   // we will estimate a complete model even in simulation scenario (ignores
   // simulation if there is an error in estimating the whole model)
@@ -52,19 +44,13 @@ VarmaSearcher::VarmaSearcher(
       if (maxHorizonCheck <= 0)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
                            "invalid horizon in checking the predictions");
-      FModel =
-          VarmaForecast(Sizes,
-                        // this->Sizes
-                        maxHorizonCheck, // length 1 is the horizon for testing
-                        true);
+
+      // length 1 is the horizon for testing
+      FModel = VarmaForecast(Sizes, maxHorizonCheck, true);
     }
   }
 
-  if (metrics.SimFixSize > 0) { // we estimate a simulation model
-    if (metrics.MetricsOut.size() == 0)
-      throw LdtException(
-          ErrorType::kLogic, "varma-modelset",
-          "simulation is requested by there is no evaluation metric");
+  if (metrics.SimFixSize > 0 && metrics.MetricsOut.size() > 0) {
     Model = VarmaSimulation(Sizes, metrics.SimFixSize, metrics.Horizons,
                             metrics.MetricsOut,
                             optimOptions); // no PCA in search
@@ -82,74 +68,41 @@ VarmaSearcher::VarmaSearcher(
     Restriction.Calculate(RestrictionData.get());
   }
 
-  this->WorkSize += source.pData->ColsCount * sizeG; // for copying the matrices
+  this->WorkSize +=
+      source.pData->ColsCount * numPartitions; // for copying the matrices
   if (Sizes.ExoCount > 0)
     this->WorkSize += source.pData->ColsCount * (Ti)exoIndexes.size();
-
-  Indexes = std::vector<Ti>(sizeG + exoIndexes.size());
-  Ti i = -1;
-  for (auto a : exoIndexes) {
-    i++;
-    Indexes.at(sizeG + i) = a;
-  }
-
-  auto numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
-                      this->pMetrics->MetricsIn.size());
-  this->WorkSize += numMeas * this->pItems->LengthTargets; // weights matrix
 }
 
-VarmaSearcher::~VarmaSearcher() {
-  delete[] Params.Data;
-  delete[] ExoIndexes.Data;
-}
-
-std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
-
-  if (this->CurrentIndices.Data[0] >=
-      this->pItems->LengthTargets) // TODO: It should be implemented in the base
-                                   // Searcher as a constrain on first Index
-    return "";
-
+std::string VarmaSearcher::EstimateOneReg(Tv *work, Ti *workI,
+                                          VMatrix<Tv> &metrics,
+                                          VMatrix<Tv> &type1Mean,
+                                          VMatrix<Tv> &type1Var,
+                                          VMatrix<Ti> &extra) {
   Ti ycount;
-  bool hasExo;
-  auto metrics = *this->pMetrics;
-  std::vector<Ti> targetPositions;
-  Matrix<Tv> weights;
-  Ti numMeas;
+  Ti num_exo = InnerIndices.size();
+
+  Source.Update(&ColIndices, nullptr); // update indexes
+
+  if (this->pOptions->RequestCancel)
+    return "";
+
   Ti s = 0;
-  Ti i, j, t;
-
-  for (i = 0; i < this->SizeG; i++) { // update indexes and target positions
-    j = this->CurrentIndices.Data[i];
-    Indexes.at(i) = j;
-    if (j < this->pItems->LengthTargets)
-      targetPositions.push_back(j);
-  }
-  hasExo = ExoIndexes.RowsCount > 0;
-
-  numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
-                 this->pMetrics->MetricsIn.size());
-  weights = Matrix<Tv>(NAN, &work[s], numMeas, (Ti)targetPositions.size());
-  s += numMeas * this->pItems->LengthTargets;
-  Source.Update(&Indexes, nullptr); // update indexes
-
-  if (this->pOptions->RequestCancel)
-    return "";
-
   ycount = Source.End - Source.Start + 1;
-  Y.SetData(&work[s], this->SizeG, ycount);
-  s += this->SizeG * ycount;
-  Source.pData->GetSub(Source.Start, ycount, this->CurrentIndicesV, false, Y, 0,
-                       0, false);
+  Y.SetData(&work[s], this->NumPartitions, ycount);
+  s += this->NumPartitions * ycount;
+  Source.pData->GetSub(Source.Start, ycount, this->CurrentIndices.Vec, false, Y,
+                       0, 0, false);
 
   if (this->pOptions->RequestCancel)
     return "";
 
-  if (hasExo) { // get out of sample data too
+  if (num_exo > 0) { // get out of sample data too
     auto xcount = Source.pData->ColsCount - Source.Start;
-    X.SetData(&work[s], ExoIndexes.RowsCount, xcount);
-    s += ExoIndexes.RowsCount * xcount;
-    Source.pData->GetSub(Source.Start, xcount, *pExoIndexes, false, X, 0, 0,
+    X.SetData(&work[s], num_exo, xcount);
+
+    s += num_exo * xcount;
+    Source.pData->GetSub(Source.Start, xcount, InnerIndices, false, X, 0, 0,
                          false);
   }
 
@@ -158,7 +111,6 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
   auto R = Restriction.R;
   // auto r = Restriction.r;
-  Tv weight;
 
   auto S_e = &work[s];
   s += DModel.Result.StorageSize;
@@ -182,12 +134,17 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     if (this->pOptions->RequestCancel)
       return "";
 
-    DModel.EstimateMl(Y, hasExo ? &X : nullptr, W, S_e,
+    DModel.EstimateMl(Y, num_exo > 0 ? &X : nullptr, W, S_e,
                       Restriction.IsRestricted ? &R : nullptr, nullptr, 0,
                       false, StdMultiplier,
                       this->pChecks && this->pChecks->mCheckCN_all
                           ? this->pChecks->MaxConditionNumber
                           : INFINITY);
+
+    /*if (DModel.Result.Optim.Iteration ==
+        DModel.Result.Optim.Options.IterationMax)
+      throw LdtException(ErrorType::kLogic, "varma-modelset",
+                         "maximum number of iteration reached.");*/
 
     if (this->pChecks) {
       if (this->pChecks->MaxAic < DModel.Result.Aic)
@@ -205,7 +162,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
       try {
         if (this->pOptions->RequestCancel)
           return "";
-        FModel.Calculate(DModel, hasExo ? &X : nullptr, &Y, S_p, W,
+        FModel.Calculate(DModel, num_exo > 0 ? &X : nullptr, &Y, S_p, W,
                          mMaxHorizonCheck, false);
       } catch (...) {
         throw LdtException(
@@ -222,11 +179,11 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
       // check bounds
 
-      i = -1;
-      for (auto &t : this->CurrentIndicesV) { // is it a target?
+      Ti i = -1;
+      for (auto &t : this->CurrentIndices.Vec) { // is it a target?
         i++;
         if (t < this->pItems->LengthTargets) {
-          j = -1;
+          Ti j = -1;
           for (auto &h : this->pMetrics->Horizons) {
             j++;
 
@@ -248,134 +205,90 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
       }
     }
 
-    if (metrics.mIndexOfAic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Result.Aic);
-      for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set0(metrics.mIndexOfAic, t, weight);
-    }
-    if (metrics.mIndexOfSic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Result.Sic);
-      for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set0(metrics.mIndexOfSic, t, weight);
-    }
+    auto ind = this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kAic);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(ind, t, DModel.Result.Aic);
+
+    ind = this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kSic);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(ind, t, DModel.Result.Sic);
   }
 
-  if (this->pMetrics->SimFixSize > 0) {
+  if (this->pMetrics->SimFixSize > 0 && this->pMetrics->MetricsOut.size() > 0) {
     auto count0 = Model.mCount;
 
     if (this->pOptions->RequestCancel)
       return "";
 
     Model.Calculate(
-        S_s, W, Y, this->pOptions->RequestCancel, hasExo ? &X : nullptr,
+        S_s, W, Y, this->pOptions->RequestCancel, num_exo > 0 ? &X : nullptr,
         Restriction.IsRestricted ? &R : nullptr, nullptr, UsePreviousEstim,
         this->pChecks && this->pChecks->mCheckCN
             ? this->pChecks->MaxConditionNumber
             : INFINITY,
         StdMultiplier, false, count0 - this->pChecks->MinOutSim,
-        this->pMetrics->TransformForMetrics
-            ? &(this->pMetrics->TransformForMetrics)
-            : nullptr);
+        this->pData->Lambdas.size() == 0 ? nullptr : &this->pData->Lambdas);
 
     if (Model.ValidCounts == 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
                          "number of valid simulations is 0");
 
-    j = (Ti)this->pMetrics->MetricsIn.size();
-    for (t = 0; t < (Ti)targetPositions.size(); t++) {
-      if (metrics.mIndexOfSign >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfSign, t,
-            Scoring::ToWeight(ScoringType::kSign,
-                              Model.ResultAggs.Get0(metrics.mIndexOfSign, t)));
-      if (metrics.mIndexOfDirection >= 0)
-        weights.Set0(j + metrics.mIndexOfDirection, t,
-                     Scoring::ToWeight(
-                         ScoringType::kDirection,
-                         Model.ResultAggs.Get0(metrics.mIndexOfDirection, t)));
-      if (metrics.mIndexOfMae >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfMae, t,
-            Scoring::ToWeight(ScoringType::kMae,
-                              Model.ResultAggs.Get0(metrics.mIndexOfMae, t)));
-      if (metrics.mIndexOfMaeSc >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfMaeSc, t,
-            Scoring::ToWeight(ScoringType::kMape,
-                              Model.ResultAggs.Get0(metrics.mIndexOfMaeSc, t)));
-      if (metrics.mIndexOfRmse >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfRmse, t,
-            Scoring::ToWeight(ScoringType::kRmse,
-                              Model.ResultAggs.Get0(metrics.mIndexOfRmse, t)));
-      if (metrics.mIndexOfRmseSc >= 0)
-        weights.Set0(j + metrics.mIndexOfRmseSc, t,
-                     Scoring::ToWeight(
-                         ScoringType::kRmspe,
-                         Model.ResultAggs.Get0(metrics.mIndexOfRmseSc, t)));
-      if (metrics.mIndexOfCrps >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfCrps, t,
-            Scoring::ToWeight(ScoringType::kCrps,
-                              Model.ResultAggs.Get0(metrics.mIndexOfCrps, t)));
-    }
+    Ti j = (Ti)this->pMetrics->MetricsIn.size();
+
+    auto ind = this->pMetrics->MetricOutIndices.at(ScoringType::kSign);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kDirection);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kMae);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kMape);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kRmse);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kRmspe);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
+
+    ind = this->pMetrics->MetricOutIndices.at(ScoringType::kCrps);
+    if (ind >= 0)
+      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
+        metrics.Mat.Set0(j + ind, t, Model.ResultAggs.Get0(ind, t));
   }
 
   if (this->pOptions->RequestCancel)
     return "";
 
-  bool allNan = true;
-  for (i = 0; i < weights.RowsCount; i++) { // evaluation index
-    for (j = 0; j < weights.ColsCount;
-         j++) { // target index (use TargetsPositions to interpret)
-      weight = weights.Get0(i, j);
-      if (std::isnan(weight))
-        continue;
+  // Update Type1 values:
+  Params.Mat.CopyTo00(extra.Mat);
 
-      allNan = false;
+  if (FModel.WorkSize > 0 && this->pItems->Length1 > 0) {
+    for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++) {
 
-      if (this->pItems->KeepModelEvaluations) // Add Model evaluation
-      {
-        auto ek = new EstimationKeep(weight, &ExoIndexes, &Params,
-                                     &this->CurrentIndices);
-        this->Push0(*ek, i, targetPositions.at(j));
-      }
+      // length1 is the max horizon
+      for (Ti i = 0; i < this->pItems->Length1; i++) {
 
-      if (this->pItems->Length1 > 0) { // Add predictions
-
-        for (Ti t = 0; t < this->pItems->Length1;
-             t++) { // length1 is the max horizon
-
-          if (t + Model.Forecast.StartIndex >= FModel.Forecast.ColsCount)
-            throw LdtException(ErrorType::kLogic, "varma-modelset",
-                               "not enough number of forecasts");
-
-          auto ek = new EstimationKeep(
-              weight, &ExoIndexes, &Params, &this->CurrentIndices,
-              FModel.Forecast.Get0(j, t + Model.Forecast.StartIndex),
-              FModel.Variance.Get0(j, t + Model.Forecast.StartIndex));
-          this->Push1(*ek, i, targetPositions.at(j), t);
-        }
-      }
-
-      if (this->pItems->Length2 > 0) { // TODO: for saving IRF
+        type1Mean.Mat.Set(i, t, FModel.Forecast.Get(t, i + FModel.StartIndex));
+        type1Var.Mat.Set(i, t, FModel.Variance.Get(t, i + FModel.StartIndex));
       }
     }
-  }
-
-  if (this->pOptions->RequestCancel)
-    return "";
-
-  if (allNan) {
-    auto sg = std::unique_ptr<Tv[]>(new Tv[Y.RowsCount]);
-    auto sgm = Matrix<Tv>(sg.get(), Y.RowsCount, 1);
-    Y.Transpose();
-    Y.ColumnsMeans(sgm, false);
-    throw std::string("All weights are NaN: ") + Varma::ModelToString(Sizes);
-    // VectorToCsv(this->CurrentIndicesV) + std::string(" ; ") +
-    // VectorToCsv(sgm.Data, Y.ColsCount);  // weights are all nan
   }
 
   return "";
@@ -385,35 +298,35 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
 // #pragma region Modelset
 
-VarmaModelset::VarmaModelset(
-    SearchOptions &searchOptions, SearchItems &searchItems,
-    SearchMetricOptions &metrics, SearchModelChecks &checks,
-    const std::vector<Ti> &sizes, std::vector<std::vector<Ti>> &groupIndexMap,
-    DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,
-    Ti seasonCount, const std::vector<std::vector<Ti>> &exoIndexes,
-    bool usePreviousEstim, LimitedMemoryBfgsbOptions *optimOptions,
-    Tv stdMultiplier, Ti maxHorizonCheck) {
+VarmaModelset::VarmaModelset(const SearchData &data,
+                             const SearchCombinations &combinations,
+                             SearchOptions &options, SearchItems &items,
+                             SearchMetricOptions &metrics,
+                             SearchModelChecks &checks, DatasetTs<true> &source,
+                             std::vector<Ti> varmaMaxParameters6,
+                             Ti seasonCount, bool usePreviousEstim,
+                             LimitedMemoryBfgsbOptions *optimOptions,
+                             Tv stdMultiplier, Ti maxHorizonCheck) {
   metrics.Update(false, true);
   checks.Update(metrics);
-  searchItems.Update(metrics, searchItems.LengthTargets,
-                     searchItems.LengthDependents,
-                     searchItems.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthEndogenous,
+               items.LengthExogenous);
 
-  // searchItems.Length1 is the forecast horizon in 'metrics.Type1'
-  if (searchItems.Length1 > 0 && checks.Prediction == false)
-    throw LdtException(
-        ErrorType::kLogic, "varma-modelset",
-        "'Length1' is the forecast horizon. Set 'checks.Prediction=true' when "
-        "it is positive");
+  // items.Length1 is the forecast horizon in 'metrics.Type1'
+  if (items.Length1 > 0 && checks.Prediction == false)
+    throw LdtException(ErrorType::kLogic, "varma-modelset",
+                       "'Length1' is the forecast horizon. Set "
+                       "'checks.Prediction=true' when "
+                       "it is positive");
 
   // check group indexes and create sizes array
-  for (auto const &b : groupIndexMap) {
+  for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a > searchItems.LengthDependents)
-        throw LdtException(
-            ErrorType::kLogic, "varma-modelset",
-            "invalid endogenous group element (it is larger than the number "
-            "of available endogenous variables)");
+      if (a > items.LengthEndogenous)
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "invalid endogenous group element (it is larger "
+                           "than the number "
+                           "of available endogenous variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
                            "invalid exogenous group element (it is negative)");
@@ -427,53 +340,40 @@ VarmaModelset::VarmaModelset(
     if (i < 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
                          "invalid varma parameter");
-  if (seasonCount < 2) {
-    varmaMaxParameters6.at(3) = 0;
-    varmaMaxParameters6.at(4) = 0;
-    varmaMaxParameters6.at(5) = 0;
-  }
-  ExoIndexes = exoIndexes;
+
+  ExoIndexes = combinations.InnerGroups;
   if (ExoIndexes.size() == 0)
     ExoIndexes.resize(1); // add empty for loop
 
   auto T = source.Ranges.at(0).EndIndex +
-           1; // The first target determines the number of observations (this
-              // is required for out-of-sample exogenous data)
+           1; // The first target determines the number of observations
+              // (this is required for out-of-sample exogenous data)
 
-  bool hasBounds = checks.PredictionBoundMultiplier > 0;
-  if (metrics.MetricsOut.size() != 0) {
-    if (hasBounds && checks.Prediction == false)
-      throw LdtException(
-          ErrorType::kLogic, "varma-modelset",
-          "forecast bounds are given but 'forecast check' is false");
-    if (checks.PredictionBoundMultiplier < 0)
-      throw LdtException(ErrorType::kLogic, "varma-modelset",
-                         "invalid forecast bound multiplier");
-    else { // create matrixes
-      ForecastLowers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
-          searchItems.LengthTargets, metrics.Horizons.size());
-      ForecastUppers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
-          searchItems.LengthTargets, metrics.Horizons.size());
-      for (Ti i = 0; i < searchItems.LengthTargets; i++) {
-        auto last = source.pData->Get0(i, T - 1);
-        Tv g = 0;
-        for (Ti j = 1; j < T; j++)
-          g += source.pData->Get0(i, j) - source.pData->Get0(i, j - 1);
-        g /= T - 1;
-        g = std::abs(checks.PredictionBoundMultiplier * g);
-        Ti j = -1;
-        for (auto &h : metrics.Horizons) {
-          j++;
-          ForecastLowers.Set0(i, j, last - h * g);
-          ForecastUppers.Set0(i, j, last + h * g);
-        }
+  bool hasBounds = checks.Prediction && checks.PredictionBoundMultiplier > 0;
+  if (metrics.MetricsOut.size() != 0 && hasBounds) {
+    ForecastLowers =
+        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                   items.LengthTargets, metrics.Horizons.size());
+    ForecastUppers =
+        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                   items.LengthTargets, metrics.Horizons.size());
+    for (Ti i = 0; i < items.LengthTargets; i++) {
+      auto last = source.pData->Get0(i, T - 1);
+      Tv g = 0;
+      for (Ti j = 1; j < T; j++)
+        g += source.pData->Get0(i, j) - source.pData->Get0(i, j - 1);
+      g /= T - 1;
+      g = std::abs(checks.PredictionBoundMultiplier * g);
+      Ti j = -1;
+      for (auto &h : metrics.Horizons) {
+        j++;
+        ForecastLowers.Set0(i, j, last - h * g);
+        ForecastUppers.Set0(i, j, last + h * g);
       }
     }
   }
 
-  for (auto const &s : sizes) {
+  for (auto const &s : combinations.Sizes) {
     if (s <= 0)
       throw LdtException(
           ErrorType::kLogic, "varma-modelset",
@@ -496,8 +396,8 @@ VarmaModelset::VarmaModelset(
                                            Q, seasonCount, true);
 
                   auto se = new VarmaSearcher(
-                      searchOptions, searchItems, metrics, checks, s,
-                      groupIndexMap, 0, source, vsizes, exo,
+                      data, combinations, options, items, metrics, checks, s,
+                      source, vsizes, exo,
                       hasBounds ? &ForecastLowers : nullptr,
                       hasBounds ? &ForecastUppers : nullptr, optimOptions,
                       stdMultiplier, usePreviousEstim, maxHorizonCheck);
@@ -511,8 +411,8 @@ VarmaModelset::VarmaModelset(
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
-                            searchItems, metrics, checks);
+  this->Modelset =
+      ModelSet(Searchers, data, combinations, options, items, metrics, checks);
 }
 
 // #pragma endregion

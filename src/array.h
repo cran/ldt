@@ -399,6 +399,30 @@ public:
     }
   }
 
+  // ................ Box-Cox
+
+  /// @brief In-place Box-Cox transformation
+  /// @param value An value to be updated
+  /// @param lambda Parameter of the transformation.  If NAN, it is ignored.
+  static void BoxCox0(Tw &value, const Tw &lambda);
+
+  /// @brief Inverse Box-Cox Transformation
+  /// @param data A value to be updated
+  /// @param lambda Parameter used in transformation.  If NAN, it is ignored.
+  static void BoxCoxInv0(Tw &value, const Tw &lambda);
+
+  /// @brief In-place Box-Cox transformation
+  /// @param data An array
+  /// @param length Length of the array
+  /// @param lambda Parameter of the transformation. If NAN, it is ignored.
+  static void BoxCox(Tw *data, const Ti &length, const Tw &lambda);
+
+  /// @brief Inverse Box-Cox Transformation
+  /// @param data An array
+  /// @param length Length of the array
+  /// @param lambda Parameter used in transformation.  If NAN, it is ignored.
+  static void BoxCoxInv(Tw *data, const Ti &length, const Tw &lambda);
+
   // ................ DESCRIPTIVES
 
   template <bool skipNAN>
@@ -452,7 +476,7 @@ public:
 
     default:
       throw LdtException(ErrorType::kLogic, "array.h",
-                     "invalid or not-implemented descriptive statistics");
+                         "invalid or not-implemented descriptive statistics");
     }
   }
 
@@ -659,7 +683,7 @@ public:
     if constexpr (isWeighted) {
       if (!weights)
         throw LdtException(ErrorType::kLogic, "array.h, moments",
-                       "weights are missing");
+                           "weights are missing");
     }
 
     Tw sumW = 0, m2 = 0, m3 = 0, m4 = 0, w = 1;

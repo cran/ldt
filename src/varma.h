@@ -376,6 +376,8 @@ public:
   Matrix<Tv> Y;
   Matrix<Tv> X;
 
+  VarmaRestriction Restriction;
+
   DatasetTs<false> Data;
 
   /// @brief It might be different from the given 'sizes' in the constructor,
@@ -459,9 +461,6 @@ public:
   VarmaForecast Forecast;
   VarmaExtended EModel;
 
-  /// @brief at(i)->[j,h] => i-th metric, j-th variable, h-th horizon
-  std::vector<Matrix<Tv>> Results;
-
   /// @brief Results aggregated by horizon [i,j] => i-th metric, j-th variable
   /// (aggregated over horizons). Note that it might be a weighted average due
   /// to different number of evaluations over different horizon. For RMSE, it
@@ -487,34 +486,28 @@ public:
       bool checkNan = true, PcaAnalysisOptions *pcaOptionsY = nullptr,
       PcaAnalysisOptions *pcaOptionsX = nullptr);
 
-  void
-  Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
-            Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
-            const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
-            Tv maxCondNum = 1e12, Tv stdMultipler = 2, bool coefUncer = false,
-            Ti maxInvalidSim = INT32_MAX,
-            const std::function<void(Tv &)> *transformForMetrics = nullptr);
+  void Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
+                 Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
+                 const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
+                 Tv maxCondNum = 1e12, Tv stdMultipler = 2,
+                 bool coefUncer = false, Ti maxInvalidSim = INT32_MAX,
+                 const std::vector<Tv> *boxCoxLambdas = nullptr);
 
-  void
-  CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
-             Tv stdMultipler = 2, bool coefUncer = false,
-             bool usePreviousEstim = false,
-             const std::function<void(Tv &)> *transformForMetrics = nullptr);
+  void CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
+                  Tv stdMultipler = 2, bool coefUncer = false,
+                  bool usePreviousEstim = false,
+                  const std::vector<Tv> *boxCoxLambdas = nullptr);
 };
 
-class LDT_EXPORT VarmaSearcher : public Searcher {
-  bool UsePreviousEstim = false;
-
+class LDT_EXPORT VarmaSearcher : public SearcherReg {
+  const bool UsePreviousEstim = false;
+  const Tv StdMultiplier = 2.0;
+  const Ti mMaxHorizonCheck = 0;
   const Matrix<Tv> *pForLowerBounds = nullptr;
   const Matrix<Tv> *pForUpperBounds = nullptr;
-
-  Tv StdMultiplier = 2.0;
-  Ti mMaxHorizonCheck = 0;
-
-  const std::vector<Ti> *pExoIndexes = nullptr;
-
+  const VarmaSizes Sizes;
   DatasetTs<true> Source;
-  VarmaSizes Sizes;
+
   Varma DModel;
   VarmaForecast FModel;
   VarmaSimulation Model;
@@ -524,23 +517,24 @@ class LDT_EXPORT VarmaSearcher : public Searcher {
 
   Matrix<Tv> Y;
   Matrix<Tv> X;
-  Matrix<Ti> Params;
-  Matrix<Ti> ExoIndexes;
-  std::vector<Ti> Indexes;
+  VMatrix<Ti> Params;
 
-  std::string EstimateOne(Tv *work, Ti *workI) override;
+  std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                             VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
+                             VMatrix<Ti> &extra) override;
 
 public:
-  VarmaSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
+  VarmaSearcher(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, const SearchItems &items,
                 const SearchMetricOptions &metrics,
-                const SearchModelChecks &checks, Ti sizeG,
-                const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
-                DatasetTs<true> &source, const VarmaSizes sizes,
-                const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
-                Matrix<Tv> *forUpperBounds,
-                LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
-                bool usePreviousEstim, Ti maxHorizonCheck);
-  ~VarmaSearcher();
+                const SearchModelChecks &checks, const Ti &numPartitions,
+                const DatasetTs<true> &source, const VarmaSizes &sizes,
+                const std::vector<Ti> &exoIndexes,
+                const Matrix<Tv> *forLowerBounds,
+                const Matrix<Tv> *forUpperBounds,
+                LimitedMemoryBfgsbOptions *optimOptions,
+                const Tv &stdMultiplier, const bool &usePreviousEstim,
+                const Ti &maxHorizonCheck);
 };
 
 class LDT_EXPORT VarmaModelset {
@@ -556,14 +550,13 @@ public:
 
   VarmaModelset(){};
 
-  VarmaModelset(SearchOptions &searchOptions, SearchItems &searchItems,
+  VarmaModelset(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, SearchItems &items,
                 SearchMetricOptions &metrics, SearchModelChecks &checks,
-                const std::vector<Ti> &sizes,
-                std::vector<std::vector<Ti>> &groupIndexMap,
                 DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,
-                Ti seasonCount, const std::vector<std::vector<Ti>> &exoIndexes,
-                bool usePreviousEstim, LimitedMemoryBfgsbOptions *optimOptions,
-                Tv stdMultiplier, Ti maxHorizonCheck);
+                Ti seasonCount, bool usePreviousEstim,
+                LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
+                Ti maxHorizonCheck);
 
   ~VarmaModelset() {
     for (auto s : Searchers)

@@ -4,13 +4,15 @@
 \alias{s.weight.from.metric}
 \title{Convert a Metric to Weight}
 \usage{
-s.weight.from.metric(value, metricName)
+s.weight.from.metric(value, metricName, minValue = 0)
 }
 \arguments{
 \item{value}{Numeric value of the metric.}
 
 \item{metricName}{Character string specifying the name of the metric.
-See \link{get.options.metric} function for the list of available options.}
+See \link{get.search.metrics} function for the list of available options.}
+
+\item{minValue}{A minimum value to be used for metrics with exponential weight formula.}
 }
 \value{
 A numeric value representing the converted metric.
@@ -22,12 +24,7 @@ This function converts a metric to its weight equivalent.
 Given a collection of models for the data, a metric is not
 generally a metric of the relative quality of a model. This function
 converts the value of a metric to such a number.
-
-These are the details of the transformations:
-\itemize{
-\item direction, sign, AUC -> weight = metric
-\item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 metric)
-}
+see \link{get.search.metrics} for more details.
 
 The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 }

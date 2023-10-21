@@ -2,70 +2,45 @@
 % Please edit documentation in R/sur.R
 \name{search.sur}
 \alias{search.sur}
-\title{Search for Best SUR Models}
+\title{Create a Model Set for SUR Models}
 \usage{
 search.sur(
-  y,
-  x,
-  numTargets = 1,
-  xSizes = NULL,
-  xPartitions = NULL,
-  numFixXPartitions = 0,
-  yGroups = NULL,
+  data = get.data(),
+  combinations = get.combinations(),
+  metrics = get.search.metrics(),
+  modelChecks = get.search.modelchecks(),
+  items = get.search.items(),
+  options = get.search.options(),
   searchSigMaxIter = 0,
-  searchSigMaxProb = 0.1,
-  metricOptions = get.options.metric(),
-  modelCheckItems = get.items.modelcheck(),
-  searchItems = get.items.search(),
-  searchOptions = get.options.search()
+  searchSigMaxProb = 0.1
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variables in the columns.}
+\item{data}{A list that determines data and other required information for the search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
-\item{x}{A matrix of exogenous data with variables in the columns.}
+\item{combinations}{A list that determines the combinations of endogenous and exogenous variables in the search process.
+Use \code{\link[=get.combinations]{get.combinations()}} function to define it.}
 
-\item{numTargets}{An integer for the number of targets variables.
-If for example 2, the first two variable in the first columns of \code{y} will be target.
-Information is saved just for the target variables.
-It must be positive and cannot be larger than the number of endogenous variables.}
+\item{metrics}{A list of options for measuring performance. Use \link{get.search.metrics} function to get them.}
 
-\item{xSizes}{An integer vector specifying the number of exogenous variables in the regressions.
-E.g., \code{c(1,2)} means the model set contains all regressions with 1 and 2 exogenous variables.
-If \code{NULL}, \code{c(1)} is used.}
+\item{modelChecks}{A list of options for excluding a subset of the model set. Use \link{get.search.modelchecks} function to get them.}
 
-\item{xPartitions}{A list of integer vectors that partition the indexes of the exogenous variables.
-No regression is estimated with two variables in the same partition.
-If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.}
+\item{items}{A list of options for specifying the purpose of the search. Use \link{get.search.items} function to get them.}
 
-\item{numFixXPartitions}{Number of partitions at the beginning of \code{xPartitions} to be included in all regressions.}
+\item{options}{A list of extra options for performing the search. Use \link{get.search.options} function to get them.}
 
-\item{yGroups}{A list of integer vectors that determine different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.}
+\item{searchSigMaxIter}{Maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.}
 
-\item{searchSigMaxIter}{An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.}
-
-\item{searchSigMaxProb}{A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.}
-
-\item{metricOptions}{A list of options for measuring performance.
-Use \link{get.options.metric} function to get them.}
-
-\item{modelCheckItems}{A list of options for excluding a subset of the model set.
-See and use \link{get.items.modelcheck} function to get them.}
-
-\item{searchItems}{A list of options for specifying the purpose of the search.
-See and use \link{get.items.search} function to get them.}
-
-\item{searchOptions}{A list of extra options for performing the search.
-See and use \link{get.options.search} function to get them.}
+\item{searchSigMaxProb}{Maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.}
 }
 \value{
 A nested list with the following members:
 \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-\item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
-\item{info}{General information about the search process, some arguments, elapsed time, etc.}
+\item{results}{A data frame with requested information in \code{items} list.}
+\item{info}{The arguments and some general information about the search process such as the elapsed time.}
 
-Note that the output does not contain any estimation results,
-but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 }
 \description{
 Use this function to create a Seemingly Unrelated Regression model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
@@ -74,7 +49,7 @@ Use this function to create a Seemingly Unrelated Regression model set and searc
 num_y <- 2L # number of equations
 num_x_r <- 3L # number of relevant explanatory variables
 num_x_ir <-
-  20 # (relatively large) number of irrelevant explanatory variables
+  10 # (relatively large) number of irrelevant explanatory variables
 num_obs = 100  # number of observations
 
 # create random data
@@ -92,69 +67,41 @@ fit <- systemfit::systemfit(fmla, data = data, method = "SUR")
 summary(fit)
 
 # You can also use this package estimation function:
-model2 <-
-  estim.sur(data[, 1:num_y], data[, (num_y + 1):(length(data))], addIntercept = FALSE)
-# format and print coefficients:
-for (j in c(1:num_y)) {
-  coefs2 <-
-    data.frame(lapply(c(1:4), function(c)
-      model2$estimations[[c]][, j]))
-  colnames(coefs2) <-
-    lapply(c(1:4), function(c)
-      names(model2$estimations[c]))
-  print(paste0("------------ Equation: ", j))
-  print(coefs2)
-}
+fit <- estim.sur(data = get.data(data, endogenous = num_y, addIntercept = FALSE))
+print(fit)
 
-# Alternatively, You can define a search process:
-x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
+# Alternatively, You can define an SUR model set:
+x_sizes = c(1:3) # assuming we know the number of relevant explanatory variables is less than 3
 num_targets = 2
-metric_options <-
-  get.options.metric(typesIn = c("sic")) # We use SIC for searching
-search_res <-
-  search.sur(
-    sample$y,
-    data[, 2:(length(data))],
-    numTargets = num_targets,
-    xSizes = x_sizes,
-    metricOptions = metric_options
-  )
-# best model's explanatory indexes for the first and second variables:
-print(search_res$sic$target1$model$bests$best1$exoIndices)
-print(search_res$sic$target2$model$bests$best1$exoIndices)
+metric_options <- get.search.metrics(typesIn = c("sic")) # We use SIC for searching
+search_res <- search.sur(data = get.data(data, endogenous = num_y, addIntercept = FALSE),
+                         combinations = get.combinations(numTargets = num_targets,
+                                                         sizes = x_sizes,
+                                                         innerGroups = list(c(1), c(2))),
+                         metrics = metric_options)
+print(search_res)
 
 # Use summary function to estimate the best models:
-search_sum <-
-  summary(search_res, y = data[, 1:num_y], x = data[, (num_y + 1):(length(data))])
-# format and print coefficients:
-for (j in c(1:num_targets)) {
-  model3 <- search_sum$sic[[j]]$model$bests$best1
-  coefs2 <-
-    data.frame(lapply(c(1:4), function(c)
-      model3$estimations[[c]][, j]))
-  colnames(coefs2) <-
-    lapply(c(1:4), function(c)
-      names(model3$estimations[c]))
-  print(paste0("------------ Equation: ", j))
-  print(coefs2)
-}
+search_sum <- summary(search_res)
 
-# Try a step-wise search (you can estimate larger models, faster):
-x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
-counts_steps = c(NA, 10, 9)
-search_items <- get.items.search(bestK = 10)
-search_step_res <-
-  search.sur.stepwise(
-    y = data[, 1:num_y],
-    x = data[, 2:(length(data))],
-    xSizeSteps = x_sizes_steps,
-    countSteps = counts_steps,
-    metricOptions = metric_options,
-    searchItems = search_items
-  )
-print(search_step_res$sic$target1$model$bests$best1$exoIndices)
-# Use summary like before.
+# Print the best model:
+print(search_sum$results[[2]]$value)
+#   see 'estim.sur' function
+
+# Using a step-wise search to build a larger model set:
+x_sizes_steps = list(c(1, 2, 3), c(4))
+counts_steps = c(NA, 7)
+search_step_res <- search.sur(data = get.data(data, endogenous = num_y, addIntercept = FALSE),
+                              combinations = get.combinations(numTargets = num_targets,
+                                                              sizes = x_sizes_steps,
+                                                              stepsNumVariables = counts_steps,
+                                                              innerGroups = list(c(1,2))),
+                              metrics = metric_options)
+# combinations argument is different
+
+print(search_step_res)
+
 }
 \seealso{
-\link{estim.sur}, \link{search.sur.stepwise}
+\link{estim.sur}
 }

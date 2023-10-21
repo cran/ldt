@@ -49,12 +49,13 @@ bool Scoring::RequiresVariance(const ScoringType &type) {
   return true;
 }
 
-Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric) {
+Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric,
+                           const double &minMetric) {
   switch (type) {
   case GoodnessOfFitType::kAic:
   case GoodnessOfFitType::kSic:
   case GoodnessOfFitType::kBrier:
-    return std::exp(-0.5 * metric);
+    return std::exp(-0.5 * (metric - minMetric));
     // Note that exp(-0.5 * x) transformation is invariant to translation. so we
     // can use the running algorithm
 
@@ -69,12 +70,13 @@ Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric) {
   }
 }
 
-Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
+Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight,
+                             const double &minMetric) {
   switch (type) {
   case GoodnessOfFitType::kAic:
   case GoodnessOfFitType::kSic:
   case GoodnessOfFitType::kBrier:
-    return -2.0 * std::log(weight);
+    return -2.0 * std::log(weight) + minMetric;
   case GoodnessOfFitType::kAuc:
     return weight;
   case GoodnessOfFitType::kFrequencyCost:
@@ -86,7 +88,23 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
   }
 }
 
-Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
+bool GoodnessOfFit::IsPositiveOriented(const GoodnessOfFitType &type) {
+  switch (type) {
+  case GoodnessOfFitType::kAic:
+  case GoodnessOfFitType::kSic:
+  case GoodnessOfFitType::kBrier:
+  case GoodnessOfFitType::kFrequencyCost:
+    return false;
+  case GoodnessOfFitType::kAuc:
+    return true;
+  default:
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented goodness-of-fit orientation");
+  }
+}
+
+Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric,
+                     const double &minMetric) {
   switch (type) {
   case ScoringType::kDirection:
   case ScoringType::kSign:
@@ -96,11 +114,11 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
   case ScoringType::kRmse:
   case ScoringType::kBrier:
   case ScoringType::kCrps:
-    return std::exp(-0.5 * metric);
+    return std::exp(-0.5 * (metric - minMetric));
 
   case ScoringType::kMape:
   case ScoringType::kRmspe:
-    return std::exp(-0.5 * metric / 100);
+    return std::exp(-0.5 * (metric - minMetric) / 100);
 
   case ScoringType::kAuc:
     return metric;
@@ -116,7 +134,8 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
   }
 }
 
-Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
+Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight,
+                       const double &minMetric) {
   switch (type) {
   case ScoringType::kDirection:
   case ScoringType::kSign:
@@ -126,11 +145,11 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
   case ScoringType::kRmse:
   case ScoringType::kCrps:
   case ScoringType::kBrier:
-    return -2 * std::log(weight);
+    return -2 * std::log(weight) + minMetric;
 
   case ScoringType::kMape:
   case ScoringType::kRmspe:
-    return -2 * std::log(weight) * 100;
+    return -2 * std::log(weight) * 100 + minMetric;
 
   case ScoringType::kAuc:
     return weight;
@@ -141,5 +160,27 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
   default:
     throw LdtException(ErrorType::kLogic, "scoring",
                        "not implemented scoring type to weight");
+  }
+}
+
+bool Scoring::IsPositiveOriented(const ScoringType &type) {
+  switch (type) {
+  case ScoringType::kDirection:
+  case ScoringType::kSign:
+  case ScoringType::kAuc:
+    return true;
+
+  case ScoringType::kMae:
+  case ScoringType::kRmse:
+  case ScoringType::kCrps:
+  case ScoringType::kBrier:
+  case ScoringType::kMape:
+  case ScoringType::kRmspe:
+  case ScoringType::kFrequencyCost:
+    return false;
+
+  default:
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented scoring orientation");
   }
 }

@@ -76,14 +76,22 @@ public:
   /// @brief Converts a \ref GoodnessOfFitType metricsIn to weight
   /// @param type The type
   /// @param metricsIn The metric
+  /// @param minMetrics minimum value for metric to be used in AIC weight
+  /// formula: exp(-0.5*(metric-minMetric))
   /// @return The weight
-  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &metric);
+  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &metric,
+                     const double &minMetric = NAN);
 
   /// @brief Converts a a \ref GoodnessOfFitType weight to metric
   /// @param type The type
   /// @param weight The weight
+  /// @param minMetrics minimum value for metric used in calculating the
+  /// weight based on AIC weight formula: exp(-0.5*(metric-minMetric))
   /// @return The metric
-  static Tv FromWeight(const GoodnessOfFitType &type, const Tv &weight);
+  static Tv FromWeight(const GoodnessOfFitType &type, const Tv &weight,
+                       const double &minMetric = NAN);
+
+  static bool IsPositiveOriented(const GoodnessOfFitType &type);
 };
 
 /// @brief Types of out-of-sample metrics
@@ -222,14 +230,22 @@ public:
   /// @brief Converts a \ref ScoringRule metric to weight
   /// @param type The type
   /// @param metric The metric
+  /// @param minMetrics minimum value for metric to be used in AIC weight
+  /// formula: exp(-0.5*(metric-minMetric))
   /// @return The weight
-  static Tv ToWeight(const ScoringType &type, const Tv &metric);
+  static Tv ToWeight(const ScoringType &type, const Tv &metric,
+                     const double &minMetric = NAN);
 
   /// @brief Converts a a \ref ScoringRule weight to metric
   /// @param type The type
   /// @param weight The weight
+  /// @param minMetrics minimum value for metric used in calculating the
+  /// weight based on AIC weight formula: exp(-0.5*(metric-minMetric))
   /// @return The metric
-  static Tv FromWeight(const ScoringType &type, const Tv &weight);
+  static Tv FromWeight(const ScoringType &type, const Tv &weight,
+                       const double &minMetric = NAN);
+
+  static bool IsPositiveOriented(const ScoringType &type);
 };
 
 /// @brief a base class for FrequencyCost

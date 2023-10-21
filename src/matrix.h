@@ -1813,6 +1813,43 @@ public:
   bool All(Tw value) const;
 };
 
+/// @brief A matrix class where its data array is a pointer to the first element
+/// of a C++ vector
+/// @tparam Tw type of data in the vector
+template <class Tw = Tv> class LDT_EXPORT VMatrix {
+
+public:
+  /// @brief Inner vector in this class. This contains all elements of the
+  /// matrix (column-wise)
+  std::vector<Tw> Vec;
+
+  /// @brief Inner matrix in this class. The owner of its Data array is \ref Vec
+  Matrix<Tw> Mat;
+
+  /// @brief Default constructor that initializes an empty vector and matrix
+  VMatrix();
+
+  /// @brief Constructor that initializes a vector and matrix of a certain size
+  /// @param m Number of rows
+  VMatrix(Ti m, Ti n = 1);
+
+  /// @brief Constructor that initializes a vector and matrix with a given
+  /// vector
+  /// @param data Initial data for the vector and matrix
+  /// @param m number of rows, defaults to length of data if n is 1, or size/n
+  /// if n is not 1
+  /// @param n number of columns, defaults to 1
+  VMatrix(const std::vector<Tw> &data, Ti m = -1, Ti n = 1);
+
+  /// @brief Constructor that initializes a vector and matrix with an
+  /// initializer list
+  /// @param initList Initializer list for the vector and matrix
+  /// @param m number of rows, defaults to length of initList if n is 1, or
+  /// size/n if n is not 1
+  /// @param n number of columns, defaults to 1
+  VMatrix(std::initializer_list<Tw> initList, Ti m = -1, Ti n = 1);
+};
+
 extern template class ldt::MatIterator<Ti>;
 extern template class ldt::MatIterator<Tv>;
 
@@ -1824,5 +1861,8 @@ extern template class ldt::MatrixSym<true, Ti>;
 
 extern template class ldt::MatrixSym<false, Tv>;
 extern template class ldt::MatrixSym<false, Ti>;
+
+extern template class ldt::VMatrix<Ti>;
+extern template class ldt::VMatrix<Tv>;
 
 } // namespace ldt

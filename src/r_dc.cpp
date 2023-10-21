@@ -4,131 +4,56 @@
 using namespace Rcpp;
 using namespace ldt;
 
-void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
-                     SEXP costMatrices, bool costMatInMetrics) {
-  if (costMatrices != R_NilValue) {
-    // don't use as.list or a vector such as c(c1,c2) will have invalid values
-    if (is<List>(costMatrices) == false)
+void getCostMatrices(SEXP costMatricesR,
+                     std::vector<ldt::Matrix<double>> &costMatrices) {
+  if (costMatricesR != R_NilValue) {
+    if (is<List>(costMatricesR) == false)
       throw LdtException(ErrorType::kLogic, "R-dc",
                          "'costMatrices' must be list of double matrices");
 
-    List costMatrices_ = (List)costMatrices;
-    for (int i = 0; i < costMatrices_.length(); i++) {
-      if (costMatrices_[i] == R_NilValue)
-        throw LdtException(ErrorType::kLogic, "R-dc",
-                           "a frequency cost matrix is null");
-      if (is<NumericMatrix>(costMatrices_[i]) == false)
-        throw LdtException(
-            ErrorType::kLogic, "R-dc",
-            "a frequency cost matrix must be a 'numeric matrix'");
-      NumericMatrix m = as<NumericMatrix>(costMatrices_[i]);
-      result.push_back(ldt::Matrix<double>(&m[0], m.nrow(), m.ncol()));
+    List cms = as<List>(costMatricesR);
+    for (int i = 0; i < cms.length(); i++) {
+      NumericMatrix m = as<NumericMatrix>(cms[i]);
+      costMatrices.push_back(ldt::Matrix<double>(&m[0], m.nrow(), m.ncol()));
     }
   }
-
-  if (printMsg) {
-    Rprintf("Number of Cost Matrices=%i\n", result.size());
-    for (int i = 0; i < (int)result.size(); i++)
-      Rprintf("    %i. Dimension=(%i,%i)\n", i + 1, result.at(i).RowsCount,
-              result.at(i).ColsCount);
-  }
-  if (costMatInMetrics && result.size() == 0)
-    throw LdtException(
-        ErrorType::kLogic, "R-dc",
-        "At least one frequency cost matrix is required for this type "
-        "of out-of-sample evaluation");
-}
-
-void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
-               ldt::Matrix<double> &mw, int &numChoices, bool &isBinary) {
-  double minY = my.Minimum();
-  double maxY = my.Maximum();
-  if (minY != 0)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "minimum value in 'y' must be zero");
-  numChoices = maxY + 1;
-  if (numChoices < 2)
-    stop("number of choices in 'data' is less than 2.");
-
-  isBinary = numChoices == 2;
-  if (isBinary == false)
-    warning("Ordered discrete choice model search is not yet tested in R.");
-
-  if (mw.Any(0))
-    warning("Zero weight is found.");
 }
 
 // [[Rcpp::export(.SearchDc)]]
-SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
-              SEXP costMatrices, bool searchLogit, bool searchProbit,
-              List optimOptions, List aucOptions, List metricOptions,
-              List modelCheckItems, List searchItems, List searchOptions) {
+SEXP SearchDc(List data, List combinations, List metrics, List modelChecks,
+              List items, List options, SEXP costMatrices, bool searchLogit,
+              bool searchProbit, List newtonOptions, List aucOptions,
+              int numChoices) {
 
-  if (y == R_NilValue || x == R_NilValue)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "invalid data: 'y' or 'x' is null");
-  if (is<NumericMatrix>(y) == false)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "'y' must be a 'numeric matrix'");
-  if (is<NumericMatrix>(x) == false)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "'x' must be a 'numeric matrix'");
+  auto options_ = SearchOptions();
+  UpdateSearchOptions(options, options_);
 
-  int numTargets = 1;
+  auto data_ = SearchData();
+  UpdateSearchData(data, data_);
 
-  bool printMsg = false;
-  auto options = SearchOptions();
-  int reportInterval = 0;
-  UpdateSearchOptions(searchOptions, options, reportInterval, printMsg);
+  auto exoStart = data_.NumEndo;
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto paramNames =
+      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
 
-  y = as<NumericMatrix>(y);
-  x = as<NumericMatrix>(x);
+  auto combinations_ = SearchCombinations();
+  UpdateSearchCombinations(combinations, combinations_);
 
-  ldt::Matrix<double> my;
-  ldt::Matrix<double> mx;
-  ldt::Matrix<double> mw;
-  ldt::Matrix<double> mnewX;
-  ldt::Matrix<double> mat;
-  std::vector<std::string> colNames;
-  auto d_re = CombineEndoExo(printMsg, mat, colNames, my, mx, mw, mnewX, y, x,
-                             w, R_NilValue, false, true, 1, 0, 0);
-
-  bool hasWeight = w != R_NilValue;
-  int exoStart = hasWeight ? 2 : 1;
-  int exoCount = mat.ColsCount - exoStart;
-
-  int numChoices;
-  bool isBinary;
-  checkData(my, mx, mw, numChoices, isBinary);
-
-  std::vector<int> xSizes_;
-  GetSizes(printMsg, xSizes_, xSizes, exoCount - 1, true); // ?intercept?
-
-  std::vector<std::vector<int>> xPartitions_;
-  GetPartitions(printMsg, xPartitions_, xPartitions, exoCount - 1, 0, true);
-
-  Newton newton;
-  UpdateNewtonOptions(printMsg, optimOptions, newton);
-
-  RocOptions aucOptions0;
-  UpdateRocOptions(printMsg, aucOptions, aucOptions0, "AUC Options:");
-
-  auto metrics = SearchMetricOptions();
+  auto metrics_ = SearchMetricOptions();
   auto metricsNames = std::vector<std::string>();
-  auto items = SearchItems();
-  auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
-                items, checks, metricsNames, exoCount, exoCount, numTargets, 1,
-                false, true, "Coefficients", true);
+  auto items_ = SearchItems();
+  auto checks_ = SearchModelChecks();
 
-  std::vector<ldt::Matrix<double>> costMatrices0;
-  GetCostMatrices(printMsg, costMatrices0, costMatrices,
-                  Contains(metrics.MetricsOut, ScoringType::kFrequencyCost));
+  auto length1 = data_.NumExo + numChoices - 2;
 
-  // get parameter names
-  std::vector<std::string> paramNames;
-  for (auto i = 0; i < exoCount; i++)
-    paramNames.push_back(colNames.at(exoStart + i));
+  UpdateOptions(items, metrics, modelChecks, metrics_, items_, checks_,
+                metricsNames, length1, data_.NumExo, combinations_.NumTargets,
+                data_.NumEndo, false, true, "Coefficients", false);
+
+  auto targetNames = std::vector<std::string>(
+      colNames.begin(), colNames.begin() + items_.LengthTargets);
+
+  // update parameter names
   for (int i = 0; i < numChoices - 2; i++)
     paramNames.push_back(std::string("Threshold") + std::to_string(i + 1));
 
@@ -136,21 +61,21 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     throw LdtException(
         ErrorType::kLogic, "R-dc",
         "model set is empty. Choose 'Logit' or 'Probit' or both");
-  if (printMsg)
-    Rprintf("Distribution Type=%s\n", searchLogit && searchProbit
-                                          ? "Logit & Probit"
-                                          : (searchLogit ? "Logit" : "Probit"));
+
+  std::vector<ldt::Matrix<double>> costMatrices_;
+  getCostMatrices(costMatrices, costMatrices_);
+
+  ldt::RocOptions roc_;
+  UpdateRocOptions(aucOptions, roc_);
+
+  ldt::Newton newton_;
+  UpdateNewtonOptions(newtonOptions, newton_);
 
   DiscreteChoiceModelsetBase *model = DiscreteChoiceModelsetBase::GetFromTypes(
-      isBinary, hasWeight, options, items, metrics, checks, xSizes_, mat,
-      costMatrices0, xPartitions_, searchLogit, searchProbit, newton,
-      aucOptions0);
+      numChoices == 2, data_.HasWeight, data_, combinations_, options_, items_,
+      metrics_, checks_, data_.Data, costMatrices_, searchLogit, searchProbit,
+      newton_, roc_);
   auto modelr = std::unique_ptr<DiscreteChoiceModelsetBase>(model);
-
-  if (printMsg) {
-    Rprintf("Model Created\n");
-    Rprintf("Number of Searchers=%i\n", model->Searchers.size());
-  }
 
   bool estimating = true;
 
@@ -173,110 +98,62 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model->Modelset, estimating, options,
-                 alli);
+  ReportProgress(model->Modelset, estimating, options_, alli);
 
-  if (options.RequestCancel)
+  if (options_.RequestCancel)
     return R_NilValue;
 
   std::vector<std::string> colNames_w = colNames; // no weight for inclusions
-  if (hasWeight)
+  if (data_.HasWeight)
     colNames_w.erase(std::next(colNames_w.begin()));
 
-  auto extraLabel = "dist";
   auto extraNames = std::vector<std::string>({"dist"});
-  List L = GetModelSetResults(model->Modelset, items, metricsNames, exoCount,
-                              extraLabel, &extraNames, 1, paramNames,
-                              colNames_w, "coefs", "item");
-
-  L["info"] = List::create(
-      _["yNames"] = colnames(y), _["xNames"] = colnames(x),
-      _["costMatrices"] = costMatrices, _["searchLogit"] = wrap(searchLogit),
-      _["searchProbit"] = wrap(searchProbit), _["optimOptions"] = optimOptions,
-      _["metricOptions"] = metricOptions,
-      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
-      _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
-
-  L.attr("class") =
-      std::vector<std::string>({"ldtsearchdc", "ldtsearch", "list"});
-  L.attr("method") = "bin";
+  List L = GetModelSetResults(model->Modelset, items_, metricsNames, colNames,
+                              targetNames, extraNames, paramNames, colNames_w,
+                              "coef", options_.ReportInterval > 0);
 
   return L;
 }
 
 // [[Rcpp::export(.EstimDc)]]
-SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
-             SEXP pcaOptionsX, SEXP costMatrices, List aucOptions,
+SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX,
+             SEXP costMatrices, List newtonOptions, List aucOptions,
              int simFixSize, double simTrainRatio, int simTrainFixSize,
-             int simSeed, bool weightedEval, bool printMsg) {
-  if (y == R_NilValue || x == R_NilValue)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "invalid data: 'y' or 'x' is null");
-  if (is<NumericMatrix>(y) == false)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "'y' must be a 'numeric matrix'");
-  if (is<NumericMatrix>(x) == false)
-    throw LdtException(ErrorType::kLogic, "R-dc",
-                       "'x' must be a 'numeric matrix'");
+             int simSeed, double simMaxConditionNumber, int numChoices,
+             bool weightedEval) {
 
-  y = as<NumericMatrix>(y);
-  x = as<NumericMatrix>(x);
+  auto data_ = SearchData();
+  UpdateSearchData(data, data_);
 
-  if (newX != R_NilValue) {
-    if (is<NumericMatrix>(newX) == false)
-      throw LdtException(ErrorType::kLogic, "R-dc",
-                         "'newX' must be a 'numeric matrix'");
-    newX = insert_intercept(
-        newX); // Combine function does not handle adding intercept to newX
-  }
-
-  ldt::Matrix<double> my;
-  ldt::Matrix<double> mx;
-  ldt::Matrix<double> mw;
-  ldt::Matrix<double> mnewX;
-  ldt::Matrix<double> mat;
-  std::vector<std::string> colNames;
-  auto d_re = CombineEndoExo(printMsg, mat, colNames, my, mx, mw, mnewX, y, x,
-                             w, newX, true, true, 1, 0, 0);
-
-  bool hasWeight = w != R_NilValue;
-  int exoStart = hasWeight ? 2 : 1;
-
-  int numChoices;
-  bool isBinary;
-  checkData(my, mx, mw, numChoices, isBinary);
-
-  if (simFixSize > 0) {
-    simTrainFixSize = std::max(0, simTrainFixSize);
-    if (simTrainFixSize == 0) {
-      if (simTrainRatio <= 0 || simTrainRatio >= 1)
-        throw LdtException(ErrorType::kLogic, "R-dc",
-                           "invalid 'simTrainRatio'. It must be in (0,1)");
-    }
-
-    if (simSeed < 0)
-      throw LdtException(ErrorType::kLogic, "R-dc",
-                         "invalid 'simSeed'. It cannot be negative");
-  }
-
-  std::vector<ldt::Matrix<double>> costMatrices0;
-  GetCostMatrices(printMsg, costMatrices0, costMatrices,
-                  costMatrices != R_NilValue);
-
-  auto pcaOptions0 = PcaAnalysisOptions();
-  bool hasPcaX = pcaOptionsX != R_NilValue;
-  if (hasPcaX) {
-    if (is<List>(pcaOptionsX) == false)
-      throw LdtException(ErrorType::kLogic, "R-dc",
-                         "'pcaOptionsX' must be a 'List'");
-    List pcaOptionsX_ = as<List>(pcaOptionsX);
-    UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptions0,
-                     "Exogenous PCA options");
-    pcaOptions0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
-  }
-
+  auto exoStart = data_.NumEndo + (data_.HasWeight ? 1 : 0);
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto paramNames =
+      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
   auto endoNames = std::vector<std::string>();
   endoNames.push_back(colNames.at(0));
+  for (int i = 0; i < numChoices - 2; i++)
+    paramNames.push_back(std::string("Threshold") + std::to_string(i + 1));
+  auto labelNames = std::vector<std::string>();
+  for (int i = 0; i < numChoices; i++)
+    labelNames.push_back(std::string("Y=") + std::to_string(i));
+
+  std::vector<ldt::Matrix<double>> costMatrices_;
+  getCostMatrices(costMatrices, costMatrices_);
+
+  ldt::RocOptions roc_;
+  UpdateRocOptions(aucOptions, roc_);
+
+  ldt::Newton newton_;
+  UpdateNewtonOptions(newtonOptions, newton_);
+
+  auto pcaOptionsX0 = PcaAnalysisOptions();
+  bool hasPcaX = pcaOptionsX != R_NilValue;
+  if (hasPcaX) {
+    List pcaOptionsX_ = as<List>(pcaOptionsX);
+    UpdatePcaOptions(pcaOptionsX_, pcaOptionsX0);
+    if (data_.HasIntercept)
+      pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
+  }
 
   const char *modelType = "binary";
   if (numChoices > 2)
@@ -285,51 +162,55 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
       FromString_DiscreteChoiceModelType(modelType);
   DiscreteChoiceDistType distType0 =
       FromString_DiscreteChoiceDistType(linkFunc.c_str());
-  if (printMsg) {
-    Rprintf("Model Type=%s\n", ToString(modelType0));
-    Rprintf("Distribution Type=%s\n", ToString(distType0));
-  }
-
-  bool hasProjection = mnewX.Data != nullptr;
-  if (printMsg)
-    Rprintf("Number of Projections=%i\n", mnewX.RowsCount);
-
-  RocOptions aucOptions0;
-  UpdateRocOptions(printMsg, aucOptions, aucOptions0, "AUC Options:");
 
   // ESTIMATE
 
   auto model = DiscreteChoiceExtended(
-      modelType0, distType0, mat.RowsCount, mat.ColsCount, hasWeight, true,
-      numChoices, true, mnewX.RowsCount, hasPcaX ? &pcaOptions0 : nullptr,
-      costMatrices0.size() > 0 ? &costMatrices0 : nullptr, weightedEval);
+      modelType0, distType0, data_.Data.RowsCount, data_.Data.ColsCount,
+      data_.HasWeight, true, numChoices, true, data_.NewX.RowsCount,
+      hasPcaX ? &pcaOptionsX0 : nullptr,
+      costMatrices_.size() > 0 ? &costMatrices_ : nullptr, weightedEval);
 
   auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
 
-  if (printMsg)
-    Rprintf("Calculations started..");
-  model.Calculate(mat, S.get(), W.get(), numChoices,
-                  hasProjection ? &mnewX : nullptr, aucOptions0);
-  if (printMsg)
-    Rprintf("Calculations finished.\n");
+  model.Calculate(data_.Data, S.get(), W.get(), true,
+                  data_.NewX.RowsCount > 0 ? &data_.NewX : nullptr, roc_);
 
+  // calculate residuals
+
+  auto resid_d =
+      std::unique_ptr<double[]>(new double[model.X.RowsCount * numChoices]);
+  auto resid =
+      ldt::Matrix<double>(resid_d.get(), model.X.RowsCount, numChoices);
+  auto resid_d_w = std::unique_ptr<double[]>(new double[model.X.RowsCount]);
+  model.Model->GetProbabilities(model.X, resid, resid_d_w.get());
+  resid.GetColumn0(1, resid);
+  resid.Restructure0(model.X.RowsCount, 1);
+  model.Y.Subtract(resid, resid);
+  // calculate Pearson residuals
+  if (numChoices > 2)
+    throw LdtException(
+        ErrorType::kLogic, "R-dc",
+        "not implemented for 'numChoices > 2'\n"); // check the mathematics
+  auto resid_d_p = std::unique_ptr<double[]>(new double[resid.RowsCount]);
+  auto resid_p = ldt::Matrix<double>(resid_d_p.get(), resid.RowsCount, 1);
+  for (int i = 0; i < resid.RowsCount; i++) {
+    auto yhat_i = model.Y.Data[i] - resid.Data[i];
+    resid_p.Data[i] = resid.Data[i] / std::sqrt(yhat_i * (1 - yhat_i));
+  }
+
+  // Simulation
   DiscreteChoiceSimBase *simmodel = nullptr;
   std::unique_ptr<DiscreteChoiceSimBase> simmodelf;
   std::unique_ptr<double[]> Ss;
   if (simFixSize > 0) {
-    if (printMsg) {
-      Rprintf("Simulating a Discrete Choice Model...\n");
-      Rprintf("Train Ratio=%f\n", simTrainRatio);
-      Rprintf("Train Fix Size=%f\n", simTrainFixSize);
-      Rprintf("Number of Simulations=%i\n", simFixSize);
-      Rprintf("Seed=%i\n", simSeed);
-    }
 
     simmodel = DiscreteChoiceSimBase::GetFromType(
-        hasWeight, modelType0, distType0, mat.RowsCount, mat.ColsCount,
-        numChoices, simTrainRatio, simTrainFixSize, costMatrices0.size(), true,
-        true, true, hasPcaX ? &pcaOptions0 : nullptr, weightedEval);
+        data_.HasWeight, modelType0, distType0, data_.Data.RowsCount,
+        data_.Data.ColsCount, numChoices, simTrainRatio, simTrainFixSize,
+        costMatrices_.size(), true, true, true,
+        hasPcaX ? &pcaOptionsX0 : nullptr, weightedEval);
     simmodelf = std::unique_ptr<DiscreteChoiceSimBase>(simmodel);
     simmodel->SimulationMax = simFixSize;
     simmodel->Seed = simSeed;
@@ -338,21 +219,12 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
     auto WIs = std::unique_ptr<int[]>(new int[simmodel->WorkSizeI]);
     Ss = std::unique_ptr<double[]>(new double[simmodel->StorageSize]);
     auto errors = std::set<const char *>();
-    if (printMsg)
-      Rprintf("Calculations Started..");
 
     bool cancel = false;
-    simmodel->Calculate(mat, &costMatrices0, Ss.get(), Ws.get(), WIs.get(),
-                        cancel, aucOptions0, true, &errors);
-    if (printMsg) {
-      Rprintf("Calculations Finished.\n");
-      if (errors.size() > 0) {
-        Rprintf("Errors:");
-        for (auto ssd : errors) {
-          Rprintf("    - %s\n", ssd);
-        }
-      }
-    }
+    simmodel->Calculate(
+        data_.Data, costMatrices_.size() > 0 ? &costMatrices_ : nullptr,
+        Ss.get(), Ws.get(), WIs.get(), cancel, roc_, true, &errors);
+
     if (simmodel->ValidSimulationCount == 0) {
       throw LdtException(ErrorType::kLogic, "R-dc",
                          "no valid simulation exists.\n");
@@ -361,17 +233,17 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
 
   // update names due to PCA (TODO: param names for ordered models)
   auto exoNames = std::vector<std::string>();
-  for (int i = exoStart; i < mat.ColsCount; i++)
+  for (int i = exoStart; i < data_.Data.ColsCount; i++)
     exoNames.push_back(colNames.at(i));
   std::vector<std::string> exoNames_pca;
   if (hasPcaX) {
     for (int i = 0; i < model.X.ColsCount; i++) {
-      if (i < pcaOptions0.IgnoreFirstCount)
+      if (i < pcaOptionsX0.IgnoreFirstCount)
         exoNames_pca.push_back(exoNames.at(i));
       else
         exoNames_pca.push_back(
             std::string("X_PC") +
-            std::to_string(i - pcaOptions0.IgnoreFirstCount + 1));
+            std::to_string(i - pcaOptionsX0.IgnoreFirstCount + 1));
     }
   } else
     exoNames_pca = exoNames;
@@ -405,24 +277,25 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
   }
 
   List L = List::create(
-      _["counts"] = List::create(
-          _["obs"] = wrap(model.Y.RowsCount), _["eq"] = wrap(model.Y.ColsCount),
-          _["exoEq"] = wrap(model.X.ColsCount),
-          _["exoAll"] = wrap(model.Model->Beta.length())),
       _["estimations"] = List::create(
-          _["coefs"] = as_matrix(model.Model->Beta, &exoNames_pca, &endoNames),
-          _["stds"] =
-              as_matrix(model.Model->BetaStd, &exoNames_pca, &endoNames),
-          _["zstats"] =
-              as_matrix(model.Model->BetaZ, &exoNames_pca, &endoNames),
+          _["Y"] = as_matrix(model.Y, std::vector<std::string>(), endoNames),
+          _["X"] = as_matrix(model.X, std::vector<std::string>(), exoNames_pca),
+          _["coefs"] = as_matrix(model.Model->Beta, exoNames_pca, endoNames),
+          _["stds"] = as_matrix(model.Model->BetaStd, exoNames_pca, endoNames),
+          _["zstats"] = as_matrix(model.Model->BetaZ, exoNames_pca, endoNames),
           _["pValues"] =
-              as_matrix(model.Model->BetaProb, &exoNames_pca, &endoNames),
+              as_matrix(model.Model->BetaProb, exoNames_pca, endoNames),
           _["gamma"] = as_matrix(model.Model->Beta),
-          _["gammaVar"] = as_matrix(model.Model->BetaVar)),
-      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames),
-      _["projection"] = hasProjection == false
-                            ? R_NilValue
-                            : (SEXP)as_matrix(model.PredProbs),
+          _["gammaVar"] = as_matrix(model.Model->BetaVar),
+          _["resid"] = as_matrix(resid, std::vector<std::string>(), endoNames),
+          _["residPearson"] =
+              as_matrix(resid_p, std::vector<std::string>(), endoNames)),
+      _["metrics"] = as_matrix(metricsRes, metricsResRowNames, endoNames),
+      _["projection"] =
+          data_.NewX.RowsCount == 0
+              ? R_NilValue
+              : (SEXP)as_matrix(model.PredProbs, std::vector<std::string>(),
+                                labelNames),
       _["simulation"] =
           simFixSize == 0
               ? R_NilValue
@@ -431,15 +304,9 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
                         wrap(simmodel->ValidSimulationCount),
                     _["probFrequencies"] = as_matrix(simmodel->FrequencyTable),
                     _["costRatios"] =
-                        costMatrices0.size() > 0
+                        costMatrices_.size() > 0
                             ? (SEXP)as_matrix(simmodel->CostRatios)
-                            : R_NilValue),
-      _["info"] =
-          List::create(_["y"] = y, _["x"] = x, _["pcaOptionsX"] = pcaOptionsX));
-
-  L.attr("class") =
-      std::vector<std::string>({"ldtestimdc", "ldtestim", "list"});
-  L.attr("method") = "bin";
+                            : R_NilValue));
 
   return L;
 }

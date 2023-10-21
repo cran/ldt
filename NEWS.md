@@ -1,5 +1,14 @@
 # *News*
 
+## ldt 0.4.1 (2023-10-21)
+
+### Changes
+
+* Adding two suitable functions for creating data and combinations
+* Exporting more generic functions, esp. for printing and plotting
+* LaTex related functions and Vignettes are removed (will be added in future)
+* Some fixes.
+
 ## ldt 0.3.2 (2023-07-26)
 
 ### Changes

@@ -6,123 +6,68 @@ using namespace Rcpp;
 using namespace ldt;
 
 // [[Rcpp::export(.SearchVarma)]]
-SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
-                 SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
-                 SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
-                 List lbfgsOptions, List metricOptions, List modelCheckItems,
-                 List searchItems, List searchOptions) {
+SEXP SearchVarma(List data, List combinations, List metrics, List modelChecks,
+                 List items, List options, IntegerVector maxParams,
+                 int seasonsCount, int maxHorizon, bool simUsePreviousEstim,
+                 double olsStdMultiplier, List lbfgsOptions) {
 
-  if (y == R_NilValue)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "invalid data: 'y' is null");
-  if (is<NumericMatrix>(y) == false)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'y' must be a 'numeric matrix'");
-  y = as<NumericMatrix>(y);
+  auto options_ = SearchOptions();
+  UpdateSearchOptions(options, options_);
 
-  if (numTargets < 1)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "number of targets must be positive");
+  auto data_ = SearchData();
+  UpdateSearchData(data, data_);
 
-  bool printMsg = false;
-  auto options = SearchOptions();
-  int reportInterval = 0;
-  UpdateSearchOptions(searchOptions, options, reportInterval, printMsg);
-
-  if (x != R_NilValue) {
-    if (is<NumericMatrix>(x) == false)
-      throw LdtException(ErrorType::kLogic, "R-varma",
-                         "'x' must be a 'numeric matrix'");
-    x = as<NumericMatrix>(x);
-  }
-  if (newX != R_NilValue) {
-    if (is<NumericMatrix>(newX) == false)
-      throw LdtException(ErrorType::kLogic, "R-varma",
-                         "'newX' must be a 'numeric matrix'");
-    newX = as<NumericMatrix>(newX);
-  }
-
-  ldt::Matrix<double> my;
-  ldt::Matrix<double> mx;
-  ldt::Matrix<double> mw;
-  ldt::Matrix<double> mnewX;
-  ldt::Matrix<double> mat;
-  std::vector<std::string> colNames;
-  auto d_re =
-      CombineEndoExo(printMsg, mat, colNames, my, mx, mw, mnewX, y, x,
-                     R_NilValue, newX, false, false, 1, 0, 0, maxHorizon, true);
-
-  if (numTargets > my.ColsCount)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'numTargets' cannot be larger than the number of "
-                       "endogenous variables (i.e., columns of 'y')");
-
-  mat.Transpose();
-
-  auto dataset0 = new DatasetTs<true>(mat.RowsCount, mat.ColsCount, true, true);
+  // don't transpose and use R matrix data (It is used later in R)
+  auto data_use_d = std::unique_ptr<double[]>(new double[data_.Data.length()]);
+  auto data_use =
+      ldt::Matrix(data_use_d.get(), data_.Data.ColsCount, data_.Data.RowsCount);
+  data_.Data.Transpose(data_use);
+  auto dataset0 =
+      new DatasetTs<true>(data_use.RowsCount, data_use.ColsCount, true, true);
   auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
-  dataset0->Data(mat);
+  dataset0->Data(data_use);
   if (dataset0->HasMissingData)
     throw LdtException(ErrorType::kLogic, "R-varma",
                        "missing observation exists");
 
-  std::vector<int> ySizes_;
-  GetSizes(printMsg, ySizes_, ySizes, my.ColsCount, false);
+  auto exoStart = data_.NumEndo;
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto exoNames =
+      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
 
-  std::vector<std::vector<int>> yPartitions_;
-  GetPartitions(printMsg, yPartitions_, yPartitions, my.ColsCount, 0, false);
+  auto combinations_ = SearchCombinations();
+  UpdateSearchCombinations(combinations, combinations_);
 
-  std::vector<std::vector<int>> xGroups_;
-  GetGroups(printMsg, xGroups_, xGroups, mx.ColsCount, my.ColsCount, true);
+  auto metrics_ = SearchMetricOptions();
+  auto metricsNames = std::vector<std::string>();
+  auto items_ = SearchItems();
+  auto checks_ = SearchModelChecks();
 
-  // Maximum Parameters
-  if (maxParams == R_NilValue)
-    maxParams = IntegerVector({1, 0, 0, 0, 0, 0});
-  auto maxParams_ = as<std::vector<int>>(IntegerVector(maxParams));
-  if (maxParams_.size() < 6)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'maxParams_' must have 6 parameters");
-  if (printMsg) {
-    Rprintf("Max Parameters:%s(p,d,q)[P,D,Q]s=(%i,%i,%i)[%i,%i,%i]\n",
-            my.ColsCount == 1 ? "ARMA" : "VARMA", maxParams_.at(0),
-            maxParams_.at(1), maxParams_.at(2), maxParams_.at(3),
-            maxParams_.at(4), maxParams_.at(5));
-    Rprintf("Number of Seasons=%i\n", seasonsCount);
-  }
+  auto length1 = maxHorizon;
+
+  UpdateOptions(items, metrics, modelChecks, metrics_, items_, checks_,
+                metricsNames, length1, data_.NumExo, combinations_.NumTargets,
+                data_.NumEndo, true, false, "Horizon", false);
+
+  auto targetNames = std::vector<std::string>(
+      colNames.begin(), colNames.begin() + items_.LengthTargets);
 
   LimitedMemoryBfgsbOptions optim;
-  UpdateLbfgsOptions(printMsg, lbfgsOptions, optim);
-
-  // if (maxHorizon > 0 && items.Length1 > 0){ // model must provide predictions
-  //   checks.Prediction = true;
-  //   checks.Estimation = true;
-  // }
-
-  auto metrics = SearchMetricOptions();
-  auto metricsNames = std::vector<std::string>();
-  auto items = SearchItems();
-  auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
-                items, checks, metricsNames, maxHorizon, mx.ColsCount,
-                numTargets, my.ColsCount, true, false, "Horizon", false);
+  UpdateLbfgsOptions(lbfgsOptions, optim);
 
   std::vector<std::string> type1Names;
-  if (items.Length1 > 0) {
-    if (maxHorizon == 0)
-      throw LdtException(
-          ErrorType::kLogic, "R-varma",
-          "Inconsistent argument and option: If 'type1' is enabled in "
-          "'searchItems', 'maxHorizon' cannot be zero");
-    checks.Prediction = true;
-    for (int i = 0; i < items.Length1; i++)
+  if (items_.Length1 > 0) {
+    for (int i = 0; i < items_.Length1; i++)
       type1Names.push_back(std::string("Horizon") + std::to_string(i + 1));
   }
 
+  auto maxParams_ = as<std::vector<int>>(maxParams);
+
   // Modelset
   auto model =
-      VarmaModelset(options, items, metrics, checks, ySizes_, yPartitions_,
-                    *dataset0, maxParams_, seasonsCount, xGroups_,
-                    simUsePreviousEstim, &optim, olsStdMultiplier, maxHorizon);
+      VarmaModelset(data_, combinations_, options_, items_, metrics_, checks_,
+                    *dataset0, maxParams_, seasonsCount, simUsePreviousEstim,
+                    &optim, olsStdMultiplier, maxHorizon);
 
   bool estimating = true;
 
@@ -143,134 +88,65 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options,
-                 alli);
+  ReportProgress(model.Modelset, estimating, options_, alli);
 
-  if (options.RequestCancel)
+  if (options_.RequestCancel)
     return R_NilValue;
 
-  auto extraLabel = "parameters";
-  auto extraNames = std::vector<std::string>(
-      {"arP", "arD", "arQ", "maP", "maD", "maQ", "numSeasons"});
+  auto extraNames =
+      std::vector<std::string>({"arP", "arD", "arQ", "maP", "maD", "maQ"});
 
-  List L = GetModelSetResults(model.Modelset, items, metricsNames,
-                              (int)items.Length1, extraLabel, &extraNames,
-                              -my.ColsCount + 1, type1Names, colNames,
-                              "predictions", "horizon");
-
-  L["info"] = List::create(
-      _["yNames"] = colnames(y), _["xNames"] = colnames(x),
-      _["seasonsCount"] = wrap(seasonsCount),
-      _["olsStdMultiplier"] = wrap(olsStdMultiplier),
-      _["simUsePreviousEstim"] = wrap(simUsePreviousEstim),
-      _["maxHorizon"] = wrap(checks.Prediction ? maxHorizon : 0),
-      _["lbfgsOptions"] = lbfgsOptions, _["metricOptions"] = metricOptions,
-      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
-      _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
-
-  L.attr("class") =
-      std::vector<std::string>({"ldtsearchvarma", "ldtsearch", "list"});
-  L.attr("method") = "varma";
+  List L = GetModelSetResults(model.Modelset, items_, metricsNames, colNames,
+                              targetNames, extraNames, type1Names, colNames,
+                              std::string("predictions"),
+                              options_.ReportInterval > 0);
 
   return L;
 }
 
 // [[Rcpp::export(.EstimVarma)]]
-SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
-                bool addIntercept, List lbfgsOptions, double olsStdMultiplier,
-                SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX,
-                int simFixSize, SEXP simHorizons, bool simUsePreviousEstim,
-                double simMaxConditionNumber, SEXP simTransform,
-                bool printMsg) {
+SEXP EstimVarma(List data, IntegerVector params, int seasonsCount,
+                List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY,
+                SEXP pcaOptionsX, int maxHorizon, int simFixSize,
+                SEXP simHorizons, bool simUsePreviousEstim,
+                double simMaxConditionNumber) {
 
-  if (y == R_NilValue)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "invalid data: 'y' is null");
-  if (is<NumericMatrix>(y) == false)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'y' must be a 'numeric matrix'");
-  y = as<NumericMatrix>(y);
+  auto data_ = SearchData();
+  UpdateSearchData(data, data_);
 
-  if (x != R_NilValue) {
-    if (is<NumericMatrix>(x) == false)
-      throw LdtException(ErrorType::kLogic, "R-varma",
-                         "'x' must be a 'numeric matrix'");
-    x = as<NumericMatrix>(x);
-  }
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto endoNames = std::vector<std::string>(colNames.begin(),
+                                            colNames.begin() + data_.NumEndo);
+  auto exoNames = std::vector<std::string>(colNames.begin() + data_.NumEndo,
+                                           colNames.end());
 
-  if (newX != R_NilValue) {
-    if (is<NumericMatrix>(newX) == false)
-      throw LdtException(ErrorType::kLogic, "R-varma",
-                         "'newX' must be a 'numeric matrix'");
-  }
-  if (addIntercept && maxHorizon > 0) {
-    if (newX == R_NilValue) {
-      auto newX0 = NumericMatrix(maxHorizon, 0);
-      newX = insert_intercept(newX0);
-    } else {
-      auto newX0 = as<NumericMatrix>(newX);
-      newX = insert_intercept(newX0);
-    }
-  }
+  auto params_ = as<std::vector<int>>(params);
 
-  ldt::Matrix<double> my;
-  ldt::Matrix<double> mx;
-  ldt::Matrix<double> mw;
-  ldt::Matrix<double> mnewX;
-  ldt::Matrix<double> mat;
-  std::vector<std::string> colNames;
-  auto d_re = CombineEndoExo(printMsg, mat, colNames, my, mx, mw, mnewX, y, x,
-                             R_NilValue, newX, false, addIntercept, 1, 0, 0,
-                             maxHorizon, true);
-
-  int k = mx.ColsCount + (int)addIntercept;
-
-  // Model Parameters
-  if (params == R_NilValue)
-    params = IntegerVector({1, 0, 0, 0, 0, 0});
-  auto params_ = as<std::vector<int>>(IntegerVector(params));
-  if (params_.size() < 6)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'params' must have 6 parameters");
-  if (printMsg) {
-    Rprintf("Model:%s(p,d,q)[P,D,Q]s=(%i,%i,%i)[%i,%i,%i]\n",
-            my.ColsCount == 1 ? "ARMA" : "VARMA", params_.at(0), params_.at(1),
-            params_.at(2), params_.at(3), params_.at(4), params_.at(5));
-    Rprintf("Number of Seasons=%i\n", seasonsCount);
-  }
-  if (maxHorizon < 0)
-    throw LdtException(ErrorType::kLogic, "R-varma",
-                       "'maxHorizon' cannot be negative");
-  if (printMsg)
-    Rprintf("Prediction Horizon=%i\n", maxHorizon);
-
-  // PCA
   auto pcaOptionsX0 = PcaAnalysisOptions();
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
-    UpdatePcaOptions(printMsg, as<List>(pcaOptionsX), hasPcaX, pcaOptionsX0,
-                     "Exogenous PCA options");
-    if (addIntercept)
+    List pcaOptionsX_ = as<List>(pcaOptionsX);
+    UpdatePcaOptions(pcaOptionsX_, pcaOptionsX0);
+    if (data_.HasIntercept)
       pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
   }
 
   auto pcaOptionsY0 = PcaAnalysisOptions();
   bool hasPcaY = pcaOptionsY != R_NilValue;
-  if (hasPcaY)
-    UpdatePcaOptions(printMsg, as<List>(pcaOptionsY), hasPcaY, pcaOptionsY0,
-                     "Endogenous PCA options");
+  if (hasPcaY) {
+    List pcaOptionsY_ = as<List>(pcaOptionsY);
+    UpdatePcaOptions(pcaOptionsY_, pcaOptionsY0);
+  }
 
   auto restriction = VarmaRestrictionType::kMaFinal; // TODO: as an option
-  auto sizes = VarmaSizes(my.RowsCount, my.ColsCount, k, params_.at(0),
-                          params_.at(1), params_.at(2), params_.at(3),
-                          params_.at(4), params_.at(5), seasonsCount);
+  auto sizes = VarmaSizes(
+      data_.ObsCount, data_.NumEndo, data_.NumExo, params_.at(0), params_.at(1),
+      params_.at(2), params_.at(3), params_.at(4), params_.at(5), seasonsCount);
 
   // L-BFGS
   LimitedMemoryBfgsbOptions optim;
-  if (sizes.HasMa) {
-    UpdateLbfgsOptions(printMsg, lbfgsOptions, optim);
-  } else if (printMsg)
-    Rprintf("L-BFGS (skipped).\n");
+  if (sizes.HasMa)
+    UpdateLbfgsOptions(lbfgsOptions, optim);
 
   // Estimation
 
@@ -280,14 +156,27 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
 
-  if (printMsg)
-    Rprintf("Starting Calculations ..");
-
-  model.Calculate(mat, S.get(), W.get(), false, maxHorizon, 0, -1,
+  model.Calculate(data_.Data, S.get(), W.get(), false, maxHorizon, 0, -1,
                   olsStdMultiplier);
 
-  if (printMsg)
-    Rprintf("Calculations Finished.\n");
+  // save isRestricted before running simulation because pR changes
+  auto isRestricted = ldt::Matrix<double>();
+  auto isRestrictedD = std::unique_ptr<double[]>();
+  if (model.Restriction.IsRestricted) {
+    auto num_c = model.Restriction.R.RowsCount;
+    isRestrictedD = std::unique_ptr<double[]>(new double[num_c]);
+    isRestricted = ldt::Matrix<double>(isRestrictedD.get(),
+                                       model.Model.Result.coef.RowsCount,
+                                       model.Model.Result.coef.ColsCount);
+    auto rowinds = std::vector<int>();
+    model.Restriction.R.RowsSum(isRestricted, rowinds);
+    for (int i = 0; i < isRestricted.length(); i++) {
+      if (isRestricted.Data[i] != 0)
+        isRestricted.Data[i] = 0;
+      else
+        isRestricted.Data[i] = 1;
+    }
+  }
 
   // Simulation
 
@@ -325,52 +214,6 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
       throw LdtException(ErrorType::kLogic, "R-varma",
                          "simulation horizons are missing");
 
-    if (printMsg) {
-      Rprintf("Simulation Horizons:%s\n",
-              VectorToCsv(simHorizons_, ',').c_str());
-      Rprintf("Maximum Condition Number=%f\n", simMaxConditionNumber);
-    }
-
-    std::function<void(double &)> transform = nullptr;
-    if (printMsg)
-      Rprintf("    - Metric Transform = ");
-
-    if (simTransform == R_NilValue) {
-      // do nothing
-      if (printMsg)
-        Rprintf("none");
-    } else if (is<Function>(simTransform)) {
-
-      auto F = as<Function>(simTransform);
-      transform = [&F](double &x) { x = as<double>(F(wrap(x))); };
-      if (printMsg)
-        Rprintf("Custom function");
-
-    } else if (TYPEOF(simTransform) == STRSXP) {
-
-      auto funcType = FromString_FunctionType(as<const char *>(simTransform));
-
-      if (printMsg)
-        Rprintf(ToString(funcType));
-
-      if (funcType == FunctionType::kId) { // for tests
-        transform = [](double &x) { };
-      } else if (funcType == FunctionType::kExp) {
-        transform = [](double &x) { x = std::exp(x); };
-      } else if (funcType == FunctionType::kPow2) {
-        transform = [](double &x) { x = x * x; };
-      } else {
-        throw LdtException(ErrorType::kLogic, "R-varma",
-                           "this type of transformation is not available");
-      }
-    } else {
-      throw LdtException(
-          ErrorType::kLogic, "R-varma",
-          "invalid 'transform'. It can be null, string or function");
-    }
-    if (printMsg)
-      Rprintf("\n");
-
     simModel =
         VarmaSimulation(sizes, simFixSize, simHorizons_, metrics, &optim, true,
                         restriction, true, hasPcaY ? &pcaOptionsY0 : nullptr,
@@ -382,40 +225,43 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     S0 = std::unique_ptr<double[]>(
         new double[simModel.StorageSize]); // don't override S
 
-    if (printMsg)
-      Rprintf("Starting Simulation ..");
-
-    simModel.CalculateE(S0.get(), W0.get(), mat, simMaxConditionNumber,
+    simModel.CalculateE(S0.get(), W0.get(), data_.Data, simMaxConditionNumber,
                         olsStdMultiplier, false, simUsePreviousEstim,
-                        transform ? &transform : nullptr);
-
-    if (printMsg)
-      Rprintf("Simulation Finished.\n");
+                        data_.Lambdas.size() > 0 ? &data_.Lambdas : nullptr);
   }
 
   // Simulation Details
-  NumericMatrix simDetails(0, 9);
-  colnames(simDetails) = CharacterVector::create(
-      "sampleEnd", "metricIndex", "horizon", "targetIndex", "last", "actual",
-      "forecast", "error", "std");
+  DataFrame simDetails;
 
   if (simFixSize > 0) {
-    simDetails = NumericMatrix(simModel.Details.size(), 9);
+    int n = simModel.Details.size();
 
-    int h = -1;
+    CharacterVector metric(n), target(n);
+    IntegerVector sampleEnd(n), horizon(n);
+    NumericVector last(n), actual(n), prediction(n), error(n), std(n);
 
-    for (const auto &a : simModel.Details) {
-      h++;
-      simDetails(h, 0) = std::get<0>(a);
-      simDetails(h, 1) = std::get<1>(a);
-      simDetails(h, 2) = std::get<2>(a);
-      simDetails(h, 3) = std::get<3>(a);
-      simDetails(h, 4) = std::get<4>(a);
-      simDetails(h, 5) = std::get<5>(a);
-      simDetails(h, 6) = std::get<6>(a);
-      simDetails(h, 7) = std::get<7>(a);
-      simDetails(h, 8) = std::get<8>(a);
+    for (int i = 0; i < n; ++i) {
+
+      // The items are: sample end, metric index, horizon, target index, last
+      // value, actual value, prediction, prediction error, std
+
+      sampleEnd[i] = std::get<0>(simModel.Details[i]);
+      metric[i] = metricNames.at(std::get<1>(simModel.Details[i]));
+      horizon[i] = std::get<2>(simModel.Details[i]);
+      target[i] = endoNames.at(std::get<3>(simModel.Details[i]));
+      last[i] = std::get<4>(simModel.Details[i]);
+      actual[i] = std::get<5>(simModel.Details[i]);
+      prediction[i] = std::get<6>(simModel.Details[i]);
+      error[i] = std::get<7>(simModel.Details[i]);
+      std[i] = std::get<8>(simModel.Details[i]);
     }
+
+    simDetails = DataFrame::create(
+        Named("metric") = metric, Named("target") = target,
+        Named("sampleEnd") = sampleEnd, Named("horizon") = horizon,
+        Named("last") = last, Named("actual") = actual,
+        Named("prediction") = prediction, Named("error") = error,
+        Named("std") = std);
   }
 
   // Simulation Failures
@@ -430,27 +276,6 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
       simFails[h - 1] =
           List::create(_["message"] = wrap(k), _["count"] = wrap(v));
     }
-    if (fcount > 0) {
-      if (printMsg)
-        Rprintf("    Failed Count in Simulation=%i\n", fcount);
-      int i = -1;
-      for (const auto &[k, v] : simModel.Errors) {
-        i++;
-        if (printMsg)
-          Rprintf("        %i. (%i, %.2f) msg=%s\n", i, v,
-                  (v / (double)fcount) * 100, k.c_str());
-      }
-    }
-  }
-
-  // Names
-  std::vector<std::string> exoNames;
-  std::vector<std::string> endoNames;
-  for (int i = 0; i < (int)colNames.size(); i++) {
-    if (i < my.ColsCount)
-      endoNames.push_back(colNames.at(i));
-    else
-      exoNames.push_back(colNames.at(i));
   }
 
   std::vector<std::string> exoNames_pca;
@@ -484,7 +309,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   if (simFixSize > 0)
     metricCount += simModel.ResultAggs.RowsCount;
   auto metricsResD =
-      std::unique_ptr<double[]>(new double[metricCount * my.ColsCount]);
+      std::unique_ptr<double[]>(new double[metricCount * data_.NumEndo]);
   auto metricsRes =
       ldt::Matrix<double>(metricsResD.get(), metricCount, endoNames_pca.size());
   auto metricsResRowNames = std::vector<std::string>({"logL", "aic", "sic"});
@@ -505,33 +330,41 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   VarmaStorage::GetExpNames(sizes, endoNames_pca, exoNames_pca, expNames);
 
   List L = List::create(
-      _["counts"] = List::create(
-          _["obs"] = wrap(model.Y.ColsCount), _["eq"] = wrap(model.Y.RowsCount),
-          _["exoEq"] = wrap(model.X.ColsCount),
-          _["expAll"] = wrap(model.Model.Result.gamma.length())),
       _["estimations"] = List::create(
-          _["coefs"] =
-              as_matrix(model.Model.Result.coef, &endoNames_pca, &expNames),
-          _["stds"] =
-              as_matrix(model.Model.Result.coefstd, &endoNames_pca, &expNames),
-          _["tstats"] =
-              as_matrix(model.Model.Result.coeft, &endoNames_pca, &expNames),
-          _["pValues"] =
-              as_matrix(model.Model.Result.coefprob, &endoNames_pca, &expNames),
+          _["Y"] = Rcpp::transpose(
+              as_matrix(model.Model.Result.y, endoNames_pca,
+                        std::vector<std::string>())), // might change due to PCA
+          _["X"] = as_matrix(model.Model.Result.Xt, std::vector<std::string>(),
+                             expNames),
+          _["coefs"] = Rcpp::transpose(
+              as_matrix(model.Model.Result.coef, endoNames_pca, expNames)),
+          _["stds"] = Rcpp::transpose(
+              as_matrix(model.Model.Result.coefstd, endoNames_pca, expNames)),
+          _["tstats"] = Rcpp::transpose(
+              as_matrix(model.Model.Result.coeft, endoNames_pca, expNames)),
+          _["pValues"] = Rcpp::transpose(
+              as_matrix(model.Model.Result.coefprob, endoNames_pca, expNames)),
           _["gamma"] = as_matrix(model.Model.Result.gamma),
           _["gammaVar"] = as_matrix(model.Model.Result.gammavar),
-          _["sigma"] = as_matrix(model.Model.Result.sigma2, &endoNames_pca,
-                                 &endoNames_pca)),
-      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames_pca),
+          _["resid"] =
+              Rcpp::transpose(as_matrix(model.Model.Result.resid, endoNames_pca,
+                                        std::vector<std::string>())),
+          _["sigma"] = as_matrix(model.Model.Result.sigma2, endoNames_pca,
+                                 endoNames_pca),
+          _["isRestricted"] = model.Restriction.IsRestricted
+                                  ? (SEXP)Rcpp::transpose(as_matrix(
+                                        isRestricted, endoNames_pca, expNames))
+                                  : R_NilValue),
+      _["metrics"] = as_matrix(metricsRes, metricsResRowNames, endoNames_pca),
       _["prediction"] =
           maxHorizon == 0
               ? R_NilValue
               : (SEXP)List::create(
-                    _["means"] = as_matrix(model.Forecasts.Forecast,
-                                           &endoNames_pca, nullptr),
+                    _["means"] =
+                        as_matrix(model.Forecasts.Forecast, endoNames_pca),
                     _["vars"] = model.Forecasts.mDoVariance
                                     ? (SEXP)as_matrix(model.Forecasts.Variance,
-                                                      &endoNames_pca, nullptr)
+                                                      endoNames_pca)
                                     : R_NilValue,
                     _["startIndex"] = wrap(model.Forecasts.StartIndex + 1)),
       _["simulation"] = simFixSize == 0
@@ -539,14 +372,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
                             : (SEXP)List::create(_["validCounts"] =
                                                      wrap(simModel.ValidCounts),
                                                  _["details"] = simDetails,
-                                                 _["failed"] = simFails),
-      _["info"] =
-          List::create(_["y"] = y, _["x"] = x, _["pcaOptionsY"] = pcaOptionsY,
-                       _["pcaOptionsX"] = pcaOptionsX));
-
-  L.attr("class") =
-      std::vector<std::string>({"ldtestimvarma", "ldtestim", "list"});
-  L.attr("method") = "varma";
+                                                 _["failed"] = simFails));
 
   return L;
 }

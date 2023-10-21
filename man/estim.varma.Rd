@@ -5,38 +5,29 @@
 \title{Estimate a VARMA Model}
 \usage{
 estim.varma(
-  y,
-  x = NULL,
+  data,
   params = NULL,
   seasonsCount = 0,
-  addIntercept = TRUE,
   lbfgsOptions = get.options.lbfgs(),
   olsStdMultiplier = 2,
   pcaOptionsY = NULL,
   pcaOptionsX = NULL,
   maxHorizon = 0,
-  newX = NULL,
   simFixSize = 0,
   simHorizons = NULL,
-  simUsePreviousEstim = TRUE,
-  simMaxConditionNumber = Inf,
-  simTransform = NULL,
-  printMsg = FALSE
+  simUsePreviousEstim = FALSE,
+  simMaxConditionNumber = Inf
 )
 }
 \arguments{
-\item{y}{A matrix of endogenous data with variables in the columns.}
-
-\item{x}{A matrix of exogenous data with variables in the columns. It can be \code{NULL}.}
+\item{data}{A list that determines data and other required information for the search process.
+Use \code{\link[=get.data]{get.data()}} function to generate it from a \code{matrix} or a \code{data.frame}.}
 
 \item{params}{An integer vector that determines the values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(1,0,0,0,0,0)} is used.}
 
 \item{seasonsCount}{An integer value representing the number of observations per unit of time.}
 
-\item{addIntercept}{If \code{TRUE}, an intercept is automatically added to x.}
-
-\item{lbfgsOptions}{A list containing L-BFGS optimization options.
-Use \link{get.options.lbfgs} function for initialization.}
+\item{lbfgsOptions}{A list containing L-BFGS optimization options. Use \link{get.options.lbfgs} function for initialization.}
 
 \item{olsStdMultiplier}{A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.}
 
@@ -46,19 +37,13 @@ Use \link{get.options.lbfgs} function for initialization.}
 
 \item{maxHorizon}{An integer representing the maximum prediction horizon. Set to zero to disable prediction.}
 
-\item{newX}{A matrix containing new exogenous variables to be used in predictions. Its columns must be the same as \code{x}.}
-
 \item{simFixSize}{An integer that determines the number of out-of-sample simulations. Use zero to disable simulation.}
 
-\item{simHorizons}{An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also \code{\link[=get.options.metric]{get.options.metric()}}.}
+\item{simHorizons}{An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also \code{\link[=get.search.metrics]{get.search.metrics()}}.}
 
 \item{simUsePreviousEstim}{If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.}
 
 \item{simMaxConditionNumber}{A number representing the maximum value for the condition number in simulation.}
-
-\item{simTransform}{Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.}
-
-\item{printMsg}{Set to \code{TRUE} to enable printing some details.}
 }
 \value{
 A nested list with the following items:
@@ -73,23 +58,15 @@ A nested list with the following items:
 Use this function to estimate a Vector Autoregressive Moving Average model.
 }
 \details{
-Seasonal Integrated Vector Autoregressive Moving-Average is used for predicting time series variables.
-Its formula is:
+The VARMA model can be used to analyze multivariate time series data with seasonal or non-seasonal patterns. According to \insertCite{lutkepohl2005new;textual}{ldt}, it considers interdependencies between the series, making it a powerful tool for prediction. The specification of this model is given by:
 \deqn{
-\Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} +
-                              \sum_{i=1}^q B_i \epsilon_{t-i}  +
-                              C x_t  +
-                              \sum_{i=1}^P A_{is} y_{t-is} +
-                              \sum_{i=1}^Q B_{is} \epsilon_{t-is} +
-                              \epsilon_t,
+\Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} + \sum_{i=1}^q B_i \epsilon_{t-i} + C x_t + \sum_{i=1}^P A_{is} y_{t-is} + \sum_{i=1}^Q B_{is} v_{t-is} + v_t,
 }
-where \eqn{y_t} is the vector of endogenous variables, \eqn{x_t} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} are the lag structure of the model.
-Furthermore, \eqn{c,\;C,\;A_i} and \eqn{B_i} for all available \eqn{i} are the parameters of the model.
-We use maximum likelihood estimator to estimate the parameters of the model.
-If \eqn{B_i} coefficients are not zero, identification restrictions are necessary to ensure that the model is uniquely identifiable.
-In the current implementation, this function restricts \eqn{B_i} coefficients to be diagonal.
+where \eqn{y_t:m\times 1} is the vector of endogenous variables, \eqn{x_t:k\times 1} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} determines the lag structure of the model. Furthermore, \eqn{c,C,A_i} and \eqn{B_i} for all available \eqn{i} determines the model’s parameters. \eqn{v_t} is the disturbance vector and is contemporaneously correlated between different equations, i.e., \eqn{E(v_tv_t')=\Sigma}.
+Given a sample of size \eqn{T}, the model can be estimated using maximum likelihood estimation. However, to ensure identifiability, it is necessary to impose additional constraints on the parameters (see chapter 12 in \insertCite{lutkepohl2005new;textual}{ldt}). In this function, diagonal MA equation form is used (see \insertCite{dufour2022practical;textual}{ldt}).
+In this function, the feasible GLS estimator is used to initialize the maximum likelihood, and the OLS estimator is used to calculate the initial value of the variance matrix of the error term. The condition number is calculated similar to the other models (see \link{estim.sur} or e.g., page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given a prediction horizon and required exogenous data, prediction is performed in a recursive schema, in which the actual estimated errors are used if available and zero otherwise. The variance of the predictions is also calculated recursively. Note that this function does not incorporate the coefficients uncertainty in calculation of the variance (see section 3.5 in \insertCite{lutkepohl2005new;textual}{ldt}).
 
-Note that the main purpose of exporting this method is to show the inner calculations of the search process in \link{search.varma} function.
+Finally, note that the main purpose of exporting this method is to show the inner calculations of the search process in \link{search.varma} function.
 }
 \examples{
 # Example 1 (simulation, ARMA):
@@ -97,9 +74,20 @@ num_eq <- 1L
 num_ar <- 2L
 num_ma <- 1L
 num_exo <- 1L
-sample <- sim.varma(num_eq, arList = num_ar, maList = num_ma, exoCoef = num_exo, nObs = 100)
+sample <- sim.varma(num_eq, arList = num_ar, maList = num_ma, exoCoef = num_exo, nObs = 110)
 # estimate:
-fit <- estim.varma(sample$y, sample$x, params = c(num_ar, 0, num_ma, 0, 0, 0))
+fit <- estim.varma(data = get.data(cbind(sample$y, sample$x)[1:100,],
+                                   endogenous = num_eq,
+                                   newData = sample$x[101:110,, drop=FALSE]),
+                   params = c(num_ar, 0, num_ma, 0, 0, 0),
+                   maxHorizon = 10,
+                   simFixSize = 5,
+                   simHorizons = c(1:10))
+print(fit)
+
+pred <- predict(fit, actualCount = 10)
+plot(pred, simMetric = "mape")
+
 # split coefficient matrix:
 get.varma.params(fit$estimations$coefs, numAR = num_ar, numMA = num_ma, numExo = num_exo)
 
@@ -109,12 +97,25 @@ num_ar <- 2L
 num_ma <- 1L
 num_ma <- 1L
 num_exo <- 2L
-sample <- sim.varma(num_eq, arList = num_ar, maList = num_ma, exoCoef = num_exo, nObs = 100)
+sample <- sim.varma(num_eq, arList = num_ar, maList = num_ma, exoCoef = num_exo, nObs = 110)
 # estimate:
-fit <- estim.varma(sample$y, sample$x, params = c(num_ar, 0, num_ma, 0, 0, 0))
+fit <- estim.varma(data = get.data(cbind(sample$y, sample$x)[1:100,],
+                                   endogenous = num_eq,
+                                   newData = sample$x[101:110,]),
+                   params = c(num_ar, 0, num_ma, 0, 0, 0),
+                   maxHorizon = 10,
+                   simFixSize = 5,
+                   simHorizons = c(1:10))
+
+pred <- predict(fit, actualCount = 10)
+plot(pred, simMetric = "mape")
+
 # split coefficient matrix:
 get.varma.params(fit$estimations$coefs, numAR = num_ar, numMA = num_ma, numExo = num_exo)
 }
+\references{
+\insertAllCited{}
+}
 \seealso{
-\link{search.varma}, \link{search.varma.stepwise}
+\link{search.varma}
 }

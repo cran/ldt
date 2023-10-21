@@ -13,32 +13,36 @@
     .Call('_ldt_ClusterHGroup', PACKAGE = 'ldt', data, nGroups, threshold, distance, linkage, correlation)
 }
 
-.SearchDc <- function(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, metricOptions, modelCheckItems, searchItems, searchOptions) {
-    .Call('_ldt_SearchDc', PACKAGE = 'ldt', y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, metricOptions, modelCheckItems, searchItems, searchOptions)
+.SearchDc <- function(data, combinations, metrics, modelChecks, items, options, costMatrices, searchLogit, searchProbit, newtonOptions, aucOptions, numChoices) {
+    .Call('_ldt_SearchDc', PACKAGE = 'ldt', data, combinations, metrics, modelChecks, items, options, costMatrices, searchLogit, searchProbit, newtonOptions, aucOptions, numChoices)
 }
 
-.EstimDc <- function(y, x, w, linkFunc, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg) {
-    .Call('_ldt_EstimDc', PACKAGE = 'ldt', y, x, w, linkFunc, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg)
+.EstimDc <- function(data, linkFunc, pcaOptionsX, costMatrices, newtonOptions, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, numChoices, weightedEval) {
+    .Call('_ldt_EstimDc', PACKAGE = 'ldt', data, linkFunc, pcaOptionsX, costMatrices, newtonOptions, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, numChoices, weightedEval)
+}
+
+.SearchRFunc <- function(data, combinations, metrics, modelChecks, items, options, rFuncName, length1, isInnerExogenous) {
+    .Call('_ldt_SearchRFunc', PACKAGE = 'ldt', data, combinations, metrics, modelChecks, items, options, rFuncName, length1, isInnerExogenous)
 }
 
 .SupportsParallel <- function() {
     .Call('_ldt_SupportsParallel', PACKAGE = 'ldt')
 }
 
-.GetWeightFromMetric <- function(value, metricName) {
-    .Call('_ldt_GetWeightFromMetric', PACKAGE = 'ldt', value, metricName)
+.GetWeightFromMetric <- function(value, metricName, minValue) {
+    .Call('_ldt_GetWeightFromMetric', PACKAGE = 'ldt', value, metricName, minValue)
 }
 
-.GetMetricFromWeight <- function(value, metricName) {
-    .Call('_ldt_GetMetricFromWeight', PACKAGE = 'ldt', value, metricName)
+.GetMetricFromWeight <- function(value, metricName, minValue) {
+    .Call('_ldt_GetMetricFromWeight', PACKAGE = 'ldt', value, metricName, minValue)
 }
 
-.GetRoc <- function(y, scores, weights, options, printMsg) {
-    .Call('_ldt_GetRoc', PACKAGE = 'ldt', y, scores, weights, options, printMsg)
+.GetRoc <- function(y, scores, weights, options) {
+    .Call('_ldt_GetRoc', PACKAGE = 'ldt', y, scores, weights, options)
 }
 
-.GetGldFromMoments <- function(mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions, printMsg) {
-    .Call('_ldt_GetGldFromMoments', PACKAGE = 'ldt', mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions, printMsg)
+.GetGldFromMoments <- function(mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions) {
+    .Call('_ldt_GetGldFromMoments', PACKAGE = 'ldt', mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions)
 }
 
 .GldQuantile <- function(data, L1, L2, L3, L4) {
@@ -57,19 +61,19 @@
     .Call('_ldt_GetPca', PACKAGE = 'ldt', x, center, scale, newX)
 }
 
-.SearchSur <- function(y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions, modelCheckItems, searchItems, searchOptions) {
-    .Call('_ldt_SearchSur', PACKAGE = 'ldt', y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions, modelCheckItems, searchItems, searchOptions)
+.SearchSur <- function(data, combinations, metrics, modelChecks, items, options, searchSigMaxIter, searchSigMaxProb) {
+    .Call('_ldt_SearchSur', PACKAGE = 'ldt', data, combinations, metrics, modelChecks, items, options, searchSigMaxIter, searchSigMaxProb)
 }
 
-.EstimSur <- function(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg) {
-    .Call('_ldt_EstimSur', PACKAGE = 'ldt', y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg)
+.EstimSur <- function(data, searchSigMaxIter, searchSigMaxProb, restriction, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber) {
+    .Call('_ldt_EstimSur', PACKAGE = 'ldt', data, searchSigMaxIter, searchSigMaxProb, restriction, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber)
 }
 
-.SearchVarma <- function(y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions) {
-    .Call('_ldt_SearchVarma', PACKAGE = 'ldt', y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions)
+.SearchVarma <- function(data, combinations, metrics, modelChecks, items, options, maxParams, seasonsCount, maxHorizon, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions) {
+    .Call('_ldt_SearchVarma', PACKAGE = 'ldt', data, combinations, metrics, modelChecks, items, options, maxParams, seasonsCount, maxHorizon, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions)
 }
 
-.EstimVarma <- function(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg) {
-    .Call('_ldt_EstimVarma', PACKAGE = 'ldt', y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg)
+.EstimVarma <- function(data, params, seasonsCount, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber) {
+    .Call('_ldt_EstimVarma', PACKAGE = 'ldt', data, params, seasonsCount, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber)
 }
 

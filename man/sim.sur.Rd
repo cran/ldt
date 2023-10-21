@@ -4,38 +4,27 @@
 \alias{sim.sur}
 \title{Generate Random Sample from an SUR Model}
 \usage{
-sim.sur(
-  sigma = 1L,
-  coef = 1L,
-  nObs = 100,
-  intercept = TRUE,
-  numFormat = "\%.2f"
-)
+sim.sur(sigma = 1L, coef = 1L, nObs = 100, intercept = TRUE)
 }
 \arguments{
 \item{sigma}{covariance matrix of the errors.
 If it is an integer value, it specifies the number of equations in the SUR model and covariance matrix is generated randomly.}
 
 \item{coef}{Coefficients of the model.
-If it is an integer value, it specifies the number of independent variables in each equation of the SUR model and coefficient matrix is generated randomly.}
+If it is an integer value, it specifies the number of exogenous variables in each equation of the SUR model and coefficient matrix is generated randomly.}
 
 \item{nObs}{Number of observations to generate.}
 
 \item{intercept}{If \code{TRUE}, an intercept is included in the model as the first exogenous variable.}
-
-\item{numFormat}{A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-If \code{NULL}, conversion to latex or html representations are disabled.}
 }
 \value{
 A list with the following items:
-\item{y}{matrix, the generated dependent variable.}
-\item{x}{matrix, the generated independent variable.}
+\item{y}{matrix, the generated endogenous variable(s).}
+\item{x}{matrix, the generated exogenous variable(s).}
 \item{e}{matrix, the generated errors.}
 \item{sigma}{matrix, the covariance matrix of the disturbances.}
 \item{coef}{matrix, the coefficients used in the model.}
 \item{intercept}{logical, whether an intercept was included in the model.}
-\item{eqsLatex}{character string, Latex representation of the equations of the system.}
-\item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 }
 \description{
 This function generates a random sample from an Seemingly Unrelated Regression model.
@@ -46,15 +35,7 @@ num_x <- 3L
 n_obs = 100
 data <- sim.sur(sigma = num_y, coef = num_x, nObs = n_obs)
 
-# Use systemfit to estimate:
-exp_names <- paste0(colnames(data$x), collapse = " + ")
-fmla <- lapply(1:num_y, function(i) as.formula(paste0("Y", i, " ~ -1 +", exp_names)))
-fit <- systemfit::systemfit(fmla, data = data.frame(data$y, data$x), method = "SUR")
-summary(fit)
-
-# Use estim.sur function in this package:
-fit2 <- estim.sur(data$y, data$x, addIntercept = FALSE)
-fit2$estimations$coefs # coefficient matrix
+# see the examples in 'estim.sur' or 'search.sur' functions
 }
 \seealso{
 \link{sim.varma},\link{estim.sur},\link{search.sur}

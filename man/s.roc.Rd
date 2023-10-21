@@ -4,7 +4,7 @@
 \alias{s.roc}
 \title{Get ROC Curve Data for Binary Classification}
 \usage{
-s.roc(y, scores, weights = NULL, options = get.options.roc(), printMsg = FALSE)
+s.roc(y, scores, weights = NULL, options = get.options.roc())
 }
 \arguments{
 \item{y}{A numeric vector (\code{Nx1}) representing the actual values.}
@@ -15,8 +15,6 @@ s.roc(y, scores, weights = NULL, options = get.options.roc(), printMsg = FALSE)
 Use \code{NULL} for equal weights.}
 
 \item{options}{A list from \code{\link{get.options.roc}} function for more options.}
-
-\item{printMsg}{Set to \code{TRUE} to enable printing some details.}
 }
 \value{
 A list with the following items:
@@ -29,13 +27,14 @@ This function calculates the required points for plotting the ROC curve and the 
 }
 \details{
 This is generally a statistics helper method in this package and it shows the inner calculations.
+See AUC section in \link{get.search.metrics} for a discussion.
 }
 \examples{
 y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
 scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
-res1 <- s.roc(y,scores, printMsg = FALSE)
+res1 <- s.roc(y,scores)
 costs <- c(1,2,1,4,1,5,1,1,0.5,1)
 costMatrix <- matrix(c(0.02,-1,-3,3),2,2)
 opt <- get.options.roc(costs = costs, costMatrix = costMatrix)
-res2 <- s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
+res2 <- s.roc(y,scores,NULL,options = opt)
 }

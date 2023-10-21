@@ -96,19 +96,16 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
   return sum;
 }
 
-void SurSimulation::Calculate(
-    Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R, bool &cancel,
-    Ti maxIteration, unsigned int seed, Tv sigSearchMaxProb, Tv maxCondNum,
-    Ti maxInvalidSim, const std::function<void(Tv &)> *transformForMetrics) {
+void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
+                              Matrix<Tv> *R, bool &cancel, Ti maxIteration,
+                              unsigned int seed, Tv sigSearchMaxProb,
+                              Tv maxCondNum, Ti maxInvalidSim,
+                              const std::vector<Tv> *boxCoxLambdas) {
   if (cancel)
     return;
   if (maxIteration <= 0)
     throw LdtException(ErrorType::kLogic, "sur-simulation",
                        "number of iterations must be positive");
-
-  std::function<void(Tv &)> tfm;
-  if (transformForMetrics)
-    tfm = *transformForMetrics;
 
   // Ti N = data.RowsCount;
   Ti k = data.ColsCount - m;
@@ -183,15 +180,20 @@ void SurSimulation::Calculate(
         continue;
     }
 
-    if (transformForMetrics) {
-      for (int i = 0; i < len; i++) {
-        tfm(newY.Data[i]);
-        tfm(Model.Projections.Means.Data[i]);
+    if (boxCoxLambdas) {
+      for (Ti j = 0; j < m; j++) {
+        Array<Tv>::BoxCoxInv(newY.ColBegin(j), newY.RowsCount,
+                             boxCoxLambdas->at(j));
+        Array<Tv>::BoxCoxInv(Model.Projections.Means.ColBegin(j),
+                             Model.Projections.Means.RowsCount,
+                             boxCoxLambdas->at(j));
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int i = 0; i < len; i++) {
-          tfm(Model.Projections.Variances.Data[i]);
+        for (Ti j = 0; j < m; j++) {
+          Array<Tv>::BoxCoxInv(Model.Projections.Variances.ColBegin(j),
+                               Model.Projections.Variances.RowsCount,
+                               boxCoxLambdas->at(j));
         }
       }
     }

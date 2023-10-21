@@ -53,50 +53,66 @@ BEGIN_RCPP
 END_RCPP
 }
 // SearchDc
-SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions, SEXP costMatrices, bool searchLogit, bool searchProbit, List optimOptions, List aucOptions, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
-RcppExport SEXP _ldt_SearchDc(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP optimOptionsSEXP, SEXP aucOptionsSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+SEXP SearchDc(List data, List combinations, List metrics, List modelChecks, List items, List options, SEXP costMatrices, bool searchLogit, bool searchProbit, List newtonOptions, List aucOptions, int numChoices);
+RcppExport SEXP _ldt_SearchDc(SEXP dataSEXP, SEXP combinationsSEXP, SEXP metricsSEXP, SEXP modelChecksSEXP, SEXP itemsSEXP, SEXP optionsSEXP, SEXP costMatricesSEXP, SEXP searchLogitSEXP, SEXP searchProbitSEXP, SEXP newtonOptionsSEXP, SEXP aucOptionsSEXP, SEXP numChoicesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type w(wSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type xSizes(xSizesSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type xPartitions(xPartitionsSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< List >::type combinations(combinationsSEXP);
+    Rcpp::traits::input_parameter< List >::type metrics(metricsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelChecks(modelChecksSEXP);
+    Rcpp::traits::input_parameter< List >::type items(itemsSEXP);
+    Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type costMatrices(costMatricesSEXP);
     Rcpp::traits::input_parameter< bool >::type searchLogit(searchLogitSEXP);
     Rcpp::traits::input_parameter< bool >::type searchProbit(searchProbitSEXP);
-    Rcpp::traits::input_parameter< List >::type optimOptions(optimOptionsSEXP);
+    Rcpp::traits::input_parameter< List >::type newtonOptions(newtonOptionsSEXP);
     Rcpp::traits::input_parameter< List >::type aucOptions(aucOptionsSEXP);
-    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
-    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(SearchDc(y, x, w, xSizes, xPartitions, costMatrices, searchLogit, searchProbit, optimOptions, aucOptions, metricOptions, modelCheckItems, searchItems, searchOptions));
+    Rcpp::traits::input_parameter< int >::type numChoices(numChoicesSEXP);
+    rcpp_result_gen = Rcpp::wrap(SearchDc(data, combinations, metrics, modelChecks, items, options, costMatrices, searchLogit, searchProbit, newtonOptions, aucOptions, numChoices));
     return rcpp_result_gen;
 END_RCPP
 }
 // EstimDc
-SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX, SEXP pcaOptionsX, SEXP costMatrices, List aucOptions, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, bool weightedEval, bool printMsg);
-RcppExport SEXP _ldt_EstimDc(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP linkFuncSEXP, SEXP newXSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP aucOptionsSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP weightedEvalSEXP, SEXP printMsgSEXP) {
+SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX, SEXP costMatrices, List newtonOptions, List aucOptions, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, int numChoices, bool weightedEval);
+RcppExport SEXP _ldt_EstimDc(SEXP dataSEXP, SEXP linkFuncSEXP, SEXP pcaOptionsXSEXP, SEXP costMatricesSEXP, SEXP newtonOptionsSEXP, SEXP aucOptionsSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP numChoicesSEXP, SEXP weightedEvalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type w(wSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::string >::type linkFunc(linkFuncSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type costMatrices(costMatricesSEXP);
+    Rcpp::traits::input_parameter< List >::type newtonOptions(newtonOptionsSEXP);
     Rcpp::traits::input_parameter< List >::type aucOptions(aucOptionsSEXP);
     Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
     Rcpp::traits::input_parameter< double >::type simTrainRatio(simTrainRatioSEXP);
     Rcpp::traits::input_parameter< int >::type simTrainFixSize(simTrainFixSizeSEXP);
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
+    Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
+    Rcpp::traits::input_parameter< int >::type numChoices(numChoicesSEXP);
     Rcpp::traits::input_parameter< bool >::type weightedEval(weightedEvalSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimDc(y, x, w, linkFunc, newX, pcaOptionsX, costMatrices, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, weightedEval, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimDc(data, linkFunc, pcaOptionsX, costMatrices, newtonOptions, aucOptions, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, numChoices, weightedEval));
+    return rcpp_result_gen;
+END_RCPP
+}
+// SearchRFunc
+SEXP SearchRFunc(List data, List combinations, List metrics, List modelChecks, List items, List options, std::string rFuncName, int length1, bool isInnerExogenous);
+RcppExport SEXP _ldt_SearchRFunc(SEXP dataSEXP, SEXP combinationsSEXP, SEXP metricsSEXP, SEXP modelChecksSEXP, SEXP itemsSEXP, SEXP optionsSEXP, SEXP rFuncNameSEXP, SEXP length1SEXP, SEXP isInnerExogenousSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< List >::type combinations(combinationsSEXP);
+    Rcpp::traits::input_parameter< List >::type metrics(metricsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelChecks(modelChecksSEXP);
+    Rcpp::traits::input_parameter< List >::type items(itemsSEXP);
+    Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type rFuncName(rFuncNameSEXP);
+    Rcpp::traits::input_parameter< int >::type length1(length1SEXP);
+    Rcpp::traits::input_parameter< bool >::type isInnerExogenous(isInnerExogenousSEXP);
+    rcpp_result_gen = Rcpp::wrap(SearchRFunc(data, combinations, metrics, modelChecks, items, options, rFuncName, length1, isInnerExogenous));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -111,32 +127,34 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetWeightFromMetric
-SEXP GetWeightFromMetric(SEXP value, SEXP metricName);
-RcppExport SEXP _ldt_GetWeightFromMetric(SEXP valueSEXP, SEXP metricNameSEXP) {
+SEXP GetWeightFromMetric(SEXP value, SEXP metricName, SEXP minValue);
+RcppExport SEXP _ldt_GetWeightFromMetric(SEXP valueSEXP, SEXP metricNameSEXP, SEXP minValueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
     Rcpp::traits::input_parameter< SEXP >::type metricName(metricNameSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetWeightFromMetric(value, metricName));
+    Rcpp::traits::input_parameter< SEXP >::type minValue(minValueSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetWeightFromMetric(value, metricName, minValue));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetMetricFromWeight
-SEXP GetMetricFromWeight(SEXP value, SEXP metricName);
-RcppExport SEXP _ldt_GetMetricFromWeight(SEXP valueSEXP, SEXP metricNameSEXP) {
+SEXP GetMetricFromWeight(SEXP value, SEXP metricName, SEXP minValue);
+RcppExport SEXP _ldt_GetMetricFromWeight(SEXP valueSEXP, SEXP metricNameSEXP, SEXP minValueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
     Rcpp::traits::input_parameter< SEXP >::type metricName(metricNameSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetMetricFromWeight(value, metricName));
+    Rcpp::traits::input_parameter< SEXP >::type minValue(minValueSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetMetricFromWeight(value, metricName, minValue));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetRoc
-List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg);
-RcppExport SEXP _ldt_GetRoc(SEXP ySEXP, SEXP scoresSEXP, SEXP weightsSEXP, SEXP optionsSEXP, SEXP printMsgSEXP) {
+List GetRoc(SEXP y, SEXP scores, SEXP weights, List options);
+RcppExport SEXP _ldt_GetRoc(SEXP ySEXP, SEXP scoresSEXP, SEXP weightsSEXP, SEXP optionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -144,14 +162,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type scores(scoresSEXP);
     Rcpp::traits::input_parameter< SEXP >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetRoc(y, scores, weights, options, printMsg));
+    rcpp_result_gen = Rcpp::wrap(GetRoc(y, scores, weights, options));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetGldFromMoments
-NumericVector GetGldFromMoments(double mean, double variance, double skewness, double excessKurtosis, int type, double s1, double s2, List nelderMeadOptions, bool printMsg);
-RcppExport SEXP _ldt_GetGldFromMoments(SEXP meanSEXP, SEXP varianceSEXP, SEXP skewnessSEXP, SEXP excessKurtosisSEXP, SEXP typeSEXP, SEXP s1SEXP, SEXP s2SEXP, SEXP nelderMeadOptionsSEXP, SEXP printMsgSEXP) {
+NumericVector GetGldFromMoments(double mean, double variance, double skewness, double excessKurtosis, int type, double s1, double s2, List nelderMeadOptions);
+RcppExport SEXP _ldt_GetGldFromMoments(SEXP meanSEXP, SEXP varianceSEXP, SEXP skewnessSEXP, SEXP excessKurtosisSEXP, SEXP typeSEXP, SEXP s1SEXP, SEXP s2SEXP, SEXP nelderMeadOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -163,8 +180,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type s1(s1SEXP);
     Rcpp::traits::input_parameter< double >::type s2(s2SEXP);
     Rcpp::traits::input_parameter< List >::type nelderMeadOptions(nelderMeadOptionsSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetGldFromMoments(mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions, printMsg));
+    rcpp_result_gen = Rcpp::wrap(GetGldFromMoments(mean, variance, skewness, excessKurtosis, type, s1, s2, nelderMeadOptions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -225,41 +241,33 @@ BEGIN_RCPP
 END_RCPP
 }
 // SearchSur
-SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions, int numFixXPartitions, SEXP yGroups, int searchSigMaxIter, double searchSigMaxProb, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
-RcppExport SEXP _ldt_SearchSur(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP xSizesSEXP, SEXP xPartitionsSEXP, SEXP numFixXPartitionsSEXP, SEXP yGroupsSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+SEXP SearchSur(List data, List combinations, List metrics, List modelChecks, List items, List options, int searchSigMaxIter, double searchSigMaxProb);
+RcppExport SEXP _ldt_SearchSur(SEXP dataSEXP, SEXP combinationsSEXP, SEXP metricsSEXP, SEXP modelChecksSEXP, SEXP itemsSEXP, SEXP optionsSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type numTargets(numTargetsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type xSizes(xSizesSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type xPartitions(xPartitionsSEXP);
-    Rcpp::traits::input_parameter< int >::type numFixXPartitions(numFixXPartitionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type yGroups(yGroupsSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< List >::type combinations(combinationsSEXP);
+    Rcpp::traits::input_parameter< List >::type metrics(metricsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelChecks(modelChecksSEXP);
+    Rcpp::traits::input_parameter< List >::type items(itemsSEXP);
+    Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
     Rcpp::traits::input_parameter< int >::type searchSigMaxIter(searchSigMaxIterSEXP);
     Rcpp::traits::input_parameter< double >::type searchSigMaxProb(searchSigMaxProbSEXP);
-    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
-    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions, yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions, modelCheckItems, searchItems, searchOptions));
+    rcpp_result_gen = Rcpp::wrap(SearchSur(data, combinations, metrics, modelChecks, items, options, searchSigMaxIter, searchSigMaxProb));
     return rcpp_result_gen;
 END_RCPP
 }
 // EstimSur
-SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP newX, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber, SEXP simTransform, bool printMsg);
-RcppExport SEXP _ldt_EstimSur(SEXP ySEXP, SEXP xSEXP, SEXP addInterceptSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP newXSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP, SEXP simTransformSEXP, SEXP printMsgSEXP) {
+SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb, SEXP restriction, SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize, double simTrainRatio, int simTrainFixSize, int simSeed, double simMaxConditionNumber);
+RcppExport SEXP _ldt_EstimSur(SEXP dataSEXP, SEXP searchSigMaxIterSEXP, SEXP searchSigMaxProbSEXP, SEXP restrictionSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP simFixSizeSEXP, SEXP simTrainRatioSEXP, SEXP simTrainFixSizeSEXP, SEXP simSeedSEXP, SEXP simMaxConditionNumberSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< bool >::type addIntercept(addInterceptSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
     Rcpp::traits::input_parameter< int >::type searchSigMaxIter(searchSigMaxIterSEXP);
     Rcpp::traits::input_parameter< double >::type searchSigMaxProb(searchSigMaxProbSEXP);
     Rcpp::traits::input_parameter< SEXP >::type restriction(restrictionSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsY(pcaOptionsYSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
     Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
@@ -267,63 +275,51 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type simTrainFixSize(simTrainFixSizeSEXP);
     Rcpp::traits::input_parameter< int >::type simSeed(simSeedSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type simTransform(simTransformSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimSur(y, x, addIntercept, searchSigMaxIter, searchSigMaxProb, restriction, newX, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber, simTransform, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimSur(data, searchSigMaxIter, searchSigMaxProb, restriction, pcaOptionsY, pcaOptionsX, simFixSize, simTrainRatio, simTrainFixSize, simSeed, simMaxConditionNumber));
     return rcpp_result_gen;
 END_RCPP
 }
 // SearchVarma
-SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions, SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon, SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier, List lbfgsOptions, List metricOptions, List modelCheckItems, List searchItems, List searchOptions);
-RcppExport SEXP _ldt_SearchVarma(SEXP ySEXP, SEXP xSEXP, SEXP numTargetsSEXP, SEXP ySizesSEXP, SEXP yPartitionsSEXP, SEXP xGroupsSEXP, SEXP maxParamsSEXP, SEXP seasonsCountSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simUsePreviousEstimSEXP, SEXP olsStdMultiplierSEXP, SEXP lbfgsOptionsSEXP, SEXP metricOptionsSEXP, SEXP modelCheckItemsSEXP, SEXP searchItemsSEXP, SEXP searchOptionsSEXP) {
+SEXP SearchVarma(List data, List combinations, List metrics, List modelChecks, List items, List options, IntegerVector maxParams, int seasonsCount, int maxHorizon, bool simUsePreviousEstim, double olsStdMultiplier, List lbfgsOptions);
+RcppExport SEXP _ldt_SearchVarma(SEXP dataSEXP, SEXP combinationsSEXP, SEXP metricsSEXP, SEXP modelChecksSEXP, SEXP itemsSEXP, SEXP optionsSEXP, SEXP maxParamsSEXP, SEXP seasonsCountSEXP, SEXP maxHorizonSEXP, SEXP simUsePreviousEstimSEXP, SEXP olsStdMultiplierSEXP, SEXP lbfgsOptionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type numTargets(numTargetsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ySizes(ySizesSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type yPartitions(yPartitionsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type xGroups(xGroupsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type maxParams(maxParamsSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< List >::type combinations(combinationsSEXP);
+    Rcpp::traits::input_parameter< List >::type metrics(metricsSEXP);
+    Rcpp::traits::input_parameter< List >::type modelChecks(modelChecksSEXP);
+    Rcpp::traits::input_parameter< List >::type items(itemsSEXP);
+    Rcpp::traits::input_parameter< List >::type options(optionsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type maxParams(maxParamsSEXP);
     Rcpp::traits::input_parameter< int >::type seasonsCount(seasonsCountSEXP);
     Rcpp::traits::input_parameter< int >::type maxHorizon(maxHorizonSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< bool >::type simUsePreviousEstim(simUsePreviousEstimSEXP);
     Rcpp::traits::input_parameter< double >::type olsStdMultiplier(olsStdMultiplierSEXP);
     Rcpp::traits::input_parameter< List >::type lbfgsOptions(lbfgsOptionsSEXP);
-    Rcpp::traits::input_parameter< List >::type metricOptions(metricOptionsSEXP);
-    Rcpp::traits::input_parameter< List >::type modelCheckItems(modelCheckItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchItems(searchItemsSEXP);
-    Rcpp::traits::input_parameter< List >::type searchOptions(searchOptionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(SearchVarma(y, x, numTargets, ySizes, yPartitions, xGroups, maxParams, seasonsCount, maxHorizon, newX, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions, metricOptions, modelCheckItems, searchItems, searchOptions));
+    rcpp_result_gen = Rcpp::wrap(SearchVarma(data, combinations, metrics, modelChecks, items, options, maxParams, seasonsCount, maxHorizon, simUsePreviousEstim, olsStdMultiplier, lbfgsOptions));
     return rcpp_result_gen;
 END_RCPP
 }
 // EstimVarma
-SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount, bool addIntercept, List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber, SEXP simTransform, bool printMsg);
-RcppExport SEXP _ldt_EstimVarma(SEXP ySEXP, SEXP xSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP addInterceptSEXP, SEXP lbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP newXSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP, SEXP simTransformSEXP, SEXP printMsgSEXP) {
+SEXP EstimVarma(List data, IntegerVector params, int seasonsCount, List lbfgsOptions, double olsStdMultiplier, SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, int simFixSize, SEXP simHorizons, bool simUsePreviousEstim, double simMaxConditionNumber);
+RcppExport SEXP _ldt_EstimVarma(SEXP dataSEXP, SEXP paramsSEXP, SEXP seasonsCountSEXP, SEXP lbfgsOptionsSEXP, SEXP olsStdMultiplierSEXP, SEXP pcaOptionsYSEXP, SEXP pcaOptionsXSEXP, SEXP maxHorizonSEXP, SEXP simFixSizeSEXP, SEXP simHorizonsSEXP, SEXP simUsePreviousEstimSEXP, SEXP simMaxConditionNumberSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< int >::type seasonsCount(seasonsCountSEXP);
-    Rcpp::traits::input_parameter< bool >::type addIntercept(addInterceptSEXP);
     Rcpp::traits::input_parameter< List >::type lbfgsOptions(lbfgsOptionsSEXP);
     Rcpp::traits::input_parameter< double >::type olsStdMultiplier(olsStdMultiplierSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsY(pcaOptionsYSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pcaOptionsX(pcaOptionsXSEXP);
     Rcpp::traits::input_parameter< int >::type maxHorizon(maxHorizonSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type newX(newXSEXP);
     Rcpp::traits::input_parameter< int >::type simFixSize(simFixSizeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type simHorizons(simHorizonsSEXP);
     Rcpp::traits::input_parameter< bool >::type simUsePreviousEstim(simUsePreviousEstimSEXP);
     Rcpp::traits::input_parameter< double >::type simMaxConditionNumber(simMaxConditionNumberSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type simTransform(simTransformSEXP);
-    Rcpp::traits::input_parameter< bool >::type printMsg(printMsgSEXP);
-    rcpp_result_gen = Rcpp::wrap(EstimVarma(y, x, params, seasonsCount, addIntercept, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, newX, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg));
+    rcpp_result_gen = Rcpp::wrap(EstimVarma(data, params, seasonsCount, lbfgsOptions, olsStdMultiplier, pcaOptionsY, pcaOptionsX, maxHorizon, simFixSize, simHorizons, simUsePreviousEstim, simMaxConditionNumber));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -332,21 +328,22 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldt_GetDistance", (DL_FUNC) &_ldt_GetDistance, 4},
     {"_ldt_ClusterH", (DL_FUNC) &_ldt_ClusterH, 2},
     {"_ldt_ClusterHGroup", (DL_FUNC) &_ldt_ClusterHGroup, 6},
-    {"_ldt_SearchDc", (DL_FUNC) &_ldt_SearchDc, 14},
-    {"_ldt_EstimDc", (DL_FUNC) &_ldt_EstimDc, 14},
+    {"_ldt_SearchDc", (DL_FUNC) &_ldt_SearchDc, 12},
+    {"_ldt_EstimDc", (DL_FUNC) &_ldt_EstimDc, 13},
+    {"_ldt_SearchRFunc", (DL_FUNC) &_ldt_SearchRFunc, 9},
     {"_ldt_SupportsParallel", (DL_FUNC) &_ldt_SupportsParallel, 0},
-    {"_ldt_GetWeightFromMetric", (DL_FUNC) &_ldt_GetWeightFromMetric, 2},
-    {"_ldt_GetMetricFromWeight", (DL_FUNC) &_ldt_GetMetricFromWeight, 2},
-    {"_ldt_GetRoc", (DL_FUNC) &_ldt_GetRoc, 5},
-    {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 9},
+    {"_ldt_GetWeightFromMetric", (DL_FUNC) &_ldt_GetWeightFromMetric, 3},
+    {"_ldt_GetMetricFromWeight", (DL_FUNC) &_ldt_GetMetricFromWeight, 3},
+    {"_ldt_GetRoc", (DL_FUNC) &_ldt_GetRoc, 4},
+    {"_ldt_GetGldFromMoments", (DL_FUNC) &_ldt_GetGldFromMoments, 8},
     {"_ldt_GldQuantile", (DL_FUNC) &_ldt_GldQuantile, 5},
     {"_ldt_GldDensityQuantile", (DL_FUNC) &_ldt_GldDensityQuantile, 5},
     {"_ldt_CombineStats4", (DL_FUNC) &_ldt_CombineStats4, 2},
     {"_ldt_GetPca", (DL_FUNC) &_ldt_GetPca, 4},
-    {"_ldt_SearchSur", (DL_FUNC) &_ldt_SearchSur, 13},
-    {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 16},
-    {"_ldt_SearchVarma", (DL_FUNC) &_ldt_SearchVarma, 17},
-    {"_ldt_EstimVarma", (DL_FUNC) &_ldt_EstimVarma, 17},
+    {"_ldt_SearchSur", (DL_FUNC) &_ldt_SearchSur, 8},
+    {"_ldt_EstimSur", (DL_FUNC) &_ldt_EstimSur, 11},
+    {"_ldt_SearchVarma", (DL_FUNC) &_ldt_SearchVarma, 12},
+    {"_ldt_EstimVarma", (DL_FUNC) &_ldt_EstimVarma, 12},
     {NULL, NULL, 0}
 };
 

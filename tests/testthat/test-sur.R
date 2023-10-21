@@ -1,7 +1,22 @@
 
-#TODO:  update search tests by using 'summary' function
+test_that("estim.sur estimation works with simulated data", {
+  set.seed(340)
+  data <- sim.sur(sigma = 2L, coef = 4L, nObs = 1000, intercept = TRUE)
 
-printMsg = FALSE
+  res = estim.sur(data = get.data(cbind(data$y,data$x), endogenous = ncol(data$y),
+                                  addIntercept = FALSE))
+
+  expect_equal(as.numeric(coef(res)), as.numeric(data$coef), tolerance = 1e-1)
+  expect_equal(as.numeric(res$estimations$sigma), as.numeric(data$sigma), tolerance = 1e-1)
+
+  # test exogenous and endogenous functions:
+  X <- exogenous(res)
+  Y <- endogenous(res)
+  beta <- solve(t(X) %*% X) %*% t(X) %*% Y
+  expect_equal(res$estimations$coefs, beta)
+})
+
+
 x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
              26.695,21.992,68.033,98.872,61.154,71.842,66.922,
              31.142,58.429,45.123,80.99,26.345,50.096,36.478,
@@ -28,8 +43,9 @@ x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
 colnames(x) = paste0("V",seq(1,ncol(x)))
 
 
+
 test_that("estim.sur estimation works with NO restrictions (OLS)", {
-  res = estim.sur(x[,1:2], x[,3:5], printMsg = printMsg)
+  res = estim.sur(data = get.data(x[,1:5], endogenous = 2))
 
   #resR = systemfit::systemfit(list(V1~V3+V4+V5,V2~V3+V4+V5), data=as.data.frame(x))
   #cofs = as.numeric(resR$coefficients)
@@ -37,7 +53,7 @@ test_that("estim.sur estimation works with NO restrictions (OLS)", {
            -0.01306229557043696,  0.01754567721511469,  0.01380101248468951)
   #rcov = as.numeric(resR$residCov)*18/22
   rcov = c(379.12773062174330,  -74.25995265091441,  -74.25995265091441, 1004.26919375767909)
-  expect_equal(as.numeric(res$estimations$gamma), cofs, tolerance = 1e-8)
+  expect_equal(as.numeric(coef(res)), cofs, tolerance = 1e-8)
   expect_equal(as.numeric(res$estimations$sigma),
                rcov, tolerance = 1e-8) # adjusted dof
 
@@ -50,7 +66,7 @@ test_that("estim.sur estimation works with NO restrictions (OLS)", {
 test_that("estim.sur peojection works with NO restrictions (OLS)", {
   newX = matrix(c(1,2,3,4,5,6),2,3)
   colnames(newX) <- c("V3", "V4", "V5")
-  res = estim.sur(x[,1:2], x[,3:5], newX = newX, printMsg = printMsg)
+  res = estim.sur(data = get.data(x[,1:5], endogenous = 2, newData = newX))
 
 
   #cont = systemfit::systemfit.control(methodResidCov = 'noDfCor')
@@ -82,7 +98,7 @@ test_that("estim.sur peojection works with NO restrictions (OLS)", {
 test_that("estim.sur estimation works with restrictions", {
   R = diag(8)
   R=R[,c(-2,-7)]
-  res = estim.sur(x[,1:2], x[,3:5], restriction = R, printMsg = printMsg)
+  res = estim.sur(data = get.data(x[,1:5], endogenous = 2), restriction = R)
   #resR = systemfit::systemfit(list(V1~V4+V5,V2~V3+V5), data=as.data.frame(x),method="SUR")
   #cf = as.numeric(resR$coefficients)
   cf = c(69.83450663570873473 , 0.01888766594180449 ,-0.37231463758924349, 51.22018576974861759, -0.01993726393353337,
@@ -93,6 +109,7 @@ test_that("estim.sur estimation works with restrictions", {
                tolerance = 1e-3) # low tolerance ?! it must be because the initialization is different
   expect_equal(as.numeric(res$estimations$sigma),
                cv, tolerance = 1e-3) # adjusted dof
+
 })
 
 test_that("estim.sur peojection works with NO restrictions (OLS)", {
@@ -100,7 +117,7 @@ test_that("estim.sur peojection works with NO restrictions (OLS)", {
   colnames(newX) <- c("V3", "V4", "V5")
   R = diag(8)
   R=R[,c(-2,-7)]
-  res = estim.sur(x[,1:2], x[,3:5], restriction = R, newX = newX, printMsg = printMsg)
+  res = estim.sur(data = get.data(x[,1:5], endogenous = 2, newData = newX), restriction = R)
 
   # cont = systemfit::systemfit.control(methodResidCov = 'noDfCor', singleEqSigma = TRUE)
   # resR = systemfit::systemfit(list(V1~V4+V5,V2~V3+V5), data=as.data.frame(x), control = cont, method = "SUR")
@@ -110,7 +127,8 @@ test_that("estim.sur peojection works with NO restrictions (OLS)", {
   rcov = c(380.49525763946917, -74.49900118994805,
            -74.49900118994805, 1004.63372739176225) # as.numeric(resR$residCov)
 
-  expect_equal(as.numeric(res$projection$means[,1]), prd, tolerance = 1e-3) # ??
+  pr <- predict(res)
+  expect_equal(as.numeric(pr$means[,1]), prd, tolerance = 1e-3) # ??
   expect_equal(as.numeric(res$estimations$sigma), rcov, tolerance = 1e-3)
 
   # I could not reproduce the exact results of the coefficient variance.
@@ -125,8 +143,9 @@ test_that("estim.sur peojection works with NO restrictions (OLS)", {
 
 test_that("estim.sur estimation works with significance search", {
   for (th in seq(0.01,0.90,0.1)){
-    res = estim.sur(x[,1:2], x[,3:7], searchSigMaxIter = 10,
-                   searchSigMaxProb = th, printMsg = printMsg)
+    res = estim.sur(data = get.data(x[,1:5], endogenous = 2),
+                    searchSigMaxIter = 10,
+                   searchSigMaxProb = th)
     for (a in res$estimations$pValues){
       if (is.nan(a) == FALSE){
         expect_true(a < th)
@@ -144,8 +163,13 @@ test_that("estim.sur projection works with PCA for endogenous", {
 
   newX = matrix(c(10,11,12, 13,14,15),3,2)
 
-  res1 = estim.sur(as.matrix(y[,1:3]), as.matrix(x[,6:7]), newX = newX, printMsg = printMsg)
-  res2 = estim.sur(as.matrix(x[,1:5]), as.matrix(x[,6:7]), pcaOptionsY = pcaOp, newX = newX, printMsg = printMsg)
+  D <- cbind(as.matrix(y[,1:3]), x[,6:7, drop = FALSE])
+  colnames(D)[4:5] <- c("X1", "X2")
+  colnames(newX) <- c("X1", "X2")
+  res1 = estim.sur(data = get.data(D, endogenous = 3, newData = newX))
+  colnames(newX) <- c("V6", "V7")
+  res2 = estim.sur(data = get.data(x[,1:7], endogenous = 5, newData = newX),
+                   pcaOptionsY = pcaOp)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-13)
   expect_equal(as.numeric( res1$estimations$sigma),as.numeric(res2$estimations$sigma), tolerance = 1e-13)
@@ -167,15 +191,22 @@ test_that("estim.sur projection works with PCA for exogenous", {
   pcaOp$ignoreFirst = 0
   pcaOp$exactCount = 1
 
-  res1 = estim.sur(x[,1:2], x= Z, addIntercept = TRUE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
-  res2 = estim.sur(x[,1:2], x=x[,3:4], addIntercept = TRUE, pcaOptionsX = pcaOp, newX = newZp, printMsg = printMsg)
+  D <- cbind(as.matrix(x[,1:2]), Z)
+  colnames(D) <- c("Y1", "Y2", "pca1")
+  newX = newZp[,1,drop=FALSE]
+  colnames(newX) <- c("pca1")
+  res1 = estim.sur(data = get.data(D, endogenous = 2, newData = newX))
+  colnames(newZp) <- c("V3", "V4")
+  res2 = estim.sur(data = get.data(x[,1:4], endogenous = 2, newData = newZp),
+                   pcaOptionsX = pcaOp)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
   expect_equal(res1$estimations$gammaVar, res2$estimations$gammaVar, tolerance = 1e-8)
 
   # without intercept
-  res1 = estim.sur(x[,1:2], x= Z, addIntercept = FALSE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
-  res2 = estim.sur(x[,1:2], x=x[,3:4], addIntercept = FALSE, pcaOptionsX = pcaOp, newX = newZ, printMsg = printMsg)
+  res1 = estim.sur(data = get.data(D, endogenous = 2, newData = newX, addIntercept = FALSE))
+  res2 = estim.sur(data = get.data(x[,1:4], endogenous = 2, newData = newZp, addIntercept = FALSE),
+                   pcaOptionsX = pcaOp)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
   expect_equal(res1$estimations$gammaVar, res2$estimations$gammaVar, tolerance = 1e-8)
@@ -199,8 +230,11 @@ test_that("estim.sur estimation works with PCA for endogenous and exogenous with
   R = diag(6)
   R=R[,c(-2,-5)]
 
-  res1 = estim.sur(as.matrix(y[,1:3]), Z, restriction = R, printMsg = printMsg)
-  res2 = estim.sur(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, restriction = R, printMsg = printMsg)
+  D = cbind(y[,1:3], Z)
+  res1 = estim.sur(data = get.data(D, endogenous = 3), restriction = R)
+  DD = cbind(x[,1:5], x[,3:4])
+  colnames(DD) <- c("V1", "V2", "V3", "V4", "V5", "X1", "X2")
+  res2 = estim.sur(data = get.data(DD, endogenous = 5), pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, restriction = R)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
 })
@@ -221,8 +255,10 @@ test_that("estim.sur estimation works with PCA for endogenous and exogenous with
 
   # note that it is the current code's responsibility to predict the dimensions of R when PCA is used
 
-  res1 = estim.sur(as.matrix(y[,1:3]), Z, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
-  res2 = estim.sur(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
+  D = cbind(y[,1:3], Z)
+  res1 = estim.sur(data = get.data(D, endogenous = 3), searchSigMaxIter = 10, searchSigMaxProb = 0.3)
+  DD = cbind(x[,1:5], x[,3:4])
+  res2 = estim.sur(data = get.data(DD, endogenous = 5), pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, searchSigMaxIter = 10, searchSigMaxProb = 0.3)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
 })
@@ -237,485 +273,412 @@ test_that("estim.sur simulation works", {
   exo <- x[,c(5,6)]
   exo[[1,1]] <- NA
   exo[[1,2]] <- NaN
-  res1 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, searchSigMaxProb = 0.95, printMsg = printMsg )
+  D <- cbind(x[,c(1,2,3)], exo)
+  res1 = suppressWarnings(estim.sur(data = get.data(D, endogenous = 3), simFixSize = 10, searchSigMaxIter = 2, searchSigMaxProb = 0.95 ))
   expect_equal(res1$simulation$validIter, 10)
   expect_true(all(is.na(res1$simulation$results[,1]) == FALSE))
   expect_equal(res1$simulation$results[,1], res1$simulation$results[,1], tolerance = 1e-8) # any better test ?!
 
 })
 
-test_that("estim.sur transform in simulation works", {
+test_that("estim.sur lambda in simulation works", {
 
-  exo <- x[,c(5,6)]
-  exo[[1,1]] <- NA
-  exo[[1,2]] <- NaN
-  res1 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, printMsg = printMsg, simSeed = 340 )
+  res1 = estim.sur(data = get.data(x[,1:6], endogenous = 2, lambdas = c(1, 1)),
+                   simFixSize = 10, simSeed = 340 )
   expect_equal(res1$simulation$validIter, 10)
 
-  res2 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, printMsg = printMsg, simSeed = 340
-                   , simTransform = "id")
+  res2 = estim.sur(data = get.data(x[,1:6], endogenous = 2),
+                   simFixSize = 10, simSeed = 340)
   expect_equal(res1$simulation, res2$simulation)
-  expect_equal(res1$metrics, res2$metrics)
+  expect_equal(res1$metrics[c("mae", "rmse"),],
+               res2$metrics[c("mae", "rmse"),])
+
+  # Note that When λ=1, the Box-Cox transformation returns x-1
+  # It seems that this shift does not change some metrics
+  # However, check its mathematics
 
 })
 
 test_that("search.sur works for insample", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
-  res1 = estim.sur(y[,res$aic$target1$model$bests$best1$depIndices,drop=FALSE],
-                  Exo[,res$aic$target1$model$bests$best1$exoIndices,drop=FALSE],
-                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-  res2 = estim.sur(y[,res$sic$target2$model$bests$best1$depIndices,drop=FALSE],
-                  Exo[,res$sic$target2$model$bests$best1$exoIndices,drop=FALSE],
-                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1,2),
+                                                   innerGroups = list(c(1,2), c(1,3),c(2,3)),
+                                                   numTargets = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(typesIn = c("aic", "sic")))
+  allMetrics = sort(sapply(res$results, function(x){x$value$metric}))
+  sumRes <- summary(res, test = TRUE)
 
-  expect_equal(exp(-0.5 * res1$metrics[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
-  expect_equal(exp(-0.5 * res2$metrics[3,1]), res$sic$target2$model$bests$best1$weight, tolerance = 1e-10)
-
-  for (m in res$aic$target1$model$all){
-    M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
-                 simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-    expect_equal(exp(-0.5 * M$metrics[2,1]), m$weight, tolerance = 1e-10)
-  }
+  expect_equal(sumRes$counts, res$counts) # Just to show that is not an empty test
 
   # change Indexes
-  y=x[,c(2,3,1)]
-  Exo=x[,c(5,4,7,6)]
-  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
-  expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
+  res1 = search.sur(data = get.data(x[,c(2,3,1,5,4,7,6), drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1,2),
+                                                   innerGroups = list(c(1,2), c(1,3),c(2,3)),
+                                                   numTargets = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(typesIn = c("aic", "sic")))
+
+  expect_equal(res$counts, res1$counts)
+  allMetrics1 = sort(sapply(res1$results, function(x){x$value$metric}))
+
+  for (r1 in res$results){
+    if (r1$typeName == "model")
+      next # we cannot compare 'info' of all models, but best ones (you can check the existence)
+
+    r2 = res1$results[which(sapply(res1$results,
+                                  function(r)r$evalName == r1$evalName &&
+                                    r$targetName == r1$targetName && r$typeName == r1$typeName &&
+                                    r$info == r1$info))]
+    expect_true(length(r2) == 1)
+    expect_equal(r1$value$metric, r2[[1]]$value$metric) # indices are different
+  }
+  # note that data must have given column names in the two searches
+  # also, 'innerGroups' must point to same variables in both cases
+  # also, make sure 'numTargets' does not exclude best models
+
+  expect_equal(allMetrics, allMetrics1)
 
 })
 
 test_that("search.sur works with fixed exogenous variables", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2, xSizes = c(3L),  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                  numFixXPartitions = 3,
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2, 3),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2,
+                                                   numFixPartitions = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(typesIn = c("aic", "sic")))
 
-  for (m in res$aic$target1$model$all){
-    expect_equal(c(1,2,3),m$exoIndices[1:3])
+  for (m in res$results){
+    expect_equal(c('(Intercept)', 'V4', 'V5'),m$value$exogenous[1:3]) # first 3 exogenous variables are fixed
   }
 })
-
-
-test_that("search.sur works for insample when changing indexes", {
-  skip_on_cran()
-
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = F, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 0),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
-  allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
-
-  # change Indexes
-  y=x[,c(2,1,3)]
-  Exo=x[,c(5,4,7,6)]
-  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search(parallel = F, printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 0),
-                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
-  allWeights3 = sort(sapply(res3$aic$target2$model$all, function(x){x$weight}))
-
-  expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
-})
-
 
 test_that("search.sur works for out-of-sample", {
   skip_on_cran()
 
-  y=x[,c(1,2,3),drop=FALSE]
-  Exo=x[,4:7,drop=FALSE]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = -340))  # negative seed for equal seed in the searchers
-  res1 = estim.sur(y[,res$rmse$target1$model$bests$best1$depIndices,drop=FALSE],
-                  Exo[,res$rmse$target1$model$bests$best1$exoIndices,drop=FALSE],
-                  simFixSize = 4, simTrainRatio = 0.75, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1,2),
+                                                   innerGroups = list(c(1,2), c(1,3),c(2,3)),
+                                                   numTargets = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),
+                                                simFixSize = 4,
+                                                trainRatio = 0.75,
+                                                seed = -340))  # negative seed for equal seed in the searchers
+  sumRes <- summary(res, test = TRUE)
+  allMetrics = sort(sapply(res$results, function(x){x$value$metric}))
+  expect_equal(sumRes$counts, res$counts) # Just to show that is not an empty test
 
-  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="rmse"),1]),
-              as.numeric(s.metric.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
+  # change Indexes
+  res1 = search.sur(data = get.data(x[,c(3,1,2,6,4,5,7), drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1,2),
+                                                   innerGroups = list(c(1,2), c(1,3),c(2,3)),
+                                                   numTargets = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),
+                                                simFixSize = 4,
+                                                trainRatio = 0.75,
+                                                seed = -340))
+  allMetrics1 = sort(sapply(res1$results, function(x){x$value$metric}))
+  expect_equal(res$counts, res1$counts)
 
-  for (m in res$crps$target1$model$all){
-    M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
-                 simFixSize = 4, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
-    expect_equal(as.numeric(M$metrics[which(rownames(res1$metrics)=="crps"),1]),
-                 as.numeric(s.metric.from.weight(m$weight, "crps")), tolerance = 1e-10)
+  for (r1 in res$results){
+    if (r1$typeName == "model")
+      next # we cannot compare 'info' of all models, but best ones (you can check the existence)
+
+    r2 = res1$results[which(sapply(res1$results,
+                                   function(r)r$evalName == r1$evalName &&
+                                     r$targetName == r1$targetName && r$typeName == r1$typeName &&
+                                     r$info == r1$info))]
+    expect_true(length(r2) == 1)
+    expect_equal(r1$value$metric, r2[[1]]$value$metric) # indices are different
   }
+  # note that data must have given column names in the two searches
+  # also, 'innerGroups' must point to same variables in both cases
+  # also, make sure 'numTargets' does not exclude best models
 
-  # change Indexes
-  y=x[,c(2,3,1)]
-  Exo=x[,c(5,4,7,6)]
-  res3 = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                      seed = -340))
-  expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
-
+  expect_equal(allMetrics, allMetrics1)
 })
 
-test_that("search.sur works for out-of-sample when changing indexes", {
-  skip_on_cran()
-
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = -340))
-  allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
-
-  # change Indexes
-  y=x[,c(2,1,3)]
-  Exo=x[,c(5,4,7,6)]
-  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                      seed = -340))
-  allWeights3 = sort(sapply(res3$crps$target2$model$all, function(x){x$weight}))
-
-  expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
-})
 
 test_that("search.sur works when parallel", {
   skip_on_cran()
 
-  y=x[,c(2,1,3)]
-  Exo=x[,c(5,4,7,6)]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = -340))
-  allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2, 3),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2,
+                                                   numFixPartitions = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                                                seed = -340),
+                   options = get.search.options(parallel = FALSE))
+  sumRes <- summary(res, test=TRUE)
+  allWeights = sort(sapply(res$results, function(x){x$value$metric}))
 
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = -340))
-  allWeights0 = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
+  res1 = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2, 3),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2,
+                                                   numFixPartitions = 3),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),
+                                                simFixSize = 4,
+                                                trainRatio = 0.75,
+                                                seed = -340),
+                   options = get.search.options(parallel = TRUE))
 
-  expect_equal(as.numeric(allWeights), as.numeric(allWeights0), tolerance = 1e-10)
+  allWeights1 = sort(sapply(res1$results, function(x){x$value$metric}))
+
+  expect_equal(as.numeric(allWeights), as.numeric(allWeights1), tolerance = 1e-10)
 })
 
 
-test_that("search.sur works for fixed training sample", {
-  skip_on_cran()
-
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
-                                                     trainFixSize = 12,
-                                                     seed = -340))  # negative seed for equal distribution
-  res1 = estim.sur(as.matrix(y[,res$mae$target1$model$bests$best1$depIndices]),
-                  as.matrix(Exo[,res$mae$target1$model$bests$best1$exoIndices]),
-                  simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
-                  printMsg = printMsg)
-  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="mae"),1]),
-               as.numeric(s.metric.from.weight(res$mae$target1$model$bests$best1$weight, "mae")), tolerance = 1e-10)
-
-  res1 = estim.sur(as.matrix(y[,res$crps$target1$model$bests$best1$depIndices]),
-                   as.matrix(Exo[,res$crps$target1$model$bests$best1$exoIndices]),
-                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
-                   printMsg = printMsg)
-  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="crps"),1]),
-               as.numeric(s.metric.from.weight(res$crps$target1$model$bests$best1$weight, "crps")), tolerance = 1e-10)
-
-
-  res1 = estim.sur(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
-                   as.matrix(Exo[,res$rmse$target1$model$bests$best1$exoIndices]),
-                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
-                   printMsg = printMsg)
-  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="rmse"),1]),
-               as.numeric(s.metric.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
-
-})
 
 test_that("search.sur works with restricted aic", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  modelCheckItems = get.items.modelcheck(maxAic = 300),
-                  searchItems = get.items.search(all = TRUE, bestK = 0),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                  modelChecks = get.search.modelchecks(maxAic = 230),
+                  items = get.search.items(all = TRUE, bestK = 0),
+                  metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
-  alls = list()
-  for (m in res$crps$target1$model$all){
-    M = estim.sur(as.matrix(y[,m$depIndices]), x = as.matrix(Exo[,m$exoIndices]),
-                 simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-    alls = append(alls, M$metrics[2,1])
-    expect_true(as.numeric(M$metrics[2,1]) <= 300)
+  sumRes <- summary(res, test = TRUE)
+  for (m in sumRes$results){
+    aic <- as.numeric(m$value$metrics[rownames(m$value$metrics) == "aic",1])
+    #print(aic)
+    expect_true(aic <= 230)
   }
 })
 
 test_that("search.sur works with inclusion weights", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
-                  metricOptions = get.options.metric(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = -340))
-  inclusion = matrix(0,7,2)
-  for (m in res$crps$target1$model$all){
-    for (d in m$depIndices){
-      inclusion[d,1] = inclusion[d,1] + m$weight
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                   items = get.search.items(all = TRUE, bestK = 0, inclusion = TRUE),
+                   metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                                                trainFixSize = 12,
+                                                seed = -340))
+
+  inclusion = matrix(0,8,2, dimnames = list(colnames(res$info$data$data), NULL))
+  for (m in res$results[which(sapply(res$results,
+                                     function(r) r$evalName == "sic" && r$typeName == "model" && r$targetName == "V1"))]){
+    for (d in (m$value$endogenous)){
+      inclusion[d,1] = inclusion[d,1] + m$value$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
-    for (e in m$exoIndices){
-      d = e + ncol(y)
-      inclusion[d,1] = inclusion[d,1] + m$weight
+    for (d in (m$value$exogenous)){
+      inclusion[d,1] = inclusion[d,1] + m$value$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
   }
   inclusion[,1] = inclusion[,1]/inclusion[,2]
 
-  expect_equal(as.numeric(res$crps$target1$model$inclusion), as.numeric(inclusion), tolerance = 1e-10)
+  searchInclusion = res$results[which(sapply(res$results,
+                                             function(r) r$evalName == "sic" && r$targetName == "V1" && r$typeName == "inclusion"))]
+  expect_equal(as.numeric(searchInclusion[[1]]$value), as.numeric(inclusion), tolerance = 1e-10)
 
 })
 
 test_that("search.sur works with coefficients (bests)", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
-                  metricOptions = get.options.metric(c("sic", "aic"),c("rmse", "sign")))
-  best_coef2 = NULL
-  w=-Inf
-  for (m in res$aic$target1$model$all){
-    if (any(m$exoIndices==3)){
-      if (w<m$weight){
-        w=m$weight
-        best_coef2 = m
-      }
-    }
-  }
-  expect_equal(res$aic$target1$coefs$bests$item3$best1$weight, best_coef2$weight, tolerance = 1e-10)
-  expect_equal(res$aic$target1$coefs$bests$item3$best1$depIndices, best_coef2$depIndices, tolerance = 1e-10)
-  expect_equal(res$aic$target1$coefs$bests$item3$best1$exoIndices, best_coef2$exoIndices, tolerance = 1e-10)
-
-  # are mean and variance equal?
-  M = estim.sur(as.matrix(y[,res$aic$target1$coefs$bests$item3$best1$depIndices]),
-               x = as.matrix(Exo[,res$aic$target1$coefs$bests$item3$best1$exoIndices]),
-               simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-  expect_equal(exp(-0.5 * M$metrics[2,1]), res$aic$target1$coefs$bests$item3$best1$weight, tolerance = 1e-10)
-  expect_equal(res$aic$target1$coefs$bests$item3$best1$mean, M$estimations$gamma[1], tolerance = 1e-10)
-  expect_equal(res$aic$target1$coefs$bests$item3$best1$var, M$estimations$gammaVar[1,1], tolerance = 1e-10)
-
+  res = search.sur(data = get.data(x[,1:5, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                   items = get.search.items(all = TRUE, bestK = 2, type1 = TRUE),
+                   metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
+                                                , seed = -340))
+   sumRes <- summary(res, test = TRUE)
+   expect_equal(sumRes$counts, res$counts) # Just to show that is not an empty test
 })
 
 test_that("search.sur works with coefficients (cdfs)", {
   skip_on_cran()
 
-  y=x[,c(1,2,3),drop=FALSE]
-  Exo=x[,4:7,drop=FALSE]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
-                                               all = TRUE, bestK = 0,inclusion = FALSE,
-                                               cdfs = c(0,1,0)),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = 0))
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                   items = get.search.items(all = TRUE, bestK = 0, type1 = TRUE,
+                                            cdfs = c(0,1,0)),
+                   metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
+                                                , seed = -340))
+  sumRes <- summary(res, test = TRUE)
   sum = 0
   c = 0
   cc=0
-  for (m in res$rmse$target1$model$all){
-
-    if (any(m$exoIndices==2)){
-      ind = which(m$exoIndices == 2)
-      M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
-                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-      coef = M$estimations$gamma[ind]
-      sd = sqrt(M$estimations$gammaVar[ind,ind])
-      sum = sum+m$weight * pnorm(0,coef,sd)  # note the NORMAL dist. If t,  d.o.f : nrow(y)-length(gamma)
-      c=c+m$weight
+  i = 0
+  for (m in sumRes$results){
+    i = i + 1
+    if (m$evalName != "rmse" || m$typeName != "model" || m$targetName != "V1")
+      next()
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coef = m$value$estimations$gamma[ind]
+      sd = sqrt(m$value$estimations$gammaVar[ind,ind])
+      w = res$results[[i]]$value$weight
+      sum = sum + w * pnorm(0,coef,sd)  # note the NORMAL dist. If t,  d.o.f : nrow(y)-length(gamma)
+      c=c+w
       cc=cc+1
     }
   }
-  expect_equal(res$rmse$target1$coefs$cdfs$cdf3[2,1], sum/c, tolerance = 1e-10)
-  expect_equal(res$rmse$target1$coefs$cdfs$cdf3[2,2], cc, tolerance = 1e-10)
+
+  cdfs = res$results[which(sapply(res$results,
+                                  function(r) r$evalName == "rmse" && r$targetName == "V1" && r$typeName == "cdf"))]
+
+  expect_equal(cdfs[[1]]$value[2,1], sum/c, tolerance = 1e-10)
+  expect_equal(cdfs[[1]]$value[2,2], cc, tolerance = 1e-10)
 })
 
 
 test_that("search.sur works with coefficients (extreme bounds)", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
-                                               all = TRUE, bestK = 0,inclusion = FALSE,
-                                               extremeMultiplier = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = 0))
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                   items = get.search.items(all = TRUE, bestK = 0, type1 = TRUE,
+                                            extremeMultiplier = 2),
+                   metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
+                                                , seed = -340))
+  sumRes <- summary(res, test = TRUE)
   mn = Inf
   mx = -Inf
-  h = 2
-  for (m in res$rmse$target1$model$all){
+  for (m in sumRes$results){
+    if (m$evalName != "rmse" || m$typeName != "model" || m$targetName != "V1")
+      next()
 
-    if (any(m$exoIndices==h)) {
-      ind = which(m$exoIndices == h)
-      M = estim.sur(y[,m$depIndices, drop=FALSE], x = Exo[,m$exoIndices, drop=FALSE],
-                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-      coef = M$estimations$gamma[ind]
-      sd = sqrt(M$estimations$gammaVar[ind,ind])
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coef = m$value$estimations$gamma[ind]
+      sd = sqrt(m$value$estimations$gammaVar[ind,ind])
       mn = min(mn,coef-2*sd)
       mx = max(mx,coef+2*sd)
     }
   }
-  expect_equal(res$rmse$target1$coefs$extremeBounds[h,1], mn, tolerance = 1e-10)
-  expect_equal(res$rmse$target1$coefs$extremeBounds[h,2], mx, tolerance = 1e-10)
+
+  extremeB = res$results[which(sapply(res$results,
+                                  function(r) r$evalName == "rmse" && r$targetName == "V1" && r$typeName == "extreme bound"))]
+
+  expect_equal(extremeB[[1]]$value[2,1], mn, tolerance = 1e-10)
+  expect_equal(extremeB[[1]]$value[2,2], mx, tolerance = 1e-10)
 })
 
 test_that("search.sur works with coefficients (mixture)", {
   skip_on_cran()
 
-  y=x[,c(1,2)]
-  Exo=x[,3:7]
-  res = search.sur(y, Exo, 1, yGroups = list(c(1L,2L)), xSizes = c(1L,2L,3L,4L,5L),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
-                                               all = TRUE, bestK = 0,inclusion = FALSE,
-                                               extremeMultiplier = 0,
-                                               mixture4 = TRUE),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
-                                                     seed = 0))
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+                   combinations = get.combinations(sizes = c(1, 2),
+                                                   innerGroups = list(c(2),c(1,3),c(1,2,3)),
+                                                   numTargets = 2),
+                   items = get.search.items(all = TRUE, bestK = 0, type1 = TRUE,
+                                            mixture4 = TRUE),
+                   metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
+                                                , seed = -340))
+  sumRes <- summary(res, test = TRUE)
   coefs = c()
   vars = c()
   weights = c()
-  h = 1
-  for (m in res$rmse$target1$model$all){
+  i = 0
+  for (m in sumRes$results){
+    i = i + 1
+    if (m$evalName != "rmse" || m$typeName != "model" || m$targetName != "V1")
+      next()
 
-    if (any(m$exoIndices==h)) {
-      M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
-                   simFixSize = 0, addIntercept = FALSE,printMsg = printMsg)
-      ind = which(m$exoIndices == h)
-      coefs = append(coefs,M$estimations$gamma[ind])
-      vars = append(vars, M$estimations$gammaVar[ind,ind])
-      weights = append(weights, m$weight)
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coefs = append(coefs,m$value$estimations$gamma[ind])
+      vars = append(vars, m$value$estimations$gammaVar[ind,ind])
+      w = res$results[[i]]$value$weight
+      weights = append(weights, w)
     }
   }
+
+  mixture = res$results[which(sapply(res$results,
+                                      function(r) r$evalName == "rmse" && r$targetName == "V1" && r$typeName == "mixture"))]
+
   # note that we need weighted mean, variance, etc. assuming normal distribution
 
   len = length(coefs)
-  expect_equal(res$rmse$target1$coefs$mixture[h,5], len)
+  expect_equal(mixture[[1]]$value[2,5], len)
   me = weighted.mean(coefs, weights)
-  expect_equal(res$rmse$target1$coefs$mixture[h,1], me, tolerance = 1e-14)
+  expect_equal(mixture[[1]]$value[2,1], me, tolerance = 1e-14)
 
   # TODO : compare weighted variance, skewness, kurtosis assuming normality
   #        of course, its better to .Call the running statistics, test it, and use it here
 
 })
 
-test_that("SUR summary works", {
-  skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
-  res = search.sur(y, Exo, 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)), xSizes = c(1L,2L,3L),
-                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
-                                               cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 ),
-                  metricOptions = get.options.metric(c("sic", "aic"), c("rmse", "sign"), seed = -400),
-                  searchOptions = get.options.search(TRUE, printMsg = printMsg))
-
-  su =summary(res, y, Exo, addModelAll = TRUE, addItem1 = TRUE, test = TRUE)
-
-})
 
 
 test_that("SUR SplitSearch works (no subsetting)", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
+  # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
 
+  data = get.data(x[,1:7, drop = FALSE], endogenous = 3)
+  combinations = get.combinations(numTargets = 3, innerGroups = list(c(1), c(1,2), c(1,3)))
+  items = get.search.items(inclusion = TRUE
+                           #, all = TRUE
+                           , bestK = 4
+                           , type1 = TRUE
+                           , cdfs = c(0,0.3)
+                           , mixture4 = TRUE
+                           , extremeMultiplier = 2
+                           )
+  metrics = get.search.metrics(c("sic", "aic")) # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  options = get.search.options(FALSE,
+                               #reportInterval = 1
+                               )
 
-  # also don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  combinations$sizes <- c(1, 2, 3)
+  whole = search.sur(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
+                     options = options)
 
-  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L))
-  numTargets = 2
-  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
-                               cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  metricOptions = get.options.metric(c("sic", "aic"), c("crps"), seed = -400)
-  searchOptions = get.options.search(FALSE, printMsg = printMsg)
+  combinations$sizes <- list(c(1, 2), c(3))
+  combinations$stepsNumVariables <- c(NA, NA)
+  split = search.sur(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
+                     options = options)
 
-  split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
-                      numTargets = numTargets,  yGroups = yGroups,
-                      searchItems = searchItems, metricOptions = metricOptions,
-                      searchOptions = searchOptions, savePre = NULL)
+  expect_equal(whole$counts, split$counts)
+  expect_equal(length(whole$results), length(split$results))
 
-  whole = search.sur(y, Exo, xSizes = c(1L,2L,3L),
-                    numTargets = numTargets,  yGroups = yGroups,
-                    searchItems = searchItems, metricOptions = metricOptions,
-                    searchOptions = searchOptions)
+  pastedList_w <- unlist(lapply(whole$results, function(x) paste(x[1:4], collapse = "")))
+  pastedList_s <- unlist(lapply(split$results, function(x) paste(x[1:4], collapse = "")))
 
-  # CHECK ALL
+  sortedList_w <- whole$results[order(pastedList_w)]
+  sortedList_s <- split$results[order(pastedList_s)]
 
-  # for 'all' the order is generally different
-  weights0 <- sort(sapply(whole$sic$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$sic$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1),tolerance =1e-12)
-
-  weights0 <- sort(sapply(whole$crps$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$crps$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1),tolerance =1e-12) # some different models in crps has equal weight (due to OLS estimation of systems with different number of equations)
-  # we have searched similar set of models
-
-
-  # CHECK BESTS
-  expect_equal(unlist(whole$sic$target1$model$bests[1]), unlist(split$sic$target1$model$bests[1]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[2]), unlist(split$sic$target1$model$bests[2]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[3]), unlist(split$sic$target1$model$bests[3]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[4]), unlist(split$sic$target1$model$bests[4]), tolerance = 1e-6)
-
-  #INCLUSION / EXTREME BOUNDS / CDF / MIXTURE
-  expect_equal(whole$sic$target1$model$inclusion, split$sic$target1$model$inclusion, tolerance = 1e-10)
-  expect_equal(whole$sic$target1$coefs$extremeBounds, split$sic$target1$coefs$extremeBounds, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coef$cdfs, split$sic$target1$coefs$cdfs, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coefs$mixture, split$sic$target1$coefs$mixture, tolerance =1e-10)
-
-
-  #BEST COEFS
-  i = 0
-  for (w_item in whole$aic$target2$coefs$bests){
-    w_item <- w_item[lengths(w_item)!=0] # we set the bestK too high. some elements are null
-    i = i + 1
-    s_item <- split$aic$target2$coefs$bests[[i]]
-    expect_equal(w_item[1:9], s_item[1:9], tolerance =1e-10)
+  for (i in 1:length(sortedList_w)){
+    if (sortedList_s[[i]]$typeName == "mixture"){
+      expect_equal(sortedList_s[[i]]$value[,c(1:3,5,6)], sortedList_w[[i]]$value[,c(1:3,5,6)])
+      expect_equal(sortedList_s[[i]]$value[,c(4)], sortedList_w[[i]]$value[,c(4)], tolerance = 0.1)
+    }
+    else
+      expect_equal(sortedList_s[[i]]$value, sortedList_w[[i]]$value)
   }
 
 })

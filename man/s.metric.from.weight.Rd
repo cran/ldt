@@ -4,13 +4,15 @@
 \alias{s.metric.from.weight}
 \title{Convert a Weight to Metric}
 \usage{
-s.metric.from.weight(value, metricName)
+s.metric.from.weight(value, metricName, minValue = 0)
 }
 \arguments{
 \item{value}{Numeric value of the weight.}
 
 \item{metricName}{Character string specifying the name of the metric.
-See \code{\link{get.options.metric}} function for the list of available options.}
+See \code{\link{get.search.metrics}} function for the list of available options.}
+
+\item{minValue}{A minimum value used in exponential weight formula.}
 }
 \value{
 A numeric value representing the converted weight.
@@ -19,9 +21,9 @@ A numeric value representing the converted weight.
 This function converts a weight to its metric equivalent.
 }
 \details{
-See \link{s.weight.from.metric} for a discussion.
+See \link{s.weight.from.metric} and \link{get.search.metrics} for more details.
 
-The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
+Note that the main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 }
 \examples{
 weight <- s.weight.from.metric(-3.4, "sic")

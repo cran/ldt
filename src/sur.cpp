@@ -56,9 +56,9 @@ static Tv R2(const Matrix<Tv> &y, const Matrix<Tv> &resid) {
   return (Tv)1 - (sum2_r / sum2_y);
 }
 
-static Tv F(Tv r2, Ti N, Ti m, Ti qstar, Tv &pvalue) {
-  Tv d1 = (Tv)(m * (N - 1));
-  Tv d2 = (Tv)(m * N - qstar);
+static Tv F(Tv r2, Ti N, Ti m, Ti qstar, Tv &pvalue, Tv &d1, Tv &d2) {
+  d1 = (Tv)(m * (N - 1));
+  d2 = (Tv)(m * N - qstar);
   Tv f = (r2 / d1) / (((Tv)1 - r2) / d2);
   if (f < 0)
     pvalue = NAN;
@@ -139,7 +139,7 @@ void Sur::calculate_details(Ti N, Ti m, Tv *work, bool just_probs,
 
   // Goodness of Fit
   r2 = R2(y, resid);
-  f = F(r2, N, m, k0m, f_prob);
+  f = F(r2, N, m, k0m, f_prob, f_prob_d1, f_prob_d2);
   Aic = aic(logLikelihood, N, k0m);
   Sic = sic(logLikelihood, N, k0m);
   Hqic = hqic(logLikelihood, N, k0m);

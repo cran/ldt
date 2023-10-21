@@ -5,6 +5,7 @@
 #include "running.h"
 #include "scoring.h"
 #include <map>
+#include <set>
 #include <string>
 
 namespace ldt {
@@ -27,31 +28,95 @@ struct EstimationKeep {
   /// @brief Estimated variance
   Tv Variance = NAN;
 
+  /// @brief Metric in the estimation
+  Tv Metric = NAN;
+
   /// @brief Weight in the estimation
   Tv Weight = NAN;
 
   /// @brief Dependent indices. Class owns the inner array
-  Matrix<Ti> Dependents;
+  std::vector<Ti> Endogenous;
 
   /// @brief Exogenous indices. Class owns the inner array
-  Matrix<Ti> Exogenouses;
+  std::vector<Ti> Exogenouses;
 
   /// @brief Any extra information transformed into integers
-  Matrix<Ti> Extra;
+  std::vector<Ti> Extra;
 
   /// @brief Initializes a new instance of this class
+  /// @param metric Metric in this estimation
   /// @param weight Weight in this estimation
-  /// @param exogenouses Exogenous indices.
+  /// @param exogenous Exogenous indices.
   /// @param extra Any extra information transformed into integers
-  /// @param dependents Dependent indices
+  /// @param endogenous Dependent indices
   /// @param mean Estimated mean
   /// @param variance Estimated variance
-  EstimationKeep(Tv weight, const Matrix<Ti> *exogenouses,
-                 const Matrix<Ti> *extra = nullptr,
-                 const Matrix<Ti> *dependents = nullptr, Tv mean = NAN,
-                 Tv variance = NAN);
+  EstimationKeep(Tv metric, Tv weight, const std::vector<Ti> &exogenous,
+                 const std::vector<Ti> &extra = std::vector<Ti>(),
+                 const std::vector<Ti> &endogenous = std::vector<Ti>(),
+                 Tv mean = NAN, Tv variance = NAN);
+};
 
-  ~EstimationKeep();
+struct EstimationKeepComp {
+  bool positiveOriented;
+  EstimationKeepComp(bool posOri = true) : positiveOriented(posOri) {}
+  bool operator()(const EstimationKeep *lhs, const EstimationKeep *rhs) const {
+    return positiveOriented ? lhs->Metric > rhs->Metric
+                            : lhs->Metric < rhs->Metric;
+  }
+};
+
+/// @brief Search options
+struct LDT_EXPORT SearchData {
+
+  /// @brief holding the data
+  Matrix<Tv> Data;
+
+  /// @brief holding the out of sample exogenous data
+  Matrix<Tv> NewX;
+
+  /// @brief number of endogenous variables
+  Ti NumEndo;
+
+  /// @brief number of exogenous variables
+  Ti NumExo;
+
+  /// @brief number of observations in the data
+  Ti ObsCount;
+
+  /// @brief number of new observations
+  Ti NewObsCount;
+
+  /// @brief Box-Cox transformation parameters
+  std::vector<Tv> Lambdas;
+
+  /// @brief indicating whether the data includes an intercept
+  bool HasIntercept;
+
+  /// @brief indicating whether the data includes weights
+  bool HasWeight;
+};
+
+/// @brief parameters for 2-level nested loop
+struct SearchCombinations {
+
+  /// @brief the sizes.
+  std::vector<Ti> Sizes;
+
+  /// @brief the partitions.
+  std::vector<std::vector<Ti>> Partitions;
+
+  /// @brief number of fixed partitions.
+  Ti NumFixPartitions;
+
+  /// @brief number of fixed items in each partition
+  Ti NumFixItems;
+
+  /// @brief List of inner groups.
+  std::vector<std::vector<Ti>> InnerGroups;
+
+  /// @brief number of targets
+  Ti NumTargets;
 };
 
 /// @brief Search options
@@ -62,6 +127,10 @@ struct LDT_EXPORT SearchOptions {
 
   /// @brief Set it to be true in order to signal stop
   bool RequestCancel = false;
+
+  /// @brief determines the interval between reporting the result.
+  /// To be used by R
+  Ti ReportInterval;
 };
 
 /// @brief Search measuring options
@@ -73,12 +142,15 @@ struct LDT_EXPORT SearchMetricOptions {
   /// @brief List of out-of-sample metrics
   std::vector<ScoringType> MetricsOut;
 
+  /// @brief determines the orientation of the metrics
+  std::vector<bool> EvalIsPosOrientation;
+
   /// @brief A fixed size for the training sample
   Ti TrainFixSize = 0;
 
   /// @brief If \ref TrainFixSize is zero, this ratio determines the size of the
   /// training sample
-  double TrainRatio = 0;
+  Tv TrainRatio = 0;
 
   /// @brief A fixed size for the number of simulations in out-of-sample
   /// simulations
@@ -86,7 +158,7 @@ struct LDT_EXPORT SearchMetricOptions {
 
   /// @brief In some cases such as VARMA, number of simulations can be a
   /// percentage of observations. Use zero to use 'SimFixSize'.
-  // double SimRatio;
+  // Tv SimRatio;
 
   /// @brief A searcher might have its own seed (e.g., as a linear function of
   /// this seed).
@@ -102,9 +174,6 @@ struct LDT_EXPORT SearchMetricOptions {
   /// weights are used in AUC or FrequencyCost calculations
   bool WeightedEval = false;
 
-  /// @brief Transform back data in calculation of RMSE, MAE etc.
-  std::function<void(Tv &)> TransformForMetrics;
-
   /// @brief Updates the indices, etc.
   /// @param isOutOfSampleRandom If true, the training sample is randomly
   /// generated
@@ -114,13 +183,18 @@ struct LDT_EXPORT SearchMetricOptions {
   /// @brief After \ref Update, determines the type of the measuring
   bool mIsTimeSeries = false, mIsOutOfSampleRandom = false;
 
-  /// @brief After \ref Update, it is the index of the metric in \ref
-  /// MetricsIn or \ref MetricsOut. If negative, it is not found
-  Ti mIndexOfAic = -1, mIndexOfSic = -1, mIndexOfSign = -1,
-     mIndexOfDirection = -1, mIndexOfMae = -1, mIndexOfMaeSc = -1,
-     mIndexOfRmse = -1, mIndexOfRmseSc = -1, mIndexOfCrps = -1,
-     mIndexOfCostMatrixIn = -1, mIndexOfCostMatrixOut = -1, mIndexOfAucIn = -1,
-     mIndexOfAucOut = -1, mIndexOfBrierIn = -1, mIndexOfBrierOut = -1;
+  std::map<GoodnessOfFitType, Ti> MetricInIndices;
+
+  std::map<ScoringType, Ti> MetricOutIndices;
+
+  /// @brief minimum value for metrics to be used in AIC weight
+  /// formula: exp(-0.5*(metric-minMetric)). Size of vectors must equal the
+  /// number of target variables. Number of rows is equal to the number of
+  /// metrics. Each column belongs to a target variable.
+  std::map<GoodnessOfFitType, std::vector<Tv>> MinMetricIn;
+
+  /// @brief Similar to \ref MinMetricIn
+  std::map<ScoringType, std::vector<Tv>> MinMetricOut;
 };
 
 /// @brief Different options for checking models in the search
@@ -145,19 +219,19 @@ struct LDT_EXPORT SearchModelChecks {
 
   /// @brief R2 of the model (if applicable) must be larger than this. Set -Inf
   /// to disable this check
-  double MinR2 = -INFINITY;
+  Tv MinR2 = -INFINITY;
 
   /// @brief AIC of the model must be smaller than this value. Set +Inf to
   /// disable this check
-  double MaxAic = INFINITY;
+  Tv MaxAic = INFINITY;
 
   /// @brief SIC of the model must be smaller than this value. Set +Inf to
   /// disable this check
-  double MaxSic = INFINITY;
+  Tv MaxSic = INFINITY;
 
   /// @brief Condition number of the estimation (e.g. in (X'X)^-1) must be
   /// smaller than this value. Set +Inf to disable this check
-  double MaxConditionNumber = INFINITY;
+  Tv MaxConditionNumber = INFINITY;
 
   /// @brief Model must provide valid predictions given all sample. E.g., in
   /// case of VARMA, if there is exogenous data, out-of-sample exogenous data
@@ -167,7 +241,7 @@ struct LDT_EXPORT SearchModelChecks {
   /// @brief The predictions of the model must lie within a bound. The bound is
   /// the value multiplied by the average growth rate. Use zero to disable this
   /// check.
-  double PredictionBoundMultiplier = 0;
+  Tv PredictionBoundMultiplier = 0;
 
   /// @brief Updates the options such as \ref Estimation or \ref Prediction
   /// based on other options
@@ -194,7 +268,7 @@ struct LDT_EXPORT SearchItems {
   bool KeepModelEvaluations = true;
 
   /// @brief If true, a vector of inclusion weights are calculated. The length
-  /// of the vector is \ref LengthDependents + \ref LengthExogenuoses
+  /// of the vector is \ref LengthEndogenous + \ref LengthExogenous
   bool KeepInclusionWeights = false;
 
   /// @brief Length of type 1
@@ -205,11 +279,11 @@ struct LDT_EXPORT SearchItems {
 
   /// @brief Number of the dependent variable (might be overridden internally,
   /// given the data)
-  Ti LengthDependents = 0;
+  Ti LengthEndogenous = 0;
 
   /// @brief Number of the exogenous variables (might be overridden internally,
   /// given the data)
-  Ti LengthExogenouses = 0;
+  Ti LengthExogenous = 0;
 
   /// @brief If larger than zero, it keeps the data regarding the first K count
   /// models
@@ -223,11 +297,11 @@ struct LDT_EXPORT SearchItems {
   bool KeepMixture = false;
 
   /// @brief If not empty, it keeps the CDF at the given values
-  std::vector<double> CdfsAt;
+  std::vector<Tv> CdfsAt;
 
   /// @brief If larger than 0, extreme bounds are calculated and saved given
   /// this multiplier
-  double ExtremeBoundsMultiplier = 0;
+  Tv ExtremeBoundsMultiplier = 0;
 
   /// @brief Update the fields given the current state of the project
   /// @param metrics Current metric options
@@ -272,7 +346,7 @@ public:
 
   /// @brief If requested in the options, it contains the information about the
   /// first K best models
-  std::vector<EstimationKeep *> Bests;
+  std::multiset<EstimationKeep *, EstimationKeepComp> Bests;
 
   /// @brief If requested in the options, it contains the information about all
   /// models
@@ -296,6 +370,8 @@ public:
   /// @brief Pointer to the given \ref SearchItems in the constructor
   const SearchItems *pItems = nullptr;
 
+  const SearchData *pData = nullptr;
+
   /// @brief Initializes a new instance of this class
   SearcherSummary(){};
 
@@ -304,18 +380,17 @@ public:
   /// @param Index2 Index to the second dimension which is the target index
   /// @param Index3 Index to the third dimension which is (e.g.) the forecast
   /// horizon, index of a coefficient, etc.
-  /// @param options \ref SearchItems in the current state of the project
-  SearcherSummary(Ti Index1, Ti Index2, Ti Index3, const SearchItems *options);
+  /// @param options \ref SearchItems in the current state of the project.
+  /// @param isPositiveOriented determines the comparison in \ref Bests
+  SearcherSummary(Ti Index1, Ti Index2, Ti Index3, const SearchItems *options,
+                  bool isPositiveOriented, const SearchData *data);
   ~SearcherSummary();
 
   /// @brief Inserts a new estimation to the storage
   /// @param estimation Estimation information
   /// @param isModel If true, it is a push for model information. Otherwise, it
   /// is a estimated coefficient, or a forecast, etc.
-  /// @param overrideIncExo If not null, it overrides the exogenous inclusion
-  /// indices
-  void Push(EstimationKeep &estimation, bool isModel,
-            Matrix<Ti> *overrideIncExo = nullptr);
+  void Push(EstimationKeep &estimation, bool isModel);
 };
 
 /// @brief A searcher class with 3 types of summaries: Model, Type1, Type2.
@@ -329,21 +404,31 @@ private:
 
   void UpdateCurrent();
 
+  /// @brief Indices of selected partitions with respect to the partitions in
+  /// \ref pCombinations
+  VMatrix<Ti> PartitionIndices;
+
+  /// @brief Indices of items in the selected partitions given by \ref
+  /// PartitionIndices
+  VMatrix<Ti> ItemIndices;
+
+  /// @brief A storage for the size of different partitions
+  std::vector<Ti> partitionSizes;
+
 protected:
-  /// @brief Number of fixed groups
-  Ti mFixFirstGroups;
+  /// @brief An integer for adjusting the value of \ref CurrentIndices
+  bool CheckForEmpty;
 
-  /// @brief Number of fixed first items
-  Ti mFixFirstItems;
+  /// @brief Number of selected partitions
+  Ti NumPartitions = 0;
 
-  /// @brief Group size of this searcher. See the constructor
-  Ti SizeG = 0;
-
-  /// @brief Vector of current indices
-  std::vector<Ti> CurrentIndicesV;
-
-  /// @brief Current indices as a matrix
-  Matrix<Ti> CurrentIndices;
+  /// @brief The main indices to be used in the \ref EstimateOne function.
+  /// Use \ref indicesOffset in the constructor to adjust the positions, e.g.,
+  /// for exogenous columns indices. Its length is \ref NumPartitions.
+  /// It has zero-based indexation which means in an unrestricted framework,
+  /// it starts from 0,1,2,... Restrictions are imposed by partitioning or
+  /// fixating partitions or items.
+  VMatrix<Ti> CurrentIndices;
 
   /// @brief Override this method, use \ref CurrentIndices, do what ever is
   /// required, use \ref Push0, \ref Push1, and/or \ref Push2 to save the
@@ -360,8 +445,7 @@ protected:
   /// @param targetIndex Index of the target variable
   /// @param overrideIncExo If not null, it overrides the exogenous inclusion
   /// indices
-  void Push0(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex,
-             Matrix<Ti> *overrideIncExo = nullptr);
+  void Push0(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex);
 
   /// @brief Pushes information to \ref Summaries1
   /// @param estimation The information
@@ -381,28 +465,24 @@ protected:
              Ti thirdIndex);
 
 public:
+  /// @brief A pointer to the provided \ref SearchData
+  const SearchData *pData = nullptr;
+
+  /// @brief A pointer to the provided \ref SearchCombinations
+  const SearchCombinations *pCombinations = nullptr;
+
   /// @brief A pointer to the provided \ref SearchItems
   const SearchItems *pItems = nullptr;
 
-  /// @brief A pointer to the provided \ref SearchOptions
-  SearchOptions *pOptions; // don't use 'const' so that we can set
-                           // 'RequestCancel' in the searcher
+  /// @brief A pointer to the provided \ref SearchOptions. Not 'const' so that
+  /// we can set 'RequestCancel' in the searcher
+  SearchOptions *pOptions; // don't use 'const'
 
   /// @brief A pointer to the provided \ref SearchModelChecks
   const SearchModelChecks *pChecks = nullptr;
 
   /// @brief A pointer to the provided \ref SearchMetricOptions
   const SearchMetricOptions *pMetrics = nullptr;
-
-  /// @brief Pointer to the provided group mapping
-  const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
-
-  /// @brief Sizes of \ref pGroupIndexMap
-  std::vector<Ti> GroupSizes;
-
-  Matrix<Ti> GroupIndexes;
-
-  Matrix<Ti> InnerIndexes;
 
   /// @brief Current number of estimated members
   Ti Counter = 0;
@@ -432,24 +512,29 @@ public:
   Searcher(){};
 
   /// @brief Initializes a new instance of the class
-  /// @param searchOptions Search options in the project
-  /// @param searchItems Search items in the project
+  /// @brief data Search data in the project
+  /// @brief combinations Combinations in the project
+  /// @param options Search options in the project
+  /// @param items Search items in the project
   /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
-  /// @param SizeG The size of an integer array that can define this
+  /// @param numPartitions The size of an integer array that can define this
   /// subset of models. E.g. if it is 3, then you should build models with
-  ///      Group=[1,2,3], Group=[1,2,4], [1,2,5], ..., [1,3,4], [1,3,5], ...,
+  ///      Group=[1,2,3], [1,2,4], [1,2,5], ..., [1,3,4], [1,3,5], ...,
   ///      [2,3,4], [2,3,5], ...
-  /// @param GroupIndexMap Determines a grouping for the indices
-  /// @param fixFirstGroups Number of fixed groups. \ref CurrentIndices always
   /// contains these indices
-  /// @param fixFirstItems Number of fixed items. \ref CurrentIndices always
-  /// contains these indices
-  Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
+  /// @param checkForEmpty Use true if inner indices are exogenous and you might
+  /// estimate a model with no target due to an update in current indices
+  Searcher(const SearchData &data, const SearchCombinations &combinations,
+           SearchOptions &options, const SearchItems &items,
            const SearchMetricOptions &metrics, const SearchModelChecks &checks,
-           Ti SizeG, const std::vector<std::vector<Ti>> &GroupIndexMap,
-           Ti fixFirstGroups = 0, Ti fixFirstItems = 0);
-  virtual ~Searcher();
+           Ti numPartitions, bool checkForEmpty);
+
+  /// @brief
+  /// @remark in order to avoid the following warning: Deleting object of
+  /// abstract class type ‘ldt::Searcher’ which has non-virtual destructor will
+  /// cause undefined behavior
+  virtual ~Searcher() {}
 
   /// @brief Call this function before using 'Start' in an async function
   void CheckStart();
@@ -475,10 +560,76 @@ class LDT_EXPORT SearcherTest : public Searcher {
   std::string EstimateOne(Tv *work, Ti *workI) override;
 };
 
+/// @brief A searcher class for multivariate regression analysis, with
+/// endogenous and exogenous indices
+class LDT_EXPORT SearcherReg : public Searcher {
+
+  Ti mExtraLength;
+
+protected:
+  /// @brief 'isInnerExogenous' argument passed by the constructor. It
+  /// determines what is \ref InnerIndices refers to.
+  bool IsInnerExogenous;
+
+  /// @brief Combined endogenous and exogenous indices (It includes weight
+  /// column too). Use it to remove NAN (extract complete observations)
+  std::vector<Ti> ColIndices;
+
+  /// @brief The indices of endogenous or exogenous columns, depending on the
+  /// 'isInnerExogenous' argument of the constructor. Note that the other set of
+  /// indices is defined by \ref CurrentIndices
+  std::vector<Ti> InnerIndices;
+
+  /// @brief A mapping between the index of dependent variable and the targets
+  std::vector<Ti> TargetsPositions;
+
+  std::string EstimateOne(Tv *work, Ti *workI) override;
+
+  /// @brief Override this function instead of \ref EstimateOne. It manages
+  /// endogenous and exogenous indices.
+  /// @param work Similar to \ref EstimateOne
+  /// @param workI Similar to \ref EstimateOne
+  /// @param metrics A matrix of size ('number of measures' x 'number of
+  /// targets') to be updated by after estimation of forecast.
+  /// @param type1Mean A matrix to be updated after estimation or forecast. Its
+  /// size is ('number of items in length 1' x 'number of forecasts').
+  /// @param type1Var Similar to \par type1Mean but for variances.
+  /// @param extra A matrix of length \ref mExtraLength to be updated by extra
+  /// information.
+  /// @return Similar to \ref EstimateOne
+  virtual std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                                     VMatrix<Tv> &type1Mean,
+                                     VMatrix<Tv> &type1Var,
+                                     VMatrix<Ti> &extra) = 0;
+
+public:
+  /// @brief Initialize an instance
+  /// @param data
+  /// @param combinations
+  /// @param options
+  /// @param items
+  /// @param metrics
+  /// @param checks
+  /// @param numPartitions
+  /// @param isInnerExogenous
+  /// @param innerIndices
+  /// @param extraLength Length of extra information to be kept
+  SearcherReg(const SearchData &data, const SearchCombinations &combinations,
+              SearchOptions &options, const SearchItems &items,
+              const SearchMetricOptions &metrics,
+              const SearchModelChecks &checks, const Ti &numPartitions,
+              const bool &isInnerExogenous, const std::vector<Ti> &innerIndices,
+              const Ti extraLength);
+};
+
 /// @brief A set of \ref Searcher
 class LDT_EXPORT ModelSet {
 
 public:
+  const SearchData *pData = nullptr;
+
+  const SearchCombinations *pCombinations = nullptr;
+
   /// @brief A pointer to the provided \ref SearchItems
   const SearchItems *pItems = nullptr;
 
@@ -497,8 +648,9 @@ public:
   /// @remark Don't use 'const' for shuffle
   std::vector<Searcher *> *pSearchers = nullptr;
 
-  /// @brief A pointer to the given list in the constructor
-  const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
+  /// @brief If true, if shuffles the items in \ref pSearchers randomly for a
+  /// better estimation of remaining time
+  bool ShuffleSearchers = true;
 
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;
@@ -511,15 +663,14 @@ public:
 
   /// @brief Initializes a new instance of this class
   /// @param searchers List of searchers
-  /// @param groupIndexMap Determines a grouping for the indices
-  /// @param searchOptions Search options in the project
-  /// @param searchItems Search items in the project
+  /// @param options Search options in the project
+  /// @param items Search items in the project
   /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
-  ModelSet(std::vector<Searcher *> &searchers,
-           const std::vector<std::vector<Ti>> &groupIndexMap,
-           const SearchOptions &searchOptions, const SearchItems &searchItems,
-           const SearchMetricOptions &metrics, const SearchModelChecks &checks);
+  ModelSet(std::vector<Searcher *> &searchers, const SearchData &data,
+           const SearchCombinations &combinations, const SearchOptions &options,
+           const SearchItems &items, const SearchMetricOptions &metrics,
+           const SearchModelChecks &checks);
 
   /// @brief Starts the search in all the searchers
   /// @param work Work array of size \ref WorkSize
@@ -545,7 +696,7 @@ public:
   void CombineInfo(SearcherModelingInfo &result,
                    std::vector<SearcherSummary *> &list0,
                    std::vector<SearcherSummary *> &list1,
-                   std::vector<SearcherSummary *> &list2);
+                   std::vector<SearcherSummary *> &list2) const;
 
   /// @brief Combines all estimations for a specific item
   /// @param index1 Metric index of the item
@@ -553,9 +704,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineAll(Ti index1, Ti index2, Ti index3,
+  void CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
                   const std::vector<SearcherSummary *> &summaries,
-                  std::vector<EstimationKeep *> &result);
+                  std::vector<EstimationKeep *> &result) const;
 
   /// @brief Combines best estimations for a specific item
   /// @param index1 Metric index of the item
@@ -563,9 +714,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineBests(Ti index1, Ti index2, Ti index3,
+  void CombineBests(const Ti &index1, const Ti &index2, const Ti &index3,
                     const std::vector<SearcherSummary *> &summaries,
-                    std::vector<EstimationKeep *> &result);
+                    std::vector<EstimationKeep *> &result) const;
 
   /// @brief Combines inclusion weights for a specific item
   /// @param index1 Metric index of the item
@@ -573,9 +724,10 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineInclusionWeights(Ti index1, Ti index2, Ti index3,
-                               const std::vector<SearcherSummary *> &summaries,
-                               RunningMoments<1, true, false, Tv> &result);
+  void
+  CombineInclusionWeights(const Ti &index1, const Ti &index2, const Ti &index3,
+                          const std::vector<SearcherSummary *> &summaries,
+                          RunningMoments<1, true, false, Tv> &result) const;
 
   /// @brief Combines CDF at a specific point for a specific item
   /// @param index1 Metric index of the item
@@ -584,9 +736,10 @@ public:
   /// @param cdfIndex the specific point for CDF
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
+  void CombineCdfAt(const Ti &index1, const Ti &index2, const Ti &index3,
+                    const Ti &cdfIndex,
                     const std::vector<SearcherSummary *> &summaries,
-                    RunningMoments<1, true, true, Tv> &result);
+                    RunningMoments<1, true, true, Tv> &result) const;
 
   /// @brief Combines extreme bounds for a specific item
   /// @param index1 Metric index of the item
@@ -594,9 +747,10 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineExtremeBounds(Ti index1, Ti index2, Ti index3,
+  void CombineExtremeBounds(const Ti &index1, const Ti &index2,
+                            const Ti &index3,
                             const std::vector<SearcherSummary *> &summaries,
-                            double &min, double &max);
+                            Tv &min, Tv &max) const;
 
   /// @brief Combines mixture data for a specific item
   /// @param index1 Metric index of the item
@@ -604,9 +758,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineMixture(Ti index1, Ti index2, Ti index3,
+  void CombineMixture(const Ti &index1, const Ti &index2, const Ti &index3,
                       const std::vector<SearcherSummary *> &summaries,
-                      RunningMoments<4, true, true, Tv> &result);
+                      RunningMoments<4, true, true, Tv> &result) const;
 };
 
 } // namespace ldt
