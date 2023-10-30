@@ -13,17 +13,12 @@ using namespace ldt;
 DataSplitDiscrete::DataSplitDiscrete(Ti rows, Ti cols, Ti numChoices) {
 
   mNumChoices = numChoices;
-  Rows = std::vector<std::vector<Ti> *>(numChoices);
+  Rows = std::vector<std::unique_ptr<std::vector<Ti>>>(numChoices);
   Counts = std::vector<Ti>(numChoices);
   CountsSortedIndexes = std::vector<Ti>(numChoices);
 
   StorageSize = rows * cols;
   WorkSizeI = rows;
-}
-
-DataSplitDiscrete::~DataSplitDiscrete() {
-  for (auto a : Rows)
-    delete a;
 }
 
 void DataSplitDiscrete::Calculate(const Matrix<Tv> &data, Tv *storage,
@@ -53,6 +48,7 @@ void DataSplitDiscrete::Calculate(const Matrix<Tv> &data, Tv *storage,
     j = static_cast<Ti>(Y.Data[i]);
     Counts.at(j)++;
   }
+
   for (i = 0; i < mNumChoices; i++)
     if (Counts.at(i) == 0)
       throw LdtException(
@@ -62,8 +58,8 @@ void DataSplitDiscrete::Calculate(const Matrix<Tv> &data, Tv *storage,
   for (i = 0; i < mNumChoices; i++) {
     j = Counts.at(i);
     if (Rows.at(i))
-      delete Rows.at(i);
-    Rows.at(i) = new std::vector<Ti>();
+      Rows.at(i).reset();
+    Rows.at(i) = std::make_unique<std::vector<Ti>>();
   }
 
   for (i = 0; i < rows; i++) {
@@ -88,7 +84,7 @@ void DataSplitDiscrete::Shuffle(const Matrix<Tv> &data, Ti *workI,
   for (auto a : CountsSortedIndexes) {
     // Tv aa = static_cast<Tv>(a);
     Mi = Counts.at(a);
-    Rowi = Rows.at(a);
+    Rowi = Rows.at(a).get();
     if (b == mNumChoices - 1) {
       Mi0 = N0 - sumM; // fill it
       if (Mi0 <= 0)

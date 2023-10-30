@@ -23,8 +23,8 @@ NumericVector GetDistance(NumericMatrix data,
   // group
   auto dista = DistanceBase::GetFromType(checkNan, distance0, correlation0,
                                          x.RowsCount, x.ColsCount);
-  auto work = std::unique_ptr<double[]>(new double[dista->WorkSize]);
-  auto storage = std::unique_ptr<double[]>(new double[dista->StorageSize]);
+  auto work = std::make_unique<double[]>(dista->WorkSize);
+  auto storage = std::make_unique<double[]>(dista->StorageSize);
   dista.get()->Calculate(x, storage.get(), work.get());
 
   return NumericVector(dista.get()->Result.Data,
@@ -47,12 +47,12 @@ List ClusterH(NumericVector distances, std::string linkage) {
 
   auto cluster = HClusterBase::GetFromType(linkage0, numVariables);
   auto mdistances = MatrixSym<false>(&distances[0], numVariables);
-  cluster.get()->Calculate(mdistances);
+  cluster->Calculate(mdistances);
 
   // lets send similar output to R
-  auto heightsData = std::unique_ptr<Tv[]>(new Tv[numVariables - 1]);
+  auto heightsData = std::make_unique<Tv[]>(numVariables - 1);
   auto heights = ldt::Matrix<double>(heightsData.get(), numVariables - 1);
-  auto mergeData = std::unique_ptr<int[]>(new int[2 * (numVariables - 1)]);
+  auto mergeData = std::make_unique<int[]>(2 * (numVariables - 1));
   auto merge = ldt::Matrix<int>(mergeData.get(), numVariables - 1, 2);
   auto order = std::vector<int>();
   cluster->MergeR(merge, heights, order);
@@ -88,7 +88,7 @@ List ClusterHGroup(NumericMatrix data, int nGroups = 2, double threshold = 0,
   // group
   auto group = GroupDataBase::GetFromType(linkage0, distance0, correlation0,
                                           x.RowsCount, x.ColsCount);
-  auto work = std::unique_ptr<Tv[]>(new Tv[group->WorkSize]);
+  auto work = std::make_unique<Tv[]>(group->WorkSize);
 
   group.get()->Calculate(x, work.get(), nGroups, threshold);
 

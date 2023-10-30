@@ -159,10 +159,10 @@ void Descriptive::FilterAr(const Matrix<Tv> *coefs, Matrix<Tv> *storage) {
   Ti T = pArray->length();
   if (storage->length() < T)
     throw LdtException(ErrorType::kLogic, "descriptive",
-                   "invalid storage length"); // invalid length for storage
+                       "invalid storage length"); // invalid length for storage
   if (k > T)
     throw LdtException(ErrorType::kLogic, "descriptive",
-                   "invalid length"); // invalid length
+                       "invalid length"); // invalid length
 
   for (Ti i = 0; i < coefs->length(); i++)
     storage->Data[i] = pArray->Data[i];
@@ -181,7 +181,8 @@ void Descriptive::FilterMa(const Matrix<Tv> &coefs, bool centered,
   Ti k = static_cast<Ti>(coefs.length());
   Ti T = static_cast<Ti>(pArray->length());
   if (static_cast<Ti>(storage.length()) < T)
-    throw LdtException(ErrorType::kLogic, "descriptive", "invalid storage length");
+    throw LdtException(ErrorType::kLogic, "descriptive",
+                       "invalid storage length");
 
   storage.SetValue(NAN);
 
@@ -210,7 +211,7 @@ void Descriptive::SeasonalDecompositionMa(Matrix<Tv> &storage_trend,
   bool del = false;
   if (!trendcoefs) {
     throw LdtException(ErrorType::kLogic, "descriptive",
-                   "not implemented"); // fix new
+                       "not implemented"); // fix new
 
     del = true;
     double sc = static_cast<double>(seasonCount);
@@ -221,7 +222,9 @@ void Descriptive::SeasonalDecompositionMa(Matrix<Tv> &storage_trend,
       trendcoefs->Data[0] /= 2.0;
       trendcoefs->Data[seasonCount] /= 2.0;
     } else {
-      trendcoefs = new Matrix<Tv>(1.0, new double[seasonCount], seasonCount, 1);
+      auto td = std::make_unique<double[]>(seasonCount);
+      trendcoefs =
+          new Matrix<Tv>(1.0, td.get(), seasonCount, 1); // TODO: remove new
       trendcoefs->Divide_in(sc);
     }
   }

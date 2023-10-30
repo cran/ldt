@@ -1820,7 +1820,9 @@ template <class Tw = Tv> class LDT_EXPORT VMatrix {
 
 public:
   /// @brief Inner vector in this class. This contains all elements of the
-  /// matrix (column-wise)
+  /// matrix (column-wise). Be careful with pushing element to the vector or
+  /// resizing it, esp. when it is initialized as an empty matrix (Mat.Data is
+  /// supposed to be a pointer to the first element)
   std::vector<Tw> Vec;
 
   /// @brief Inner matrix in this class. The owner of its Data array is \ref Vec
@@ -1848,6 +1850,10 @@ public:
   /// size/n if n is not 1
   /// @param n number of columns, defaults to 1
   VMatrix(std::initializer_list<Tw> initList, Ti m = -1, Ti n = 1);
+
+  /// @brief Call this function to sync Mat and Vec, esp. when you have
+  /// initialized a zero length matrix and pushed data to the vector
+  void Sync();
 };
 
 extern template class ldt::MatIterator<Ti>;

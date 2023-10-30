@@ -73,8 +73,8 @@ void ModelSet::Start(Tv *work, Ti *workI) {
 #pragma omp parallel for
     for (Ti i = 0; i < (Ti)pSearchers->size(); i++) {
       auto item = pSearchers->at(i);
-      auto w = std::unique_ptr<Tv[]>(new Tv[item->WorkSize]);
-      auto wI = std::unique_ptr<Ti[]>(new Ti[item->WorkSizeI]);
+      auto w = std::make_unique<Tv[]>(item->WorkSize);
+      auto wI = std::make_unique<Ti[]>(item->WorkSizeI);
       item->Start(w.get(), wI.get());
     }
 #else
@@ -84,8 +84,8 @@ void ModelSet::Start(Tv *work, Ti *workI) {
 
     /*std::for_each(std::execution::par, pSearchers->begin(), pSearchers->end(),
                   [&](auto &&item) {
-                    auto w =  std::unique_ptr<Tv[]>(new Tv[item->WorkSize]);
-                    auto wI = std::unique_ptr<Ti[]>(new Ti[item->WorkSizeI]);
+                    auto w =  std::make_unique<Tv[]>(item->WorkSize);
+                    auto wI = std::make_unique<Ti[]>(item->WorkSizeI);
                     item->Start(w.get(), wI.get());
                   });*/
   } else {
@@ -160,9 +160,10 @@ void ModelSet::CombineInfo(SearcherModelingInfo &result,
   }
 }
 
-void ModelSet::CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
-                          const std::vector<SearcherSummary *> &summaries,
-                          std::vector<EstimationKeep *> &result) const {
+void ModelSet::CombineAll(
+    const Ti &index1, const Ti &index2, const Ti &index3,
+    const std::vector<SearcherSummary *> &summaries,
+    std::vector<std::shared_ptr<EstimationKeep>> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -176,10 +177,10 @@ void ModelSet::CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
   }
 }
 
-void ModelSet::CombineBests(const Ti &index1, const Ti &index2,
-                            const Ti &index3,
-                            const std::vector<SearcherSummary *> &summaries,
-                            std::vector<EstimationKeep *> &result) const {
+void ModelSet::CombineBests(
+    const Ti &index1, const Ti &index2, const Ti &index3,
+    const std::vector<SearcherSummary *> &summaries,
+    std::vector<std::shared_ptr<EstimationKeep>> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");

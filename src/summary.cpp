@@ -146,41 +146,29 @@ SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
         std::vector<RunningMoments<1, true, true, Tv>>(pItems->CdfsAt.size());
 }
 
-SearcherSummary::~SearcherSummary() {
-  if (All.size() > 0) {
-    for (auto &p : All)
-      delete p;
-  } else { // if 'All', it has deleted the members
-    for (auto &p : Bests)
-      delete p;
-  }
-}
-
-void SearcherSummary::Push(EstimationKeep &coef, bool isModel) {
+void SearcherSummary::Push(std::shared_ptr<EstimationKeep> &coef,
+                           bool isModel) {
   if (pItems->KeepBestCount != 0) {
-    Bests.insert(&coef);
+    Bests.insert(coef);
     if ((Ti)Bests.size() > pItems->KeepBestCount) {
       auto it = std::prev(Bests.end());
-      if (isModel == false || pItems->KeepAll == false) {
-        delete *it;
-      } // otherwise, All handles delete
       Bests.erase(it);
     }
   }
 
   if (isModel) {
     if (pItems->KeepAll) {
-      All.push_back(&coef);
+      All.push_back(coef);
     }
 
     if (pItems->KeepInclusionWeights) {
       Ti adj = pData->HasWeight ? -1 : 0;
       Tv w = 1;
 
-      for (auto &i : coef.Endogenous)
-        InclusionsInfo.at(i).PushNew(coef.Weight, w);
-      for (auto &i : coef.Exogenouses)
-        InclusionsInfo.at(i + adj).PushNew(coef.Weight, w);
+      for (auto &i : coef->Endogenous)
+        InclusionsInfo.at(i).PushNew(coef->Weight, w);
+      for (auto &i : coef->Exogenouses)
+        InclusionsInfo.at(i + adj).PushNew(coef->Weight, w);
     }
 
     return; // the rest is based on mean and variances which is not
@@ -192,20 +180,20 @@ void SearcherSummary::Push(EstimationKeep &coef, bool isModel) {
     for (auto &v : pItems->CdfsAt) {
       i++;
       Cdfs.at(i).PushNew(Distribution<DistributionType::kNormal>(
-                             coef.Mean, std::sqrt(coef.Variance))
+                             coef->Mean, std::sqrt(coef->Variance))
                              .GetCdf(v),
-                         coef.Weight); // normal distribution ?!
+                         coef->Weight); // normal distribution ?!
     }
   }
 
   if (pItems->KeepMixture) {
-    Mixture4.Combine(coef.Mean, coef.Variance, 0, 0, coef.Weight);
+    Mixture4.Combine(coef->Mean, coef->Variance, 0, 0, coef->Weight, 1);
   }
 
   if (pItems->ExtremeBoundsMultiplier > 0) {
-    double d = pItems->ExtremeBoundsMultiplier * std::sqrt(coef.Variance);
-    ExtremeBounds.at(0) = std::min(ExtremeBounds.at(0), coef.Mean - d);
-    ExtremeBounds.at(1) = std::max(ExtremeBounds.at(1), coef.Mean + d);
+    double d = pItems->ExtremeBoundsMultiplier * std::sqrt(coef->Variance);
+    ExtremeBounds.at(0) = std::min(ExtremeBounds.at(0), coef->Mean - d);
+    ExtremeBounds.at(1) = std::max(ExtremeBounds.at(1), coef->Mean + d);
   }
 }
 

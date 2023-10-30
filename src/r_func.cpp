@@ -216,7 +216,7 @@ SEXP SearchRFunc(List data, List combinations, List metrics, List modelChecks,
 
   std::unique_ptr<double[]> W;
   try {
-    W = std::unique_ptr<double[]>(new double[model.Modelset.WorkSize]);
+    W = std::make_unique<double[]>(model.Modelset.WorkSize);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-sur",
                        "more memory is required for running the project");

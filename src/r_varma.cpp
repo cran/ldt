@@ -18,13 +18,12 @@ SEXP SearchVarma(List data, List combinations, List metrics, List modelChecks,
   UpdateSearchData(data, data_);
 
   // don't transpose and use R matrix data (It is used later in R)
-  auto data_use_d = std::unique_ptr<double[]>(new double[data_.Data.length()]);
+  auto data_use_d = std::make_unique<double[]>(data_.Data.length());
   auto data_use =
       ldt::Matrix(data_use_d.get(), data_.Data.ColsCount, data_.Data.RowsCount);
   data_.Data.Transpose(data_use);
-  auto dataset0 =
-      new DatasetTs<true>(data_use.RowsCount, data_use.ColsCount, true, true);
-  auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
+  auto dataset0 = std::make_unique<DatasetTs<true>>(
+      data_use.RowsCount, data_use.ColsCount, true, true);
   dataset0->Data(data_use);
   if (dataset0->HasMissingData)
     throw LdtException(ErrorType::kLogic, "R-varma",
@@ -73,7 +72,7 @@ SEXP SearchVarma(List data, List combinations, List metrics, List modelChecks,
 
   std::unique_ptr<double[]> W;
   try {
-    W = std::unique_ptr<double[]>(new double[model.Modelset.WorkSize]);
+    W = std::make_unique<double[]>(model.Modelset.WorkSize);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-varma",
                        "more memory is required for running the project");
@@ -153,18 +152,18 @@ SEXP EstimVarma(List data, IntegerVector params, int seasonsCount,
   auto model = VarmaExtended(sizes, restriction, true, true, true, maxHorizon,
                              hasPcaY ? &pcaOptionsY0 : nullptr,
                              hasPcaX ? &pcaOptionsX0 : nullptr, &optim);
-  auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
-  auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
+  auto W = std::make_unique<double[]>(model.WorkSize);
+  auto S = std::make_unique<double[]>(model.StorageSize);
 
   model.Calculate(data_.Data, S.get(), W.get(), false, maxHorizon, 0, -1,
                   olsStdMultiplier);
 
   // save isRestricted before running simulation because pR changes
   auto isRestricted = ldt::Matrix<double>();
-  auto isRestrictedD = std::unique_ptr<double[]>();
+  std::unique_ptr<double[]> isRestrictedD;
   if (model.Restriction.IsRestricted) {
     auto num_c = model.Restriction.R.RowsCount;
-    isRestrictedD = std::unique_ptr<double[]>(new double[num_c]);
+    isRestrictedD = std::make_unique<double[]>(num_c);
     isRestricted = ldt::Matrix<double>(isRestrictedD.get(),
                                        model.Model.Result.coef.RowsCount,
                                        model.Model.Result.coef.ColsCount);
@@ -221,9 +220,8 @@ SEXP EstimVarma(List data, IntegerVector params, int seasonsCount,
 
     simModel.KeepDetails = true; // option?!
 
-    auto W0 = std::unique_ptr<double[]>(new double[simModel.WorkSize]);
-    S0 = std::unique_ptr<double[]>(
-        new double[simModel.StorageSize]); // don't override S
+    auto W0 = std::make_unique<double[]>(simModel.WorkSize);
+    S0 = std::make_unique<double[]>(simModel.StorageSize); // don't override S
 
     simModel.CalculateE(S0.get(), W0.get(), data_.Data, simMaxConditionNumber,
                         olsStdMultiplier, false, simUsePreviousEstim,

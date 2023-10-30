@@ -25,7 +25,7 @@ SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
   Ti N1 = N - N0;
 
   Split = DataSplit(N, m + k);
-  Split_d = std::unique_ptr<Ti[]>(new Ti[Split.WorkSizeI]);
+  Split_d = std::make_unique<Ti[]>(Split.WorkSizeI);
 
   mDoForecastVar = false;
   for (auto &s : metricsOut)

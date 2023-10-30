@@ -211,7 +211,7 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
       Gs.push_back(&xtprimeones);
       auto temp = Matrix<Tv>(g, g * k);
       for (Ti s = 1; s < horizon; s++) {
-          auto sum = new Matrix<Tv>(g, g * k, 0);
+          auto sum = std::unique_ptr<Matrix<Tv>>(newMatrix<Tv>(g, g * k, 0));
           Xfs.GetRow(s, &xtprime);
           xtprime.KronIden(g, sum);
           for (Ti i = 0; i < std::min(s, armax_d); i++) {

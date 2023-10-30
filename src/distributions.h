@@ -516,6 +516,7 @@ public:
                      Matrix<Ti> *storageCount, bool checkNAN);
 };
 
+/*
 /// @brief A multivariate normal distribution
 /// todo: this class needs a restructure (e.g., separate storage sizes, or split
 /// to helper classes)
@@ -581,6 +582,8 @@ public:
 
   /// todo: fix return value for GetDensity and throw exception
 };
+
+*/
 
 extern template class ldt::Distribution<DistributionType::kBeta>;
 extern template class ldt::Distribution<DistributionType::kChi2>;

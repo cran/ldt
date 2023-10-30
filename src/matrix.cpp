@@ -2334,8 +2334,8 @@ template <typename Tw> Ti Matrix<Tw>::Inv(Matrix<Tw> &storage) const {
 template <typename Tw> Ti Matrix<Tw>::Inv0() {
   const Ti M = static_cast<Ti>(this->RowsCount);
 
-  auto ipiv = std::unique_ptr<int[]>(new int[M + 1]);
-  auto work = std::unique_ptr<Tw[]>(new Tw[M * M]);
+  auto ipiv = std::make_unique<Ti[]>(M + 1);
+  auto work = std::make_unique<Tw[]>(M * M);
 
   auto info = Inv00(ipiv.get(), work.get());
 
@@ -2366,7 +2366,7 @@ template <typename Tw> Ti Matrix<Tw>::QR(Matrix<Tw> &Q, Matrix<Tw> &R) {
     throw std::invalid_argument("invalid dimension: R");
 
   Ti minMN = std::min(M, N);
-  auto tau0 = std::unique_ptr<Tw[]>(new Tw[minMN]);
+  auto tau0 = std::make_unique<Tw[]>(minMN);
   Tw *tau = tau0.get();
 
   Ti info = QR0(tau);
@@ -2398,73 +2398,6 @@ template <typename Tw> Ti Matrix<Tw>::SolvePos(Matrix<Tw> &b, bool upper) {
     throw std::invalid_argument("invalid dimension: b");
   return SolvePos0(b, upper);
 }
-
-/*
-Ti Matrix<Tw>::solvesym(Matrix<Tw>& b, bool upper) {
-        if (IsSquare() == false)
-                throw std::invalid_argument("matrix must be square");
-        if (b.RowsCount != RowsCount)
-                throw std::invalid_argument("invalid dimension: b");
-        return solvesym0(b, upper);
-
-}
-
-Ti Matrix<Tw>::solvesym0(Matrix<Tw>& b, bool upper, Ti* ipiv) {
-        const char UPLO = upper ? 'U' : 'L';
-        const Ti N = ColsCount;
-        const Ti NRHS = static_cast<Ti>(b.ColsCount);
-        Tw* A = Data;
-        Tw* B = b.Data;
-        Ti info = (Ti)0;
-
-        dsysv(&UPLO, &N, &NRHS, A, &N, ipiv, B, &N, &info); TODO
-
-        return info;
-}
-*/
-
-/*int Matrix<Tw>::lu(Matrix<Tw>& L, Matrix<Tw>& U) {
-        if (L.RowsCount != RowsCount || L.ColsCount != ColsCount)
-                throw std::invalid_argument("invalid dimension: L");
-        if (U.RowsCount != RowsCount || U.ColsCount != ColsCount)
-                throw std::invalid_argument("invalid dimension: U");
-        auto info = lu0();
-        if (info != 0)
-                return info;
-        // separate
-        for (Ti i = 0; i < RowsCount; i++)
-                for (Ti j = 0; j < ColsCount; j++) {
-                        if (i > j)
-                                L.Set0(i, j, Get0(i, j));
-                        else
-                                U.Set0(i, j, Get0(i, j));
-                }
-}
-
-int Matrix<Tw>::lu0() {
-        //A = P * L * U
-        //A : M x N
-
-        const Ti M = this->RowsCount;
-        const Ti N = this->ColsCount;
-        Tw* A = Data;
-        Ti* ipiv = new Ti[std::min(M, N)];
-        Ti info = lu00(ipiv);
-        delete[] ipiv;
-        return info;
-}
-
-int Matrix<Tw>::lu00(Ti* ipiv) {
-        //A = P * L * U
-        //A : M x N
-
-        const Ti M = this->RowsCount;
-        const Ti N = this->ColsCount;
-        Tw* A = Data;
-        Ti info = (Ti)0;
-        dgetrf(&M, &M, A, &M, ipiv, &info); // LU decomposition
-        return info;
-}*/
 
 // #pragma endregion
 
@@ -3088,7 +3021,7 @@ void Matrix<Tw>::ColumnsVariance(Matrix<Tw> &storage, std::vector<Ti> &colinds,
     if (storage.RowsCount != m || storage.ColsCount != m)
       throw std::invalid_argument("invalid dimension: storage");
 
-    auto means_d = std::unique_ptr<Tw[]>(new Tw[m]);
+    auto means_d = std::make_unique<Tw[]>(m);
     Matrix<Tw> means = Matrix<Tw>(means_d.get(), m);
     ColumnsMean(means, colinds);
 

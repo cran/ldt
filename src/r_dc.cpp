@@ -82,8 +82,8 @@ SEXP SearchDc(List data, List combinations, List metrics, List modelChecks,
   std::unique_ptr<double[]> W;
   std::unique_ptr<int[]> Wi;
   try {
-    W = std::unique_ptr<double[]>(new double[model->Modelset.WorkSize]);
-    Wi = std::unique_ptr<int[]>(new int[model->Modelset.WorkSizeI]);
+    W = std::make_unique<double[]>(model->Modelset.WorkSize);
+    Wi = std::make_unique<int[]>(model->Modelset.WorkSizeI);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-dc",
                        "more memory is required for running the project");
@@ -171,19 +171,18 @@ SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX,
       hasPcaX ? &pcaOptionsX0 : nullptr,
       costMatrices_.size() > 0 ? &costMatrices_ : nullptr, weightedEval);
 
-  auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
-  auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
+  auto W = std::make_unique<double[]>(model.WorkSize);
+  auto S = std::make_unique<double[]>(model.StorageSize);
 
   model.Calculate(data_.Data, S.get(), W.get(), true,
                   data_.NewX.RowsCount > 0 ? &data_.NewX : nullptr, roc_);
 
   // calculate residuals
 
-  auto resid_d =
-      std::unique_ptr<double[]>(new double[model.X.RowsCount * numChoices]);
+  auto resid_d = std::make_unique<double[]>(model.X.RowsCount * numChoices);
   auto resid =
       ldt::Matrix<double>(resid_d.get(), model.X.RowsCount, numChoices);
-  auto resid_d_w = std::unique_ptr<double[]>(new double[model.X.RowsCount]);
+  auto resid_d_w = std::make_unique<double[]>(model.X.RowsCount);
   model.Model->GetProbabilities(model.X, resid, resid_d_w.get());
   resid.GetColumn0(1, resid);
   resid.Restructure0(model.X.RowsCount, 1);
@@ -193,7 +192,7 @@ SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX,
     throw LdtException(
         ErrorType::kLogic, "R-dc",
         "not implemented for 'numChoices > 2'\n"); // check the mathematics
-  auto resid_d_p = std::unique_ptr<double[]>(new double[resid.RowsCount]);
+  auto resid_d_p = std::make_unique<double[]>(resid.RowsCount);
   auto resid_p = ldt::Matrix<double>(resid_d_p.get(), resid.RowsCount, 1);
   for (int i = 0; i < resid.RowsCount; i++) {
     auto yhat_i = model.Y.Data[i] - resid.Data[i];
@@ -201,23 +200,20 @@ SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX,
   }
 
   // Simulation
-  DiscreteChoiceSimBase *simmodel = nullptr;
-  std::unique_ptr<DiscreteChoiceSimBase> simmodelf;
+  std::unique_ptr<DiscreteChoiceSimBase> simmodel = nullptr;
   std::unique_ptr<double[]> Ss;
   if (simFixSize > 0) {
-
     simmodel = DiscreteChoiceSimBase::GetFromType(
         data_.HasWeight, modelType0, distType0, data_.Data.RowsCount,
         data_.Data.ColsCount, numChoices, simTrainRatio, simTrainFixSize,
         costMatrices_.size(), true, true, true,
         hasPcaX ? &pcaOptionsX0 : nullptr, weightedEval);
-    simmodelf = std::unique_ptr<DiscreteChoiceSimBase>(simmodel);
     simmodel->SimulationMax = simFixSize;
     simmodel->Seed = simSeed;
 
-    auto Ws = std::unique_ptr<double[]>(new double[simmodel->WorkSize]);
-    auto WIs = std::unique_ptr<int[]>(new int[simmodel->WorkSizeI]);
-    Ss = std::unique_ptr<double[]>(new double[simmodel->StorageSize]);
+    auto Ws = std::make_unique<double[]>(simmodel->WorkSize);
+    auto WIs = std::make_unique<int[]>(simmodel->WorkSizeI);
+    Ss = std::make_unique<double[]>(simmodel->StorageSize);
     auto errors = std::set<const char *>();
 
     bool cancel = false;
@@ -253,8 +249,8 @@ SEXP EstimDc(List data, std::string linkFunc, SEXP pcaOptionsX,
   if (simFixSize > 0)
     metricCount += 3; // brierOur aucOut, costOut
   int eqCount = 1;
-  auto metricsResD = std::unique_ptr<double[]>(
-      new double[metricCount * eqCount]); // for 1 equation
+  auto metricsResD =
+      std::make_unique<double[]>(metricCount * eqCount); // for 1 equation
   auto metricsRes =
       ldt::Matrix<double>(metricsResD.get(), metricCount, eqCount);
   auto metricsResRowNames = std::vector<std::string>(

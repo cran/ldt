@@ -41,7 +41,7 @@ void LimitedMemoryBFGSB::Minimize(
     Matrix<Tv> *upper) {
 
   Ti n = startPoint.length();
-  auto uWorkI = std::unique_ptr<Ti[]>(new Ti[4 * n + 44]);
+  auto uWorkI = std::make_unique<Ti[]>(4 * n + 44);
   auto workI = uWorkI.get();
 
   Minimize0(function, gradient, startPoint, storage, work, workI, lower, upper);

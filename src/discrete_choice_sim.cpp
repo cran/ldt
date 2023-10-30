@@ -148,20 +148,18 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
                          "not implemented discrete choice model type");
     }
     if (aucOptions.Costs.Data) {
-      auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(this->N1));
+      auc0 = std::make_unique<ROC<true, true>>(this->N1);
     } else {
-      auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(this->N1));
+      auc0 = std::make_unique<ROC<true, false>>(this->N1);
     }
-    freqCost0 =
-        std::unique_ptr<FrequencyCostBase>(new FrequencyCost<true>(costCount));
+    freqCost0 = std::make_unique<FrequencyCost<true>>(costCount);
   } else {
     if (aucOptions.Costs.Data) {
-      auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(this->N1));
+      auc0 = std::make_unique<ROC<false, true>>(this->N1);
     } else {
-      auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(this->N1));
+      auc0 = std::make_unique<ROC<false, false>>(this->N1);
     }
-    freqCost0 =
-        std::unique_ptr<FrequencyCostBase>(new FrequencyCost<false>(costCount));
+    freqCost0 = std::make_unique<FrequencyCost<false>>(costCount);
   }
   auto auc = auc0.get();
   auto frequencyCost = freqCost0.get();
@@ -335,14 +333,14 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   this->Auc /= this->ValidSimulationCount;
 }
 
-DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
+std::unique_ptr<DiscreteChoiceSimBase> DiscreteChoiceSimBase::GetFromType(
     bool hasWeight, DiscreteChoiceModelType modelType,
     DiscreteChoiceDistType distType, Ti numObs, Ti numExo, Ti numChoices,
     Tv trainPercentage, Ti trainFixSize, Ti costMatrixCount, bool doBrier,
     bool doAuc, bool doFrequecyTable, PcaAnalysisOptions *pcaOptions,
     bool weightedEval) {
 
-  DiscreteChoiceSimBase *d = nullptr;
+  std::unique_ptr<DiscreteChoiceSimBase> d = nullptr;
 
   if (hasWeight) {
 
@@ -350,15 +348,17 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
     case ldt::DiscreteChoiceModelType::kBinary:
       switch (distType) {
       case ldt::DiscreteChoiceDistType::kLogit:
-        d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
-                                  DiscreteChoiceDistType::kLogit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
+                              DiscreteChoiceDistType::kLogit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
-        d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
-                                  DiscreteChoiceDistType::kProbit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
+                              DiscreteChoiceDistType::kProbit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
@@ -373,15 +373,17 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
     case ldt::DiscreteChoiceModelType::kOrdered:
       switch (distType) {
       case ldt::DiscreteChoiceDistType::kLogit:
-        d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
-                                  DiscreteChoiceDistType::kLogit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
+                              DiscreteChoiceDistType::kLogit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
-        d = new DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
-                                  DiscreteChoiceDistType::kProbit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<true, DiscreteChoiceModelType::kOrdered,
+                              DiscreteChoiceDistType::kProbit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
@@ -405,15 +407,17 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
     case ldt::DiscreteChoiceModelType::kBinary:
       switch (distType) {
       case ldt::DiscreteChoiceDistType::kLogit:
-        d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
-                                  DiscreteChoiceDistType::kLogit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
+                              DiscreteChoiceDistType::kLogit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
-        d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
-                                  DiscreteChoiceDistType::kProbit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
+                              DiscreteChoiceDistType::kProbit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
@@ -428,15 +432,17 @@ DiscreteChoiceSimBase *DiscreteChoiceSimBase::GetFromType(
     case ldt::DiscreteChoiceModelType::kOrdered:
       switch (distType) {
       case ldt::DiscreteChoiceDistType::kLogit:
-        d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
-                                  DiscreteChoiceDistType::kLogit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
+                              DiscreteChoiceDistType::kLogit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);
         break;
       case ldt::DiscreteChoiceDistType::kProbit:
-        d = new DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
-                                  DiscreteChoiceDistType::kProbit>(
+        d = std::make_unique<
+            DiscreteChoiceSim<false, DiscreteChoiceModelType::kOrdered,
+                              DiscreteChoiceDistType::kProbit>>(
             numObs, numExo, numChoices, trainPercentage, trainFixSize,
             costMatrixCount, doBrier, doAuc, doFrequecyTable, pcaOptions,
             weightedEval);

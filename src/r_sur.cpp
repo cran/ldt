@@ -45,7 +45,7 @@ SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
 
   std::unique_ptr<double[]> W;
   try {
-    W = std::unique_ptr<double[]>(new double[model.Modelset.WorkSize]);
+    W = std::make_unique<double[]>(model.Modelset.WorkSize);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-sur",
                        "more memory is required for running the project");
@@ -95,7 +95,7 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
     // create the R for significant search
     int mk = data_.NumExo * data_.NumEndo;
     hasR = true;
-    R_d = std::unique_ptr<double[]>(new double[mk * mk]);
+    R_d = std::make_unique<double[]>(mk * mk);
     restriction_.SetData(R_d.get(), mk, mk);
   }
 
@@ -122,8 +122,8 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
       data_.Data.RowsCount, data_.NumEndo, data_.NumExo, hasR, true, true,
       data_.NewObsCount, searchSigMaxIter, true,
       hasPcaY ? &pcaOptionsY0 : nullptr, hasPcaX ? &pcaOptionsX0 : nullptr);
-  auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
-  auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
+  auto W = std::make_unique<double[]>(model.WorkSize);
+  auto S = std::make_unique<double[]>(model.StorageSize);
 
   model.Calculate(data_.Data, data_.NumEndo, S.get(), W.get(),
                   hasR ? &restriction_ : nullptr, searchSigMaxProb,
@@ -131,10 +131,10 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
 
   // save isRestricted before running simulation because pR changes
   auto isRestricted = ldt::Matrix<double>();
-  auto isRestrictedD = std::unique_ptr<double[]>();
+  std::unique_ptr<double[]> isRestrictedD;
   if (model.Model.pR) {
     auto num_c = model.Model.pR->RowsCount;
-    isRestrictedD = std::unique_ptr<double[]>(new double[num_c]);
+    isRestrictedD = std::make_unique<double[]>(num_c);
     isRestricted =
         ldt::Matrix<double>(isRestrictedD.get(), model.Model.beta.RowsCount,
                             model.Model.beta.ColsCount);
@@ -165,8 +165,8 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
         simTrainFixSize, metrics, hasR, searchSigMaxIter,
         hasPcaY ? &pcaOptionsY0 : nullptr, hasPcaX ? &pcaOptionsX0 : nullptr);
 
-    auto W0 = std::unique_ptr<double[]>(new double[simModel.WorkSize]);
-    S0 = std::unique_ptr<double[]>(new double[simModel.StorageSize]);
+    auto W0 = std::make_unique<double[]>(simModel.WorkSize);
+    S0 = std::make_unique<double[]>(simModel.StorageSize);
 
     bool cancel = false; //??
     simModel.Calculate(data_.Data, data_.NumEndo, S0.get(), W0.get(),
@@ -180,8 +180,7 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
   int metricCount = 5; // logL, aic, sic, ...
   if (simFixSize > 0)
     metricCount += simModel.Results.RowsCount;
-  auto metricsResD =
-      std::unique_ptr<double[]>(new double[metricCount * data_.NumEndo]);
+  auto metricsResD = std::make_unique<double[]>(metricCount * data_.NumEndo);
   auto metricsRes =
       ldt::Matrix<double>(metricsResD.get(), metricCount, model.Y.ColsCount);
   auto metricsResRowNames = std::vector<std::string>({

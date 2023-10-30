@@ -41,12 +41,12 @@ static Tv R2(const Matrix<Tv> &y, const Matrix<Tv> &resid) {
   Ti N = y.RowsCount;
   Ti m = y.ColsCount;
 
-  auto vars = Matrix<Tv>(new double[m], m);
+  auto varsd = std::make_unique<Tv[]>(m);
+  auto vars = Matrix<Tv>(varsd.get(), m);
   y.ColumnsVariances(vars, false, false);
   Tv sum2_y = 0;
   for (Ti i = 0; i < m; i++)
     sum2_y += vars.Data[i] * N;
-  delete[] vars.Data;
 
   // central (?) it will be different if there is no intercept
   Tv sum2_r = 0;
@@ -69,7 +69,7 @@ static Tv F(Tv r2, Ti N, Ti m, Ti qstar, Tv &pvalue, Tv &d1, Tv &d2) {
 
 static double logL(Matrix<Tv> &resid_var_copy, Ti N, Ti m) {
   // see Greene p. 348
-  auto Md = std::unique_ptr<Tv[]>(new Tv[m * m]);
+  auto Md = std::make_unique<Tv[]>(m * m);
   auto W = Matrix<Tv>(Md.get(), m, m);
   resid_var_copy.CopyTo00(W);
   Tv resid_var_det = W.Det_pd0(); // |W|

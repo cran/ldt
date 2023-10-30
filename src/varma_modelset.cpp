@@ -64,7 +64,7 @@ VarmaSearcher::VarmaSearcher(
   if (Sizes.HasMa) {
     Restriction = VarmaRestriction(
         Sizes, VarmaRestrictionType::kMaFinal); // TODO: as an option
-    RestrictionData = std::unique_ptr<Tv[]>(new Tv[Restriction.StorageSize]);
+    RestrictionData = std::make_unique<Tv[]>(Restriction.StorageSize);
     Restriction.Calculate(RestrictionData.get());
   }
 
@@ -351,12 +351,12 @@ VarmaModelset::VarmaModelset(const SearchData &data,
 
   bool hasBounds = checks.Prediction && checks.PredictionBoundMultiplier > 0;
   if (metrics.MetricsOut.size() != 0 && hasBounds) {
-    ForecastLowers =
-        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-                   items.LengthTargets, metrics.Horizons.size());
-    ForecastUppers =
-        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-                   items.LengthTargets, metrics.Horizons.size());
+    ForecastLowers = Matrix<Tv>(
+        new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+        items.LengthTargets, metrics.Horizons.size()); // data will be deleted
+    ForecastUppers = Matrix<Tv>(
+        new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+        items.LengthTargets, metrics.Horizons.size()); // data will be deleted
     for (Ti i = 0; i < items.LengthTargets; i++) {
       auto last = source.pData->Get0(i, T - 1);
       Tv g = 0;

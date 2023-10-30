@@ -110,21 +110,21 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options) {
   std::unique_ptr<RocBase> auc0;
   if (hasWeight) {
     if (options_.Costs.Data) {
-      auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(N));
+      auc0 = std::make_unique<ROC<true, true>>(N);
     } else {
-      auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(N));
+      auc0 = std::make_unique<ROC<true, false>>(N);
     }
   } else {
     if (options_.Costs.Data) {
-      auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(N));
+      auc0 = std::make_unique<ROC<false, true>>(N);
     } else {
-      auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(N));
+      auc0 = std::make_unique<ROC<false, false>>(N);
     }
   }
   auto auc = auc0.get();
   auc->Calculate(my, mscores, hasWeight ? &mweights : nullptr, options_);
 
-  auto points_d = std::unique_ptr<double[]>(new double[auc->Points.size() * 2]);
+  auto points_d = std::make_unique<double[]>(auc->Points.size() * 2);
   auto points = ldt::Matrix<double>(points_d.get(), auc->Points.size(), 2);
   auto colnames = std::vector<std::string>({"FP Rate", "TP Rate"});
   for (auto i = 0; i < (int)auc->Points.size(); i++) {
@@ -226,8 +226,8 @@ List GetPca(NumericMatrix x, bool center, bool scale, SEXP newX) {
 
   auto model = PcaAnalysis(x.nrow(), x.ncol(), hasNewX ? mnewX.RowsCount : 0,
                            false, true, center, scale);
-  auto W = std::unique_ptr<Tv[]>(new Tv[model.WorkSize]);
-  auto S = std::unique_ptr<Tv[]>(new Tv[model.StorageSize]);
+  auto W = std::make_unique<Tv[]>(model.WorkSize);
+  auto S = std::make_unique<Tv[]>(model.StorageSize);
 
   model.Calculate(mx, W.get(), S.get(), hasNewX ? &mnewX : nullptr);
   // note that 'model.DataS' is null

@@ -11,20 +11,16 @@ using namespace ldt;
 
 template <HClusterLinkage method> HCluster<method>::HCluster(Ti n) {
   this->n = n;
-  this->Nodes = std::vector<HClusterNode *>();
+  this->Nodes = std::vector<std::unique_ptr<HClusterNode>>();
   for (Ti i = 0; i < n; i++) {
-    auto cn = new HClusterNode();
+    auto cn = std::make_unique<HClusterNode>();
     cn->id = i;
     cn->distanceIndex = i;
-    this->Nodes.push_back(cn);
+    this->Nodes.push_back(std::move(cn));
   }
   // there will be n-1 more merged Nodes
   // up to n, the distance indexes are the 'ids'
   //    after that, we override the Distances
-}
-template <HClusterLinkage method> HCluster<method>::~HCluster() {
-  for (auto a : this->Nodes)
-    delete a;
 }
 
 template <HClusterLinkage method>
@@ -32,7 +28,7 @@ HClusterNode *HCluster<method>::Merge2(Ti &n_i, HClusterNode &leftNode,
                                        HClusterNode &rightNode,
                                        Tv leftDistanceRight) {
 
-  auto cn = new HClusterNode();
+  auto cn = std::make_unique<HClusterNode>();
   cn->id = n_i;
   cn->nodesWithin = leftNode.nodesWithin +
                     rightNode.nodesWithin; // update number of Nodes within
@@ -63,9 +59,11 @@ HClusterNode *HCluster<method>::Merge2(Ti &n_i, HClusterNode &leftNode,
 
   // add to cluster array after updating
   n_i++;
-  this->Nodes.push_back(cn);
 
-  return cn;
+  auto raw_cn = cn.get();
+  this->Nodes.push_back(std::move(cn));
+
+  return raw_cn;
 }
 
 template <HClusterLinkage method>
@@ -75,14 +73,14 @@ HClusterNode *HCluster<method>::GetNearestNeighbor(const HClusterNode &node,
   distance = INFINITY;
   HClusterNode *neighbor = nullptr;
   for (auto &a : this->Nodes) {
-    if (a == &node || a->isMerged)
+    if (a.get() == &node || a->isMerged)
       continue;
 
     d = Distances->Get0(node.distanceIndex, a->distanceIndex);
 
     if (d < distance) {
       distance = d;
-      neighbor = a;
+      neighbor = a.get();
     }
   }
   return neighbor;
@@ -106,7 +104,8 @@ void HCluster<method>::Calculate(MatrixSym<false> &distances) {
   std::stack<Ti> neighbors_stack;
 
   // initialize
-  top_node = this->Nodes.at(0); // arbitrarily chosen (a one-point clusters)
+  top_node =
+      this->Nodes.at(0).get(); // arbitrarily chosen (a one-point clusters)
   neighbors_stack.push(0);
   nearest_1 = GetNearestNeighbor(*top_node, nearest_1_distance);
 
@@ -129,12 +128,12 @@ void HCluster<method>::Calculate(MatrixSym<false> &distances) {
         neighbors_stack.push(top_node->id);
         nearest_1 = GetNearestNeighbor(*top_node, nearest_1_distance);
       } else if (s == 1) { // find and add nearest
-        top_node = this->Nodes.at(neighbors_stack.top());
+        top_node = this->Nodes.at(neighbors_stack.top()).get();
         nearest_1 = GetNearestNeighbor(*top_node, nearest_1_distance);
       } else { // go one level up
-        nearest_1 = this->Nodes.at(neighbors_stack.top());
-        neighbors_stack.pop();                            // remove new nearest
-        top_node = this->Nodes.at(neighbors_stack.top()); // set the top
+        nearest_1 = this->Nodes.at(neighbors_stack.top()).get();
+        neighbors_stack.pop(); // remove new nearest
+        top_node = this->Nodes.at(neighbors_stack.top()).get(); // set the top
         nearest_1_distance =
             Distances->Get0(top_node->distanceIndex, nearest_1->distanceIndex);
       }
@@ -147,8 +146,9 @@ void HCluster<method>::Calculate(MatrixSym<false> &distances) {
   }
 }
 
-static void set_group_var(const std::vector<HClusterNode *> &Nodes,
-                          HClusterNode &node, Matrix<Ti> &group_i, Ti last) {
+static void
+set_group_var(const std::vector<std::unique_ptr<HClusterNode>> &Nodes,
+              HClusterNode &node, Matrix<Ti> &group_i, Ti last) {
 
   if (node.nodesWithin == 1) { // a single node
     group_i.Set0(node.id, 0, last);
@@ -159,7 +159,8 @@ static void set_group_var(const std::vector<HClusterNode *> &Nodes,
 }
 
 template <HClusterLinkage method>
-void HCluster<method>::Group(std::vector<std::vector<Ti> *> &map) const {
+void HCluster<method>::Group(
+    std::vector<std::unique_ptr<std::vector<Ti>>> &map) const {
   Ti k = (Ti)map.size(), i, j, m0, m1;
   if (k == n) { // n variables, n groups
     for (i = 0; i < n; i++)
@@ -169,7 +170,7 @@ void HCluster<method>::Group(std::vector<std::vector<Ti> *> &map) const {
       map.at(0)->push_back(i);
   } else {
     std::set<Ti> gr;
-    auto group_i_data = std::unique_ptr<Ti[]>(new Ti[n]);
+    auto group_i_data = std::make_unique<Ti[]>(n);
     Matrix<Ti> group_i =
         Matrix<Ti>(group_i_data.get(), n); // current group of variables
     group_i.SetValue(0);                   // first, all are one group
@@ -177,10 +178,10 @@ void HCluster<method>::Group(std::vector<std::vector<Ti> *> &map) const {
     HClusterNode *node, *node_left, *node_right;
 
     for (i = 2 * n - 2; i >= n; i--) { // i-th merge
-      node = this->Nodes.at(i);
+      node = this->Nodes.at(i).get();
 
-      node_left = this->Nodes.at(node->idLeft);
-      node_right = this->Nodes.at(node->idRight);
+      node_left = this->Nodes.at(node->idLeft).get();
+      node_right = this->Nodes.at(node->idRight).get();
 
       // an split occurred at this point
       // set the index of just one of the branches to a new index
@@ -220,16 +221,16 @@ void HCluster<method>::MergeR(Matrix<Ti> &merge, Matrix<Tv> &heights,
   HClusterNode *node_left;
   HClusterNode *node_right;
 
-  auto merge0_data = std::unique_ptr<Ti[]>(new Ti[merge.length()]);
-  auto heights0_data = std::unique_ptr<Tv[]>(new Tv[heights.length()]);
+  auto merge0_data = std::make_unique<Ti[]>(merge.length());
+  auto heights0_data = std::make_unique<Tv[]>(heights.length());
   Matrix<Ti> merge0 =
       Matrix<Ti>(merge0_data.get(), merge.RowsCount, merge.ColsCount);
   Matrix<Tv> heights0 = Matrix<Tv>(heights0_data.get(), heights.length());
 
   for (Ti n_i = n; n_i < 2 * n - 1; n_i++) {
-    node = this->Nodes.at(n_i);
-    node_left = this->Nodes.at(node->idLeft);
-    node_right = this->Nodes.at(node->idRight);
+    node = this->Nodes.at(n_i).get();
+    node_left = this->Nodes.at(node->idLeft).get();
+    node_right = this->Nodes.at(node->idRight).get();
 
     auto s = n_i - n;
     heights0.Set0(s, 0, node->leftDistanceRight);

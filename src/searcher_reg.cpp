@@ -82,6 +82,10 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
   auto numMeas = (Ti)(this->pMetrics->MetricsIn.size() +
                       this->pMetrics->MetricsOut.size());
 
+  if (numMeas == 0)
+    throw LdtException(ErrorType::kLogic, "searcher-reg", "No measures!");
+  if (TargetsPositions.size() == 0)
+    throw LdtException(ErrorType::kLogic, "searcher-reg", "No targets!");
   auto metrics = VMatrix<Tv>(numMeas, (Ti)TargetsPositions.size());
 
   auto extra = VMatrix<Ti>(mExtraLength);
@@ -136,33 +140,37 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
 
       // add model information:
       if (this->pItems->KeepModelEvaluations) {
-        EstimationKeep *ek = nullptr;
+        std::shared_ptr<EstimationKeep> ek;
         if (IsInnerExogenous)
-          ek = new EstimationKeep(metric, weight, InnerIndices, extra.Vec,
-                                  this->CurrentIndices.Vec);
+          ek = std::make_shared<EstimationKeep>(metric, weight, InnerIndices,
+                                                extra.Vec,
+                                                this->CurrentIndices.Vec);
         else
-          ek = new EstimationKeep(metric, weight, this->CurrentIndices.Vec,
-                                  extra.Vec, InnerIndices);
-        this->Push0(*ek, i, t_pos);
+          ek = std::make_shared<EstimationKeep>(metric, weight,
+                                                this->CurrentIndices.Vec,
+                                                extra.Vec, InnerIndices);
+        this->Push0(ek, i, t_pos);
       }
 
       if (this->pItems->Length1 > 0) { // Add coefficients
         for (Ti i1 = 0; i1 < type1_mean.Mat.RowsCount; i1++) {
 
-          EstimationKeep *ek = nullptr;
+          std::shared_ptr<EstimationKeep> ek;
           auto m = type1_mean.Mat.Get(i1, j);
           if (std::isnan(m))
             continue;
           auto v = type1_var.Mat.Get(i1, j);
 
           if (IsInnerExogenous)
-            ek = new EstimationKeep(metric, weight, InnerIndices, extra.Vec,
-                                    this->CurrentIndices.Vec, m, v);
+            ek = std::make_shared<EstimationKeep>(
+                metric, weight, InnerIndices, extra.Vec,
+                this->CurrentIndices.Vec, m, v);
           else
-            ek = new EstimationKeep(metric, weight, this->CurrentIndices.Vec,
-                                    extra.Vec, InnerIndices, m, v);
+            ek = std::make_shared<EstimationKeep>(
+                metric, weight, this->CurrentIndices.Vec, extra.Vec,
+                InnerIndices, m, v);
 
-          this->Push1(*ek, i, t_pos, i1);
+          this->Push1(ek, i, t_pos, i1);
         }
       }
 

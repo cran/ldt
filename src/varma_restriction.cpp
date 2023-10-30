@@ -99,7 +99,7 @@ Ti VarmaRestriction::GetNumRestrictionInEq(Matrix<Tv> &R, Ti eqIndex,
   // empty rows indicate a restricted parameter
   auto m = (Ti)R.RowsCount / eqCount;
 
-  auto sumr = std::unique_ptr<Tv[]>(new Tv[m]);
+  auto sumr = std::make_unique<Tv[]>(m);
   auto sumrm = Matrix<Tv>(sumr.get(), m, 1);
   auto rowinds = std::vector<Ti>(m);
   std::iota(rowinds.begin(), rowinds.end(), m * eqIndex);

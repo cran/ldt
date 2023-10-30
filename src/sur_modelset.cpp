@@ -56,7 +56,7 @@ SurSearcher::SurSearcher(const SearchData &data,
 
   Ti km = num_exo * num_endo;
   if (SigSearchMaxProb > 0) {
-    R_d = std::unique_ptr<Tv[]>(new Tv[km * km]);
+    R_d = std::make_unique<Tv[]>(km * km);
     R = Matrix<Tv>(R_d.get(), km, km);
   }
 }

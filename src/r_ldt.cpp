@@ -425,13 +425,14 @@ extractElements(const std::vector<std::string> &vec,
   return extractedElements;
 }
 
-static void add_CoefInfo(const std::string &eName, const std::string &tName,
-                         const std::string &typeName,
-                         const std::vector<std::string> &colNames,
-                         std::vector<List> &results,
-                         const std::vector<EstimationKeep *> &list,
-                         const std::vector<std::string> &extra1Names,
-                         const bool &addCoefs, const bool &hasWeight) {
+static void
+add_CoefInfo(const std::string &eName, const std::string &tName,
+             const std::string &typeName,
+             const std::vector<std::string> &colNames,
+             std::vector<List> &results,
+             const std::vector<std::shared_ptr<EstimationKeep>> &list,
+             const std::vector<std::string> &extra1Names, const bool &addCoefs,
+             const bool &hasWeight) {
 
   int j = -1;
   for (auto &b : list) {
@@ -503,7 +504,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
       // print(wrap(i));
       // print(wrap(typeName));
 
-      auto bests = std::vector<EstimationKeep *>();
+      auto bests = std::vector<std::shared_ptr<EstimationKeep>>();
       model.CombineBests(eIndex, tIndex, i, list, bests);
 
       if (bests.size() != 0) {
@@ -526,7 +527,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
       auto typeName = std::string("cdf");
 
       auto cdf = RunningMoments<1, true, true, Tv>();
-      auto mat_d = std::unique_ptr<double[]>(new double[items.Length1 * 3]);
+      auto mat_d = std::make_unique<double[]>(items.Length1 * 3);
       auto mat = ldt::Matrix<double>(mat_d.get(), items.Length1, 3);
       auto colnames = std::vector<std::string>({"Mean", "Count", "SumWeights"});
       for (auto i = 0; i < items.Length1; i++) {
@@ -551,7 +552,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
     auto typeName = std::string("extreme bound");
 
     double min = 0, max = 0;
-    auto mat_d = std::unique_ptr<double[]>(new double[items.Length1 * 2]);
+    auto mat_d = std::make_unique<double[]>(items.Length1 * 2);
     auto mat = ldt::Matrix<double>(mat_d.get(), items.Length1, 2);
     auto colnames = std::vector<std::string>({"Lower", "Upper"});
     for (auto i = 0; i < items.Length1; i++) {
@@ -575,7 +576,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
     auto typeName = std::string("mixture");
 
     auto mixture = RunningMoments<4, true, true, Tv>();
-    auto mat_d = std::unique_ptr<double[]>(new double[items.Length1 * 6]);
+    auto mat_d = std::make_unique<double[]>(items.Length1 * 6);
     auto mat = ldt::Matrix<double>(mat_d.get(), items.Length1, 6);
     auto colnames = std::vector<std::string>(
         {"Mean", "Variance", "Skewness", "Kurtosis", "Count", "SumWeights"});
@@ -651,7 +652,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
         if (items.KeepBestCount > 0) {
           auto typeName = std::string("best model");
 
-          auto bests = std::vector<EstimationKeep *>();
+          auto bests = std::vector<std::shared_ptr<EstimationKeep>>();
           model.CombineBests(eIndex, tIndex, 0, list0, bests);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, bests,
@@ -661,7 +662,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
         if (items.KeepAll) {
           auto typeName = std::string("model");
 
-          auto all = std::vector<EstimationKeep *>();
+          auto all = std::vector<std::shared_ptr<EstimationKeep>>();
           model.CombineAll(eIndex, tIndex, 0, list0, all);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, all,
@@ -673,7 +674,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
 
           auto covars = items.LengthEndogenous + items.LengthExogenous;
           auto incweights = RunningMoments<1, true, false, Tv>();
-          auto mat_d = std::unique_ptr<double[]>(new double[covars * 2]);
+          auto mat_d = std::make_unique<double[]>(covars * 2);
           auto mat = ldt::Matrix<double>(mat_d.get(), covars, 2);
           auto colnames = std::vector<std::string>({"Mean", "Count"});
           for (auto i = 0; i < covars; i++) {

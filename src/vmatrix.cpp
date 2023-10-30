@@ -13,7 +13,8 @@ template <typename Tw> VMatrix<Tw>::VMatrix() {}
 
 template <typename Tw>
 VMatrix<Tw>::VMatrix(Ti m, Ti n) : Vec(m * n), Mat(m, n) {
-  Mat.Data = &Vec[0];
+  if (m > 0 && n > 0)
+    Mat.Data = &Vec[0];
 }
 
 template <typename Tw>
@@ -26,7 +27,8 @@ VMatrix<Tw>::VMatrix(const std::vector<Tw> &data, Ti m, Ti n) : Vec(data) {
     m = data.size() / n;
   }
   Mat = Matrix<Tw>(m, n);
-  Mat.Data = &Vec[0];
+  if (m > 0 && n > 0)
+    Mat.Data = &Vec[0];
   if ((Ti)Vec.size() != m * n)
     throw LdtException(ErrorType::kLogic, "matrix",
                        "Inconsistent arguments. Size of vector must be m*n");
@@ -43,10 +45,16 @@ VMatrix<Tw>::VMatrix(std::initializer_list<Tw> initList, Ti m, Ti n)
     m = initList.size() / n;
   }
   Mat = Matrix<Tw>(m, n);
-  Mat.Data = &Vec[0];
+  if (m > 0 && n > 0)
+    Mat.Data = &Vec[0];
   if ((Ti)Vec.size() != m * n)
     throw LdtException(ErrorType::kLogic, "matrix",
                        "Inconsistent arguments. Size of vector must be m*n");
+}
+
+template <typename Tw> void VMatrix<Tw>::Sync() {
+  if (Vec.size() > 0)
+    Mat.Data = &Vec[0];
 }
 
 template class ldt::VMatrix<Ti>;

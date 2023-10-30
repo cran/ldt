@@ -450,8 +450,8 @@ DistributionGld::GetFromMoments(Tv mean, Tv variance, Tv skewness,
 
   Tv da[2] = {startL3, startL4};
   auto x0 = Matrix<Tv>(da, isSymetric ? 1 : 2);
-  auto W = std::unique_ptr<Tv[]>(new Tv[optim.WorkSize]);
-  auto S = std::unique_ptr<Tv[]>(new Tv[optim.StorageSize]);
+  auto W = std::make_unique<Tv[]>(optim.WorkSize);
+  auto S = std::make_unique<Tv[]>(optim.StorageSize);
   optim.Minimize(objective, x0, W.get(), S.get(), &lower, &upper);
 
   Tv L3 = optim.Result.Data[0];

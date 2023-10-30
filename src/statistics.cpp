@@ -113,7 +113,7 @@ void Ols::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   Ti pos = 0;
   Matrix<Tv> xx = Matrix<Tv>(work, k, k);
   pos += k * k;
-  auto ip = std::unique_ptr<int[]>(new int[k + 1]);
+  auto ip = std::make_unique<int[]>(k + 1);
   double *invW = &work[pos];
   pos += k * k;
   Matrix<Tv> xxx = Matrix<Tv>(&work[pos], k, N);
@@ -189,7 +189,7 @@ void Gls::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Matrix<Tv> &omega,
 
   Ti pos = 0;
   Ti invs = mIsOmegaInv ? k : N;
-  auto ip = std::unique_ptr<int[]>(new int[invs + 1]);
+  auto ip = std::make_unique<int[]>(invs + 1);
   auto invW = &work[pos];
   pos += invs * invs;
   auto xo = Matrix<Tv>(&work[pos], k, N);

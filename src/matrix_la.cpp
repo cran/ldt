@@ -543,7 +543,7 @@ template <typename Tw> Tw Matrix<Tw>::Norm(const char norm) const {
   const Ti M = RowsCount;
   const Ti N = ColsCount;
   const Tw *A = const_cast<const Tw *>(Data);
-  auto WORK0 = std::unique_ptr<Tw[]>(new Tw[norm == 'I' ? M : 0]);
+  auto WORK0 = std::make_unique<Tw[]>(norm == 'I' ? M : 0);
   auto WORK = WORK0.get();
 
   Tw d;
@@ -645,7 +645,7 @@ template <typename Tw> Tw Matrix<Tw>::Det() {
   const Ti M = static_cast<Ti>(this->RowsCount);
   Tw *A = Data;
   Ti info = (Ti)0;
-  auto ipiv0 = std::unique_ptr<int[]>(new int[M + 1]);
+  auto ipiv0 = std::make_unique<int[]>(M + 1);
   auto ipiv = ipiv0.get();
 
   if constexpr (std::is_same<Tw, double>()) {
@@ -700,7 +700,7 @@ template <typename Tw> Ti Matrix<Tw>::QR0(Tw *tau) {
     return info;
 
   lwork = static_cast<Ti>(dtemp);
-  // auto work0 = std::unique_ptr<int[]>(new int[lwork]);
+  // auto work0 = std::make_unique<int[]>(lwork);
   // auto work = work0.get();
 
   if constexpr (std::is_same<Tw, double>()) {

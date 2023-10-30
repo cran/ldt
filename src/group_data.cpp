@@ -13,17 +13,10 @@ template <HClusterLinkage linkMethod, DistanceMethod distMethod,
           CorrelationMethod corrMethod>
 GroupData<linkMethod, distMethod, corrMethod>::GroupData(Ti rows, Ti cols) {
 
-  this->Groups = std::vector<std::vector<Ti> *>();
+  this->Groups = std::vector<std::unique_ptr<std::vector<Ti>>>();
   this->Removed = std::set<size_t>();
   auto distance = Distance<true, distMethod, corrMethod>(rows, cols);
   this->WorkSize = distance.WorkSize + distance.StorageSize;
-}
-
-template <HClusterLinkage linkMethod, DistanceMethod distMethod,
-          CorrelationMethod corrMethod>
-GroupData<linkMethod, distMethod, corrMethod>::~GroupData() {
-  for (auto a : this->Groups)
-    delete a;
 }
 
 template <HClusterLinkage linkMethod, DistanceMethod distMethod,
@@ -37,9 +30,7 @@ void GroupData<linkMethod, distMethod, corrMethod>::Calculate(
     throw LdtException(ErrorType::kLogic, "groupdata",
                        "inconsistent arguments");
 
-  // delete current storage and clear it
-  for (auto a : this->Groups)
-    delete a;
+  // clear current storage
   this->Groups.clear();
 
   auto distance =
@@ -61,7 +52,7 @@ void GroupData<linkMethod, distMethod, corrMethod>::Calculate(
 
   // group
   for (Ti i = 0; i < groupCount; i++)
-    this->Groups.push_back(new std::vector<Ti>());
+    this->Groups.push_back(std::make_unique<std::vector<Ti>>());
   cluster.Group(this->Groups);
 
   // filter by threshold

@@ -16,31 +16,31 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
   if (checkNan) {
     switch (distMethod) {
     case ldt::DistanceMethod::kEuclidean:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<true, DistanceMethod::kEuclidean,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<true, DistanceMethod::kEuclidean,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kManhattan:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<true, DistanceMethod::kManhattan,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<true, DistanceMethod::kManhattan,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kMaximum:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<true, DistanceMethod::kMaximum,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<true, DistanceMethod::kMaximum,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kCorrelation:
       switch (corrMethod) {
       case ldt::CorrelationMethod::kPearson:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<true, DistanceMethod::kCorrelation,
-                         CorrelationMethod::kPearson>(rows, cols));
+        return std::make_unique<Distance<true, DistanceMethod::kCorrelation,
+                                         CorrelationMethod::kPearson>>(rows,
+                                                                       cols);
 
       case ldt::CorrelationMethod::kSpearman:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<true, DistanceMethod::kCorrelation,
-                         CorrelationMethod::kSpearman>(rows, cols));
+        return std::make_unique<Distance<true, DistanceMethod::kCorrelation,
+                                         CorrelationMethod::kSpearman>>(rows,
+                                                                        cols);
 
       default:
         throw LdtException(ErrorType::kLogic, "distance",
@@ -50,14 +50,14 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
     case ldt::DistanceMethod::kAbsCorrelation:
       switch (corrMethod) {
       case ldt::CorrelationMethod::kPearson:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<true, DistanceMethod::kAbsCorrelation,
-                         CorrelationMethod::kPearson>(rows, cols));
+        return std::make_unique<Distance<true, DistanceMethod::kAbsCorrelation,
+                                         CorrelationMethod::kPearson>>(rows,
+                                                                       cols);
 
       case ldt::CorrelationMethod::kSpearman:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<true, DistanceMethod::kAbsCorrelation,
-                         CorrelationMethod::kSpearman>(rows, cols));
+        return std::make_unique<Distance<true, DistanceMethod::kAbsCorrelation,
+                                         CorrelationMethod::kSpearman>>(rows,
+                                                                        cols);
 
       default:
         throw LdtException(ErrorType::kLogic, "distance",
@@ -71,31 +71,31 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
   } else {
     switch (distMethod) {
     case ldt::DistanceMethod::kEuclidean:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<false, DistanceMethod::kEuclidean,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<false, DistanceMethod::kEuclidean,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kManhattan:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<false, DistanceMethod::kManhattan,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<false, DistanceMethod::kManhattan,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kMaximum:
-      return std::unique_ptr<DistanceBase>(
-          new Distance<false, DistanceMethod::kMaximum,
-                       CorrelationMethod::kPearson>(rows, cols));
+      return std::make_unique<Distance<false, DistanceMethod::kMaximum,
+                                       CorrelationMethod::kPearson>>(rows,
+                                                                     cols);
 
     case ldt::DistanceMethod::kCorrelation:
       switch (corrMethod) {
       case ldt::CorrelationMethod::kPearson:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<false, DistanceMethod::kCorrelation,
-                         CorrelationMethod::kPearson>(rows, cols));
+        return std::make_unique<Distance<false, DistanceMethod::kCorrelation,
+                                         CorrelationMethod::kPearson>>(rows,
+                                                                       cols);
 
       case ldt::CorrelationMethod::kSpearman:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<false, DistanceMethod::kCorrelation,
-                         CorrelationMethod::kSpearman>(rows, cols));
+        return std::make_unique<Distance<false, DistanceMethod::kCorrelation,
+                                         CorrelationMethod::kSpearman>>(rows,
+                                                                        cols);
 
       default:
         throw LdtException(ErrorType::kLogic, "distance",
@@ -105,14 +105,14 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
     case ldt::DistanceMethod::kAbsCorrelation:
       switch (corrMethod) {
       case ldt::CorrelationMethod::kPearson:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<false, DistanceMethod::kAbsCorrelation,
-                         CorrelationMethod::kPearson>(rows, cols));
+        return std::make_unique<Distance<false, DistanceMethod::kAbsCorrelation,
+                                         CorrelationMethod::kPearson>>(rows,
+                                                                       cols);
 
       case ldt::CorrelationMethod::kSpearman:
-        return std::unique_ptr<DistanceBase>(
-            new Distance<false, DistanceMethod::kAbsCorrelation,
-                         CorrelationMethod::kSpearman>(rows, cols));
+        return std::make_unique<Distance<false, DistanceMethod::kAbsCorrelation,
+                                         CorrelationMethod::kSpearman>>(rows,
+                                                                        cols);
 
       default:
         throw LdtException(ErrorType::kLogic, "distance",
@@ -125,9 +125,6 @@ DistanceBase::GetFromType(bool checkNan, DistanceMethod distMethod,
     }
   }
 }
-
-template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
-Distance<checkNan, method, corrMethod>::~Distance() {}
 
 template <bool checkNan, DistanceMethod method, CorrelationMethod corrMethod>
 Distance<checkNan, method, corrMethod>::Distance(Ti rows, Ti cols) {

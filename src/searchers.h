@@ -60,7 +60,8 @@ struct EstimationKeep {
 struct EstimationKeepComp {
   bool positiveOriented;
   EstimationKeepComp(bool posOri = true) : positiveOriented(posOri) {}
-  bool operator()(const EstimationKeep *lhs, const EstimationKeep *rhs) const {
+  bool operator()(const std::shared_ptr<EstimationKeep> &lhs,
+                  const std::shared_ptr<EstimationKeep> &rhs) const {
     return positiveOriented ? lhs->Metric > rhs->Metric
                             : lhs->Metric < rhs->Metric;
   }
@@ -346,11 +347,11 @@ public:
 
   /// @brief If requested in the options, it contains the information about the
   /// first K best models
-  std::multiset<EstimationKeep *, EstimationKeepComp> Bests;
+  std::multiset<std::shared_ptr<EstimationKeep>, EstimationKeepComp> Bests;
 
   /// @brief If requested in the options, it contains the information about all
   /// models
-  std::vector<EstimationKeep *> All;
+  std::vector<std::shared_ptr<EstimationKeep>> All;
 
   /// @brief If requested in the options, it is the CDFs at the given points
   std::vector<RunningMoments<1, true, true, Tv>> Cdfs;
@@ -384,13 +385,12 @@ public:
   /// @param isPositiveOriented determines the comparison in \ref Bests
   SearcherSummary(Ti Index1, Ti Index2, Ti Index3, const SearchItems *options,
                   bool isPositiveOriented, const SearchData *data);
-  ~SearcherSummary();
 
   /// @brief Inserts a new estimation to the storage
   /// @param estimation Estimation information
   /// @param isModel If true, it is a push for model information. Otherwise, it
   /// is a estimated coefficient, or a forecast, etc.
-  void Push(EstimationKeep &estimation, bool isModel);
+  void Push(std::shared_ptr<EstimationKeep> &estimation, bool isModel);
 };
 
 /// @brief A searcher class with 3 types of summaries: Model, Type1, Type2.
@@ -445,7 +445,8 @@ protected:
   /// @param targetIndex Index of the target variable
   /// @param overrideIncExo If not null, it overrides the exogenous inclusion
   /// indices
-  void Push0(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex);
+  void Push0(std::shared_ptr<EstimationKeep> &estimation, Ti evalIndex,
+             Ti targetIndex);
 
   /// @brief Pushes information to \ref Summaries1
   /// @param estimation The information
@@ -453,16 +454,16 @@ protected:
   /// @param targetIndex Index of the target variable
   /// @param thirdIndex Index of the third data (e.g., horizon or index of the
   /// coefficient)
-  void Push1(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex,
-             Ti thirdIndex);
+  void Push1(std::shared_ptr<EstimationKeep> &estimation, Ti evalIndex,
+             Ti targetIndex, Ti thirdIndex);
 
   /// @brief Similar to \ref Push1 but for Summaries2
   /// @param estimation
   /// @param evalIndex
   /// @param targetIndex
   /// @param thirdIndex
-  void Push2(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex,
-             Ti thirdIndex);
+  void Push2(std::shared_ptr<EstimationKeep> &estimation, Ti evalIndex,
+             Ti targetIndex, Ti thirdIndex);
 
 public:
   /// @brief A pointer to the provided \ref SearchData
@@ -706,7 +707,7 @@ public:
   /// @param result A place to save the result
   void CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
                   const std::vector<SearcherSummary *> &summaries,
-                  std::vector<EstimationKeep *> &result) const;
+                  std::vector<std::shared_ptr<EstimationKeep>> &result) const;
 
   /// @brief Combines best estimations for a specific item
   /// @param index1 Metric index of the item
@@ -716,7 +717,7 @@ public:
   /// @param result A place to save the result
   void CombineBests(const Ti &index1, const Ti &index2, const Ti &index3,
                     const std::vector<SearcherSummary *> &summaries,
-                    std::vector<EstimationKeep *> &result) const;
+                    std::vector<std::shared_ptr<EstimationKeep>> &result) const;
 
   /// @brief Combines inclusion weights for a specific item
   /// @param index1 Metric index of the item

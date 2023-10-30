@@ -74,8 +74,6 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
   }
 }
 
-DiscreteChoiceExtended::~DiscreteChoiceExtended() { delete Model; }
-
 void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
                                        Tv *work, bool olsInitial,
                                        const Matrix<Tv> *xForecast,
@@ -173,14 +171,14 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     if (mModelType == DiscreteChoiceModelType::kBinary) {
       if (aucOptions.Costs.Data) {
         if (mHasWeight && mWeightedEval)
-          auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
+          auc0 = std::make_unique<ROC<true, true>>(numObs);
         else
-          auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(numObs));
+          auc0 = std::make_unique<ROC<false, true>>(numObs);
       } else {
         if (mHasWeight && mWeightedEval)
-          auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
+          auc0 = std::make_unique<ROC<true, false>>(numObs);
         else
-          auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(numObs));
+          auc0 = std::make_unique<ROC<false, false>>(numObs);
       }
     } else {
       throw LdtException(ErrorType::kLogic, "dc-extended",

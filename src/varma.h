@@ -242,12 +242,6 @@ public:
 
   static void UnDiferences(std::vector<Ti> &polyDiff, Matrix<Tv> &storage);
 
-  static std::tuple<Matrix<Tv>, Matrix<Tv>>
-  Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
-           Matrix<Tv> *intercept = nullptr, Matrix<Tv> *exocoef = nullptr,
-           Matrix<Tv> *sigma = nullptr, Ti n = 200, Ti skip = 100,
-           unsigned int seed = 0, Matrix<Tv> *y0 = nullptr, Ti horizon = 10);
-
   void EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
                    const Matrix<Tv> *R, const Matrix<Tv> *r, Tv *work,
                    Tv *storage, Ti sampleEnd, bool noestimation,

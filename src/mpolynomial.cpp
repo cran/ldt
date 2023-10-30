@@ -48,7 +48,8 @@ Ti PolynomialM::Data(Ti degree, Ti m, Tv *data) {
   auto mm = m * m;
   isOwner = true; // delete the list
   for (Ti i = 0; i < degree + 1; i++)
-    Coefficients.push_back(new Matrix<Tv>(&data[i * mm], m, m));
+    Coefficients.push_back(
+        new Matrix<Tv>(&data[i * mm], m, m)); // TODO: avoid using new
   return (degree + 1) * mm;
 }
 
@@ -160,10 +161,10 @@ void PolynomialMInvert::Calculate(const PolynomialM &a, Tv *storage, Tv *work,
   auto tempmats = std::vector<std::unique_ptr<Matrix<Tv>>>();
   Ti q = 0;
   for (Ti i = 1; i <= degree; i++) {
-    auto m = new Matrix<Tv>(&work[q], size, size);
+    auto m = std::make_unique<Matrix<Tv>>(&work[q], size, size);
     q += s2; // degree * size * size
-    tempmats.push_back(std::unique_ptr<Matrix<Tv>>(m));
-    inv0->Dot0(*a.Coefficients.at(i), *m, -1);
+    tempmats.push_back(std::move(m));
+    inv0->Dot0(*a.Coefficients.at(i), *tempmats.back(), -1);
   }
 
   auto x = Matrix<Tv>(&work[q], size, size); // size * size

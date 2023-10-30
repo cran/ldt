@@ -95,9 +95,9 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
       std::logic_error("not implemented discrete choice model type");
 
     if (hasWeight && metrics.WeightedEval)
-      AucIn = std::unique_ptr<RocBase>(new ROC<true, false>(num_obs));
+      AucIn = std::make_unique<ROC<true, false>>(num_obs);
     else
-      AucIn = std::unique_ptr<RocBase>(new ROC<false, false>(num_obs));
+      AucIn = std::make_unique<ROC<false, false>>(num_obs);
   }
 }
 

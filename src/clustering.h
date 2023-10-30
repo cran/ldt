@@ -70,7 +70,7 @@ inline DistanceMethod FromString_DistanceMethod(const char *v) {
     return DistanceMethod::kCorrelation;
 
   throw LdtException(ErrorType::kLogic, "clustering.h",
-                 "invalid or not implemented distance method");
+                     "invalid or not implemented distance method");
 }
 
 /// @brief A base class for calculating distance
@@ -99,7 +99,6 @@ public:
                                                    DistanceMethod distMethod,
                                                    CorrelationMethod corrMethod,
                                                    Ti rows, Ti cols);
-  virtual ~DistanceBase(){};
 
   virtual void Calculate(const Matrix<Tv> &data, Tv *storage, Tv *work) = 0;
 };
@@ -119,7 +118,6 @@ public:
   /// @param rows Maximum expected number of rows
   /// @param cols Maximum expected number of columns
   Distance(Ti rows, Ti cols);
-  virtual ~Distance();
 
   /// @brief Calculates the results
   /// @param data Data
@@ -188,7 +186,7 @@ inline HClusterLinkage FromString_HClusterLinkage(const char *v) {
     return HClusterLinkage::kWard;
 
   throw LdtException(ErrorType::kLogic, "clustering.h",
-                 "invalid or not implemented h-cluster linkage");
+                     "invalid or not implemented h-cluster linkage");
 }
 
 /// @brief A cluster node
@@ -220,11 +218,11 @@ class LDT_EXPORT HClusterBase {
 
 public:
   HClusterBase(){};
-  virtual ~HClusterBase(){};
+  virtual ~HClusterBase() = default;
 
   /// @brief Array of Nodes. At first it has n nodes. After calculation, n-1
   /// more merged Nodes are added
-  std::vector<HClusterNode *> Nodes;
+  std::vector<std::unique_ptr<HClusterNode>> Nodes;
 
   /// @brief Gets the class from a type
   /// @param linkage The type
@@ -235,7 +233,8 @@ public:
 
   virtual void Calculate(MatrixSym<false> &distances) = 0;
 
-  virtual void Group(std::vector<std::vector<Ti> *> &map) const = 0;
+  virtual void
+  Group(std::vector<std::unique_ptr<std::vector<Ti>>> &map) const = 0;
 
   virtual void MergeR(Matrix<Ti> &merge, Matrix<Tv> &heights,
                       std::vector<Ti> &order) const = 0;
@@ -281,15 +280,14 @@ public:
   /// @param n
   HCluster(Ti n);
 
-  ~HCluster();
-
   /// @brief Calculates the results
   /// @param distances The distance matrix
   virtual void Calculate(MatrixSym<false> &distances) override;
 
   /// @brief After calculate, it groups the data
   /// @param map Its size determines the number of groups
-  virtual void Group(std::vector<std::vector<Ti> *> &map) const override;
+  virtual void
+  Group(std::vector<std::unique_ptr<std::vector<Ti>>> &map) const override;
 
   /// @brief Similar merge and height matrixes with the R 'hclust' function
   /// (not complete yet. the sorting remains)
@@ -308,7 +306,7 @@ public:
   Ti WorkSize = 0;
 
   /// @brief After \ref Calculate, it contains the result
-  std::vector<std::vector<Ti> *> Groups;
+  std::vector<std::unique_ptr<std::vector<Ti>>> Groups;
 
   /// @brief After \ref Calculate, it shows removed columns
   std::set<size_t> Removed;
@@ -317,7 +315,6 @@ public:
   bool NaNDistanceFound = false;
 
   GroupDataBase(){};
-  virtual ~GroupDataBase(){};
 
   virtual void Calculate(const Matrix<Tv> &mat, Tv *work, Ti groupCount,
                          Tv removeThreshold = 0) = 0;
@@ -347,7 +344,6 @@ public:
   /// @param rows Maximum expected number of rows
   /// @param cols Maximum expected number of columns
   GroupData(Ti rows, Ti cols);
-  ~GroupData();
 
   /// @brief Calculates the results
   /// @param mat Data

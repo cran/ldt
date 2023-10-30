@@ -130,7 +130,7 @@ VarmaSizes::VarmaSizes(Ti obsCount, Ti eqsCount, Ti exoCount, Ti arP, Ti arD,
 }
 
 void VarmaSizes::Calculate() {
-  auto W = std::unique_ptr<Ti[]>(new Ti[WorkSizeI]);
+  auto W = std::make_unique<Ti[]>(WorkSizeI);
   Calculate(W.get());
 }
 

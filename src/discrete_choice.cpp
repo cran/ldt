@@ -426,7 +426,7 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
 
   // calculate variances from Hessian
   hfun(this->Beta, this->BetaVar); // Hessian gets destroyed in optimization
-  auto ipiv = std::unique_ptr<int[]>(new int[k]);
+  auto ipiv = std::make_unique<int[]>(k);
 
   this->condition_number = this->BetaVar.Norm('1'); // condition number
   this->BetaVar.Inv00(ipiv.get(), Hi.Data);
@@ -1046,7 +1046,7 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
                         this->BetaVar.Data, optim_WORK);
 
   hfun(this->Beta, this->BetaVar); // hessian gets destroyed in optimization
-  auto ipiv = std::unique_ptr<int[]>(new int[k]);
+  auto ipiv = std::make_unique<int[]>(k);
   Hi.Restructure0(k, k);
   this->BetaVar.Inv00(ipiv.get(), Hi.Data);
 
@@ -1156,23 +1156,24 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
   }
 }
 
-DiscreteChoiceBase *
+std::unique_ptr<DiscreteChoiceBase>
 DiscreteChoiceBase::GetFromType(DiscreteChoiceModelType modelType,
                                 DiscreteChoiceDistType distType, Ti numObs,
                                 Ti numExo, Ti numChoices, bool doDetails) {
-  DiscreteChoiceBase *d = nullptr;
+
+  std::unique_ptr<DiscreteChoiceBase> d = nullptr;
 
   switch (modelType) {
   case ldt::DiscreteChoiceModelType::kBinary:
     switch (distType) {
     case ldt::DiscreteChoiceDistType::kLogit:
-      d = new DiscreteChoice<DiscreteChoiceModelType::kBinary,
-                             DiscreteChoiceDistType::kLogit>(
+      d = std::make_unique<DiscreteChoice<DiscreteChoiceModelType::kBinary,
+                                          DiscreteChoiceDistType::kLogit>>(
           numObs, numExo, numChoices, doDetails);
       break;
     case ldt::DiscreteChoiceDistType::kProbit:
-      d = new DiscreteChoice<DiscreteChoiceModelType::kBinary,
-                             DiscreteChoiceDistType::kProbit>(
+      d = std::make_unique<DiscreteChoice<DiscreteChoiceModelType::kBinary,
+                                          DiscreteChoiceDistType::kProbit>>(
           numObs, numExo, numChoices, doDetails);
       break;
     default:
@@ -1184,13 +1185,13 @@ DiscreteChoiceBase::GetFromType(DiscreteChoiceModelType modelType,
   case ldt::DiscreteChoiceModelType::kOrdered:
     switch (distType) {
     case ldt::DiscreteChoiceDistType::kLogit:
-      d = new DiscreteChoice<DiscreteChoiceModelType::kOrdered,
-                             DiscreteChoiceDistType::kLogit>(
+      d = std::make_unique<DiscreteChoice<DiscreteChoiceModelType::kOrdered,
+                                          DiscreteChoiceDistType::kLogit>>(
           numObs, numExo, numChoices, doDetails);
       break;
     case ldt::DiscreteChoiceDistType::kProbit:
-      d = new DiscreteChoice<DiscreteChoiceModelType::kOrdered,
-                             DiscreteChoiceDistType::kProbit>(
+      d = std::make_unique<DiscreteChoice<DiscreteChoiceModelType::kOrdered,
+                                          DiscreteChoiceDistType::kProbit>>(
           numObs, numExo, numChoices, doDetails);
       break;
     default:

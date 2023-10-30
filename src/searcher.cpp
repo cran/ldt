@@ -99,17 +99,18 @@ void Searcher::AddState(std::string state) {
   }
 }
 
-void Searcher::Push0(EstimationKeep &coef, Ti evalIndex, Ti targetIndex) {
+void Searcher::Push0(std::shared_ptr<EstimationKeep> &coef, Ti evalIndex,
+                     Ti targetIndex) {
   Summaries0.at(evalIndex).at(targetIndex).Push(coef, true);
 }
 
-void Searcher::Push1(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
-                     Ti thirdIndex) {
+void Searcher::Push1(std::shared_ptr<EstimationKeep> &coef, Ti evalIndex,
+                     Ti targetIndex, Ti thirdIndex) {
   Summaries1.at(evalIndex).at(targetIndex).at(thirdIndex).Push(coef, false);
 }
 
-void Searcher::Push2(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
-                     Ti thirdIndex) {
+void Searcher::Push2(std::shared_ptr<EstimationKeep> &coef, Ti evalIndex,
+                     Ti targetIndex, Ti thirdIndex) {
   Summaries2.at(evalIndex).at(targetIndex).at(thirdIndex).Push(coef, false);
 }
 
@@ -351,9 +352,10 @@ Ti Searcher::GetCount(bool effective) const {
 // #pragma region Test
 
 std::string SearcherTest::EstimateOne(Tv *work, Ti *workI) {
-  this->Push0(*new EstimationKeep(1, NAN, std::vector<Ti>(), std::vector<Ti>(),
-                                  this->CurrentIndices.Vec, 0, 0),
-              0, 0);
+  auto ek = std::make_shared<EstimationKeep>(1, NAN, std::vector<Ti>(),
+                                             std::vector<Ti>(),
+                                             this->CurrentIndices.Vec, 0, 0);
+  this->Push0(ek, 0, 0);
   return "";
 }
 

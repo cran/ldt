@@ -28,7 +28,7 @@ public:
 
   /// @brief size: number of choices. Each element consist index of the rows in
   /// the given data
-  std::vector<std::vector<Ti> *> Rows;
+  std::vector<std::unique_ptr<std::vector<Ti>>> Rows;
 
   /// @brief Training sample
   Matrix<Tv> Sample0;
@@ -41,8 +41,6 @@ public:
   /// @param cols maximum expected number of columns in the data
   /// @param numChoices number of unique labels in the data
   DataSplitDiscrete(Ti rows, Ti cols, Ti numChoices);
-
-  ~DataSplitDiscrete();
 
   /// @brief Allocates storage and prepares the class. After this, call
   /// \ref Shuffle, e.g. in a loop

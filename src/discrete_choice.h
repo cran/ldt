@@ -198,11 +198,10 @@ public:
   /// @param numChoices Number of choices. For binary model it is 2.
   /// @param doDetails If true, p-values are calculated
   /// @return A pointer to the initialized class
-  static DiscreteChoiceBase *GetFromType(DiscreteChoiceModelType modelType,
-                                         DiscreteChoiceDistType distType,
-                                         Ti numObs, Ti numExo,
-                                         Ti numChoices = 2,
-                                         bool doDetails = true);
+  static std::unique_ptr<DiscreteChoiceBase>
+  GetFromType(DiscreteChoiceModelType modelType,
+              DiscreteChoiceDistType distType, Ti numObs, Ti numExo,
+              Ti numChoices = 2, bool doDetails = true);
 
 protected:
   virtual void EstimatePriorBinary(const Matrix<Tv> &y, const Matrix<Tv> &x,
@@ -314,7 +313,7 @@ public:
   PcaAnalysis Pca;
 
   /// @brief A pointer to the estimated model. The class is its owner.
-  DiscreteChoiceBase *Model = nullptr;
+  std::unique_ptr<DiscreteChoiceBase> Model = nullptr;
 
   /// @brief A pointer to the given cost matrices. The class does not own it.
   std::vector<Matrix<Tv>> *pCostMatrices = nullptr;
@@ -357,8 +356,6 @@ public:
                          PcaAnalysisOptions *pcaOptions,
                          std::vector<Matrix<Tv>> *costMatrices = nullptr,
                          bool weightedEval = true);
-
-  ~DiscreteChoiceExtended();
 
   /// @brief Estimates the model and calculated other requested information
   /// @param data (N x M) matrix of data with variables in the columns
@@ -431,7 +428,7 @@ public:
 
   /// @brief Get a simulation class from types. Arguments are passed to the
   /// class or the constructors
-  static DiscreteChoiceSimBase *
+  static std::unique_ptr<DiscreteChoiceSimBase>
   GetFromType(bool hasWeight, DiscreteChoiceModelType modelType,
               DiscreteChoiceDistType distType, Ti rows, Ti cols, Ti numChoices,
               Tv trainPercentage, Ti trainFixSize, Ti costMatrixCount,

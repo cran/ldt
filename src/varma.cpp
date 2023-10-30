@@ -56,121 +56,6 @@ void Varma::UnDiferences(std::vector<Ti> &polyDiff, Matrix<Tv> &storage) {
   }
 }
 
-std::tuple<Matrix<Tv>, Matrix<Tv>>
-Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
-                Matrix<Tv> *intercept, Matrix<Tv> *exocoef, Matrix<Tv> *sigma,
-                Ti n, Ti skip, unsigned int seed, Matrix<Tv> *y0, Ti horizon) {
-  Ti m = sigma ? sigma->ColsCount
-               : (ar->size() > 0 ? ar->at(0)->ColsCount
-                                 : (ma->size() > 0 ? ma->at(0)->ColsCount
-                                                   : intercept->length()));
-  bool hasExo = exocoef;
-  Ti k = hasExo ? exocoef->ColsCount : 0;
-  Ti p = (Ti)ar->size();
-  Ti q = (Ti)ma->size();
-
-  if (exocoef && exocoef->RowsCount != m)
-    throw std::invalid_argument("invalid dimension: exocoef");
-  if (intercept && intercept->length() != m)
-    throw std::invalid_argument("invalid dimension: intercept");
-  if (sigma && (sigma->ColsCount != m || sigma->RowsCount != m))
-    throw std::invalid_argument("invalid dimension: sigma");
-  if (y0 && y0->RowsCount != m)
-    throw std::invalid_argument("invalid dimension: y0");
-
-  for (auto a : *ar)
-    if (a->ColsCount != m || a->RowsCount != m)
-      throw std::invalid_argument("invalid dimension: ar");
-  for (auto a : *ma)
-    if (a->ColsCount != m || a->RowsCount != m)
-      throw std::invalid_argument("invalid dimension: ma");
-
-  std::default_random_engine eng;
-  if (seed != 0)
-    eng = std::default_random_engine(seed);
-  else {
-    std::random_device rdev{};
-    eng = std::default_random_engine(rdev());
-  }
-  std::uniform_int_distribution<unsigned int> unifseed(1000, 600000);
-
-  auto count = n + skip;
-
-  // create exogenous data from normal distribution
-  Matrix<Tv> exodata;
-  if (hasExo) {
-    exodata = Matrix<Tv>(new std::vector<Tv>((count + horizon) * k), k,
-                         count + horizon); // (count + horizon) * k
-
-    std::normal_distribution<Tv> dist(1000, 600000);
-    for (Ti i = 0; i < exodata.length(); i++)
-      exodata.Data[i] = dist(eng);
-  }
-
-  auto e = NormalM(m, nullptr, sigma, (count + horizon), false, true, 0);
-
-  auto shocks = new Tv[e.StorageSize];
-  Tv *We = new Tv[e.WorkSize];
-  e.GetSample(shocks, We, unifseed(eng));
-
-  auto y = Matrix<Tv>(0, new Tv[count * m], m, count); // count * m
-  if (y0)
-    y.SetSub0(0, 0, *y0, 0, 0, y0->RowsCount, y0->ColsCount);
-
-  auto tmp = Matrix<Tv>(new Tv[m], m);  // m
-  auto tmp0 = Matrix<Tv>(new Tv[m], m); // m
-  auto tmp1 = Matrix<Tv>(new Tv[m], m); // m
-  Matrix<Tv> *tmp2 = nullptr;
-  if (hasExo)
-    tmp2 = new Matrix<Tv>(new Tv[k], k); // k
-
-  for (Ti i = std::max(p, q); i < count; i++) {
-    e.Sample.GetColumn0(i, tmp);
-    for (Ti j = 1; j <= q; j++) {
-      e.Sample.GetColumn0(i - j, tmp1);
-      ma->at(j - 1)->Dot0(tmp1, tmp0);
-      tmp.Add_in0(tmp0);
-    }
-    for (Ti j = 1; j <= p; j++) {
-      y.GetColumn0(i - j, tmp1);
-      ar->at(j - 1)->Dot0(tmp1, tmp0);
-      tmp.Add_in0(tmp0);
-    }
-    if (intercept)
-      tmp.Add0(*intercept, tmp);
-    if (hasExo) {
-      exodata.GetColumn0(i, *tmp2);
-      exocoef->Dot0(*tmp2, tmp1);
-      tmp.Add0(tmp1, tmp);
-    }
-    y.SetColumn0(i, tmp);
-  }
-  auto y1 = Matrix<Tv>(new std::vector<Tv>(n * m), m, n); // m x n
-  y.GetSub0(0, skip, m, n, y1);
-  Matrix<Tv> x1;
-  if (k != 0) {
-    x1 = Matrix<Tv>(new std::vector<Tv>((n + horizon) * m), m,
-                    n + horizon); // m x (n+horizon)
-    exodata.GetSub0(0, skip, m, n + horizon, x1);
-  }
-
-  delete[] shocks;
-  delete[] We;
-
-  // TODO: add work arrays
-  /*delete[] We;
-  delete[] tmp.SetData();
-  delete[] tmp1.SetData();
-  if (tmp2) {
-      delete[] tmp2.SetData();
-      delete[] exodata.SetData();
-  }
-  delete[] shocks.SetData();
-  delete[] y.SetData();*/
-
-  return std::tuple<Matrix<Tv>, Matrix<Tv>>(y1, x1);
-}
-
 // #pragma endregion
 
 // #pragma region OLS
@@ -503,11 +388,10 @@ void SetDetails(Varma &varma, const Matrix<Tv> *R) {
   if (R) {
     R->Dot0(varma.Result.gamma,
             varma.Result.coef); // don't check the dimension
-    Tv *dig = new Tv[varma.Result.gammavar.RowsCount];
-    auto mdig = Matrix<Tv>(dig, varma.Result.gammavar.RowsCount, 1);
+    auto dig = std::make_unique<Tv[]>(varma.Result.gammavar.RowsCount);
+    auto mdig = Matrix<Tv>(dig.get(), varma.Result.gammavar.RowsCount, 1);
     varma.Result.gammavar.GetDiag(mdig);
     R->Dot0(mdig, varma.Result.coefstd);
-    delete[] dig;
   } else {
     varma.Result.gamma.CopyTo00(varma.Result.coef);
     varma.Result.gammavar.GetDiag(varma.Result.coefstd);
@@ -579,7 +463,7 @@ void Varma::EstimateMl(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
     if (mDoDetails) {
       SetDetails(*this, R);
       // logarithm Likelihood
-      auto copsigma2 = std::unique_ptr<Tv[]>(new Tv[Result.sigma2.length()]);
+      auto copsigma2 = std::make_unique<Tv[]>(Result.sigma2.length());
       auto mcopsigma2 = Matrix<Tv>(copsigma2.get(), g, g);
       Result.sigma2.CopyTo(mcopsigma2);
       CalculateGoodness(*this, T, g, f,
