@@ -16,9 +16,7 @@
 #' \item{data}{The final data matrix. Endogenous variables are in the first columns, followed by weights (if provided), then the intercept (if added), and finally the exogenous variables.}
 #' \item{numEndo}{The number of endogenous variables in the data.}
 #' \item{numExo}{The number of exogenous variables in the data (including 'intercept' if it is added).}
-#' \item{obsCount}{The number of observations in the original data.}
 #' \item{newX}{The matrix of new observations for exogenous variables.}
-#' \item{newObsCount}{The number of observations in the new data.}
 #' \item{lambdas}{The lambda parameters used in the Box-Cox transformation.}
 #' \item{hasIntercept}{Indicates whether an intercept column is added to the final matrix.}
 #' \item{hasWeight}{Indicates whether there is a weight column in the final matrix.}
@@ -154,7 +152,6 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   data <- matrix(as.numeric(as.matrix(data)), ncol = ncol(data), dimnames = list(NULL, colnames(data)))
   if (!is.null(newData))
     newData <- matrix(as.numeric(as.matrix(newData)), ncol = ncol(newData), dimnames = list(NULL, colnames(newData)))
-  obsCount <- nrow(data)
 
   if (!is.null(lambdas)) {
     bcRes <- boxCoxTransform(data[, 1:numEndo,drop=FALSE], lambdas, ...)
@@ -188,9 +185,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   res <- list(data = data,
               numEndo = numEndo,
               numExo = numExo,
-              obsCount = obsCount,
               newX = newData, # it contains just exogenous data, if not NULL
-              newObsCount = ifelse(is.null(newData),0, nrow(newData)),
               lambdas = lambdas,
               hasIntercept = addIntercept,
               hasWeight = !is.null(weights),
@@ -209,8 +204,10 @@ get.data <- function(data, endogenous = 1, equations = NULL,
 #' @return The input \code{data} with updated data matrix
 get.data.append.newX <- function(data, maxHorizon = NA){
   added <- attr(data, "ldt.new.appended")
-  if (!is.null(added) && added)
+  if (!is.null(added) && added > 0)
     return(data)
+
+  addedcount <- 0
 
   if (is.null(data$newX)){
     if (is.na(maxHorizon)){ }
@@ -220,6 +217,7 @@ get.data.append.newX <- function(data, maxHorizon = NA){
                                nrow = maxHorizon), rep(1,maxHorizon))
       colnames(new_rows) <- colnames(data$data)
       data$data <- rbind(data$data, new_rows)
+      addedcount <- maxHorizon
     }
     else if (maxHorizon > 0 && data$numExo != 0)
       stop("Number of new data points (=0) is less than the required maximum horizon (=", maxHorizon,").")
@@ -234,9 +232,10 @@ get.data.append.newX <- function(data, maxHorizon = NA){
                              nrow = nrow(data$newX)), data$newX)
     colnames(new_rows) <- colnames(data$data)
     data$data <- rbind(data$data, new_rows)
+    addedcount <- nrow(data$newX)
   }
 
-  attr(data, "ldt.new.appended") <- TRUE
+  attr(data, "ldt.new.appended") <- addedcount
   return(data)
 }
 
@@ -518,11 +517,12 @@ get.combinations <- function(sizes = c(1),
     for (size in sizes)
       if (!is.numeric(size) )
         stop("An element in 'sizes' argument is not numeric.")
+    stepsNumVariables[is.na(stepsNumVariables)] <- NaN # is.numeric(c(NA)) is FALSE
     stopifnot(is.numeric(stepsNumVariables))
     stopifnot(all(is.na(stepsNumVariables) | stepsNumVariables >= 1))
     stopifnot(is.null(stepsSavePre) || is.character(stepsSavePre))
     if (is.character(stepsSavePre))
-      stopifnot(length(stepsSavePre) != 1)
+      stopifnot(length(stepsSavePre) == 1)
     stopifnot(length(sizes) == length(stepsNumVariables))
 
     stopifnot(is.null(stepsFixedNames) || is.character(stepsFixedNames))

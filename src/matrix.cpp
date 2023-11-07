@@ -214,6 +214,8 @@ void Matrix<Tw>::TranslateIndex(Ti index, Ti &rowIndex, Ti &colIndex) const {
 }
 
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i, Ti j) const {
+  if (!Data)
+    throw std::out_of_range("Get: Data is not initialized.");
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
     throw std::out_of_range(format(
         "index out-of-range in get function: (i, j)=({}, {}), Dim=({}, {})", i,
@@ -225,7 +227,13 @@ template <typename Tw> Tw Matrix<Tw>::Get0(Ti i, Ti j) const {
   return Data[i + RowsCount * j];
 }
 
+template <typename Tw> Tw &Matrix<Tw>::Get0r(Ti i, Ti j) {
+  return Data[i + RowsCount * j];
+}
+
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i) const {
+  if (!Data)
+    throw std::out_of_range("Get: Data is not initialized.");
   if (i < 0 || i >= length())
     throw std::out_of_range(format(
         "index out-of-range in get function: i={}, Length={}", i, length()));
@@ -241,6 +249,8 @@ template <typename Tw> Tw Matrix<Tw>::GetVector(Ti i) const {
 }
 
 template <typename Tw> void Matrix<Tw>::Set(Ti i, Ti j, Tw value) {
+  if (!Data)
+    throw std::out_of_range("Set: Data is not initialized.");
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
     throw std::out_of_range(format(
         "index out-of-range in set function: (i, j)=({}, {}), Dim=({}, {})", i,
@@ -274,8 +284,11 @@ template <typename Tw> void Matrix<Tw>::Set_Minus0(Ti i, Ti j, Tw value) {
 }
 
 template <typename Tw> void Matrix<Tw>::Set(Ti i, Tw value) {
+  if (!Data)
+    throw std::out_of_range("Set: Data is not initialized.");
   if (i >= length() || i < 0)
-    throw std::out_of_range("index out-of-range exception");
+    throw std::out_of_range(format(
+        "index out-of-range in set function: i={}, Length={}", i, length()));
   Data[i] = value;
 }
 

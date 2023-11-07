@@ -16,7 +16,9 @@ is.metric.pos.orien <- function(metric){
 #'
 #' @return the combined \code{ldtsearch} object
 combine.search <- function(list, method) {
-  if (length(list) == 1)
+  if (length(list) == 0)
+    return(NULL)
+  else if (length(list) == 1)
     return(list[[1]])
 
   cmb_inclusion <- function(A1, A2) {
@@ -117,7 +119,6 @@ combine.search <- function(list, method) {
 
     return(first)
   }
-
 
   result <- list[[1]]
   for (i in c(2:length(list))) {
@@ -314,7 +315,7 @@ search.steps <- function(method, isInnerExogenous, ...) {
 
   # first target and first metric
   tName <- target_names[1]
-  eName <- ifelse(is.null(dots$metrics$typesIn),
+  eName <- ifelse(length(dots$metrics$typesIn) == 0,
                   dots$metrics$typesOut[1], dots$metrics$typesIn[1])
   if (printMsg){
     print(paste0("Target used in filtering variables: ", tName))
@@ -457,7 +458,7 @@ search.steps <- function(method, isInnerExogenous, ...) {
     }
 
     if (is.null(savePre) == FALSE) {
-      saveRDS(list(estim = estims[[i]], data = data_i), paste0(savePre, i, ".RData"))
+      saveRDS(estims[[i]], paste0(savePre, i, ".RData"))
       print(paste0("Data saved: ", file.path(getwd(), paste0(savePre, i, ".RData"))))
     }
 

@@ -175,7 +175,7 @@ void Array<Tw>::BoxCoxInv(Tw *data, const Ti &length, const Tw &lambda) {
   if (std::isnan(lambda))
     return;
   for (Ti i = 0; i < length; i++)
-    Array<Tw>::BoxCox0(data[i], lambda);
+    Array<Tw>::BoxCoxInv0(data[i], lambda);
 }
 
 template class ldt::Array<Tv>;

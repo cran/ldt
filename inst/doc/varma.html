@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>VARMA (commodity prices)</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">VARMA (commodity prices)</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(ldt)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>search.varma()</code> function is one of the three main
+functions in the <code>ldt</code> package. This vignette explains a
+basic usage of this function using the commodity prices dataset (<span class="citation">International Commodity Prices (2023)</span>).
+Commodity prices refer to the prices at which raw materials or primary
+foodstuffs are bought and sold. This dataset contains monthly data on
+primary commodity prices, including 68 different commodities with some
+starting in January 1990 and others in later periods.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>For this example, we use just the first 5 columns of data:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> data.pcp<span class="sc">$</span>data[,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
+<p>Here are the last few observations from this subset of the data:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">tail</span>(data)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt;         PALLFNF  PEXGALL   PNFUEL   PFANDB    PFOOD</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; 2023M4 170.7647 171.9614 155.8291 144.1869 146.1422</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; 2023M5 157.1340 156.8779 148.7744 137.3836 138.6572</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; 2023M6 154.0691 153.8750 145.9433 135.2476 136.0733</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; 2023M7 157.9088 158.0988 146.1088 135.6483 136.6740</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; 2023M8 161.3679 162.2299 142.8028 130.7136 131.3730</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; 2023M9 168.4047 170.0978 143.4144 129.3996 129.7991</span></span></code></pre></div>
+<p>And here are some summary statistics for each variable:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sapply</span>(data, summary)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;          PALLFNF   PEXGALL    PNFUEL    PFANDB     PFOOD</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Min.     61.8872  65.91441  55.03738  54.72416  55.14206</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1st Qu. 106.9555 108.45966  97.47020  64.14606  63.48380</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Median  125.5690 129.27773 108.51537  90.77461  91.48711</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Mean    133.2516 137.56116 111.14108  89.21294  89.77894</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 3rd Qu. 166.4862 172.35819 131.78403 106.95780 108.36253</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Max.    241.9187 253.29973 178.30364 162.22220 165.74817</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; NA&#39;s    156.0000 156.00000 156.00000  24.00000  24.00000</span></span></code></pre></div>
+<p>The columns of the data represent the following variables:</p>
+<ul>
+<li><p>PALLFNF: All Commodity Price Index, 2016 = 100, includes both
+Fuel and Non-Fuel Price Indices</p></li>
+<li><p>PEXGALL: Commodities for Index: All, excluding Gold, 2016 =
+100</p></li>
+<li><p>PNFUEL: Non-Fuel Price Index, 2016 = 100, includes Precious
+Metal, Food and Beverages and Industrial Inputs Price Indices</p></li>
+<li><p>PFANDB: Food and Beverage Price Index, 2016 = 100, includes Food
+and Beverage Price Indices</p></li>
+<li><p>PFOOD: Food Price Index, 2016 = 100, includes Cereal, Vegetable
+Oils, Meat, Seafood, Sugar, and Other Food (Apple (non-citrus fruit),
+Bananas, Chana (legumes), Fishmeal, Groundnuts, Milk (dairy), Tomato
+(veg)) Price Indices</p></li>
+</ul>
+</div>
+<div id="modelling" class="section level2">
+<h2>Modelling</h2>
+<p>We use the first variable (i.e., PALLFNF) as the target variable and
+the MAPE metric to find the best predicting model. Out-of-sample
+evaluation affects the choice of maximum model complexity, as it
+involves reestimating the model using maximum likelihood several times.
+Although the <code>simUsePreviousEstim</code> argument helps with
+initializing maximum likelihood estimation, VARMA model estimation is
+time-consuming due to its large number of parameters. We impose some
+restrictions in the modelset. We set a maximum value for the number of
+equations allowed in the models. Additionally, we set a maximum value
+for the parameters of the VARMA model.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.varma</span>(<span class="at">data =</span> <span class="fu">get.data</span>(data, <span class="at">endogenous =</span> <span class="dv">5</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                           <span class="at">combinations =</span> <span class="fu">get.combinations</span>(<span class="at">sizes =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                                           <span class="at">numTargets =</span> <span class="dv">1</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                           <span class="at">maxParams =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">0</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>                           metric <span class="ot">&lt;-</span> <span class="fu">get.search.metrics</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(), </span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                                                        <span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;mape&quot;</span>),</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>                                                        <span class="at">simFixSize =</span> <span class="dv">6</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>                           <span class="at">maxHorizon =</span> <span class="dv">5</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: VARMA </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 22, searched: 22 , failed: 0 (0%)</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.0165305 minutes </span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;  Length of results: 1 </span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;  Target (PALLFNF):</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;    Evaluation (mape):</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;        endogenous: (3x1) PALLFNF, PEXGALL, PNFUEL</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;        exogenous: (Intercept)</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;        metric: 2.705854</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; --------</span></span></code></pre></div>
+<p>The output of the <code>search.varma()</code> function does not
+contain any estimation results, but only the information required to
+replicate them. The <code>summary()</code> function returns a similar
+structure but with the estimation results included.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
+<p>We can plot the predicted values along with the out-of-sample
+evaluations:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>best_model <span class="ot">&lt;-</span> search_sum<span class="sc">$</span>results[[<span class="dv">1</span>]]<span class="sc">$</span>value</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(best_model, </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                <span class="at">actualCount =</span> <span class="dv">10</span>, </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                <span class="at">startFrequency =</span> tdata<span class="sc">::</span><span class="fu">f.monthly</span>(data.pcp<span class="sc">$</span>start,<span class="dv">1</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">plot</span>(pred, <span class="at">simMetric =</span> <span class="st">&quot;mape&quot;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAHgCAMAAAB6sCJ3AAAAe1BMVEUAAAAAADoAAGYAOjoAOpAAZmYAZrYkJP86AAA6ADo6AGY6kNtmAABmADpmAGZmZgBmZmZmkJBmtrZmtv9tbf+QOgCQOjqQZgCQkGaQ2/+2ZgC2tv+2/7a2/9u2//++vr7bkDrb/9vb////AAD/tmb/25D//7b//9v////iQCYWAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAQz0lEQVR4nO3dC3ecuAGGYZKmTnbt7c11W89sk+kG2/P/f2G5zk0DSHySEOJ9ztnGnXiEGL9hANtQHAFBsfQEsG4EBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJJ4DKpCJpQLyOxyWQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBEiigj5f2dnafv3sZDskKE9CheGw/KPsPpOGQriABfbycsjl8+UMeDgkLEtD703P/YTnwJkZAmWALBEmofaBuE8Q+UO4CHYW9P7VHYQPbHwLKBueBICEgSDiRCAknEiHhMB6SyCcSixOH4ZAwtkCQcCIREk4kQsJ5IEgICJJAAR2qt69mN+jAj3PkLdBO9KfXajfo4UhA2Qt4GP/xUu1CE1Dmgp5I3H35g4AyF/ZE4u6BgDIXaB+oy+b9aej78QSUiWBHYe2b2McLAeWN80Cwtt/vjccICHb2DeNhAsK0/YnxVwSECftLxt8SEMbsbxifkExAFJWc23jSDoiC0nKvnrQDoqB0DNRDQJg2HE/qAVHQ8sbrST0gClrWZD3JB0RBy7GpJ/2AKGgZlvUQEO6wr2cFAVFQZE71rCEgCorItZ5VBERBkcyoZx0BUVAE8+pZSUAUFNjseggISj7/rBjDpRgQBYWjxLOegCgoEC2eFQVEQQGo7awqIAryzUM8BLRdXuJZVUAU5I+ndlYWEAV54i+elQVEQT74jGdtAVGQynM8BLQtvttZX0AUJAgQz/oCoqCZwsSzwoAoaJYw7awyIApyF66eNQZEQa4C1kNA+QtazyoDoiAHgetZZ0AUZC10PRED8nrXZgqyEr6eeAF5vmszBU2LUU+0gHzfM5WAJkWpJ1pAw3dtnjUcBU2JVE+0gPzftZmCxsSqJ1pAAe7aTEGDIuYT7yjM/12bKei+qPms8zxQ/wwSuiNuPqsOiI2QKXY+8QLaFcVDczLxeeATZsVAQVfi5xNvJ7ra99kVD/W+kKedaOVZmVogn6iH8eWn16O3w3jxaRlaJJ+oJxLbU4g3JxKLE4fhrgeY+cS8LJTP+rdA0jMzEjmfryfGTALvA12ckxaG8/bUXMTJ5+sdxlRWdRTm4blZCJrPvWziBxR2uI0XFCKf8WxyC2jbu9Ie87HNJruANr0RkvNxzybDgLZbkFKPkk7MgPrvxY/8VLT+9d9oQTP70dOJGVB19D740/Rzhgs2xPq49+MrnagBVQU9+BxuYIztJeTUj9904gZ0LAfPAM0aLugoK2LZT4h0IgcUabiNFWTTT7h4cgxoWwVN9hM2niwD2lJBo/2EbyfTgLazKz3cT6R4Mg1oMxuhu/1EbCffgLZRkNlP7HjyDWgLBV33s0Q7OQeU/45QIv1kG1CojdDPn0GGdXbVz3L55BxQkI3Qz59pFJRMPzkHFGLMdAJKI5/MA/K9Efrx4wf9bCogr8P++OFvLM25n6XzyT8gLxuhH+m0Uzv1s3Q8NWN2uQWkj5xWPYn1s4WA5m+EEtvydPYJ5bONgNwGP+0mJ1lPav1sJCCHjVB9oJ7mlqe1TyqfzQRkP34qZ3oGpNbPdgKy2gjVv3b082fC30bbD+VT2CGgcIvor1GUdEDq1sd/T8YUMw5oeCN0cYGr+i0s2YJ8v3t56MmYY84B3V/K5dXR6u9VVPtAiRYUeudnTk/GJPMO6HYj1G962uOu5n/qfeg0A4q982y1G2XMMvOA6gV1h1n1q3ERzjKzcZDIsddtULfTzD6g/kxPMXqqML2Clg5ngDHPbQQ0/VmpFVT434X24t5ErdfIp4hfMKszhWkF1L5TJHcW8es2A7KT0oT6uST0c0C9wblar5QnKX29WunM6DyTRH4V48LIZK3Xyot0vly9VGZ0daBz+8uES/dDQCPSmNLNLO78PjMBBRjOixTmZM4hiV+JJyAby8/p7nfvhi7KQUDJWXpSA8sfuS4QAaVl2VkNLn38ymQElJAFpzX2E3CTF2cloEQsN63xJdtc3peAUrDUvKaWa3l/DAJa3DITs1iq9S1Wsgioudnc8J0yCOh6meZC73wH2OEmPasP6FB0d7osC/+3vAws/szuLPHuz6C43edpzQFd3CnV/013g4s9NXN53Y9qG5zvFLbWgJrbfrfKYLd7Cibu1My3r9OPapvm3KtwjQGtewsUdW5Xy5r+Het5d7tcXUDVPlC3CVrhPtAx5uQul2T3G/pz75i6roBO9ywc2P4kHlCU2dW/j9b/jpHL1R2EezavKKDYw3kWYXbzLwui3TWegKIIPz3hsiB7LaFV3LV5Vx18vX0rik+vXoaLL/D86quCzL+uzF5NaH5F5ppYr7LLGjb9/PJ6dUAvDLeAoPNrfkVWuS7R3kdCsyoy18V6pR3W7/2pOvbaNbfdXeNhfCPYBJvfsFYH2ftKyLUic3Ws19th9ertTncu6OZE4vDvWCcnyAw9tNPxmZBDReYaWa+6y9rVW5/DurdAAWboY9NzwXNCdhWZK2W99i7r9v70+XuzCSqH9qLTD8j7cWdx9Hwtz73/hCYrMlfLdraOL2fZvlE9eBpuER7nGOhCsGESGsvImALngUZ4mqTfd65r4RK6n5G5crYzJSBn7YF64OOF24I8J3SbkbF8AhojzTLWNcwjJHTOyFg6AY1SzvbFu4Z5pIRqxrIDnQc6n+9Z3w+UXVAaqL9b4XMuY4yCgjVkrqbtHJ2+4h8vgz9NP2e4xcwOKPqZ0lgJmWtqO0PX38oYPICfM9xiqn7cd2MWOc9+p6AQCZkraztB5/NAA99FnTfcspy+fXWuJ/JtXO4l5L0hc3Vtp7fNneiT/hrTk592XrH4NwKKkJCxTAKy1sQxWtH1W9cCd5K6W5DXhIxFEpCLuqGhLdH1PTjqz1riTmT3E/LXkLFAAnJ0utvG8Wonp69n+bsfhk3IWBwBuWsbuvj10eKcz3KzOhkoyE9CxtIIaJYmmTag7m0tiXY6Qwl5aMhYFgHN1f5cfFLhnAwWJCdkLIqA5kv5hr2hEjIWRECCdPs5hkrIWAwB5Ws4ofkNGQshoJyNJDSzIWMRBJS3sYTmNGQsgIByN5qQc0PG8ASUv/GE3BoyBiegDZgoyKUhY2wC2oTJhGwbMkYmoI2YTsiqIWNcAtoMi4SmGzJGJaANsUlooiFjTALaFKuExiIyRiSgjbFMaKghYzwC2hzbhO42ZIxGQNtjXdCdiIzBCGiTZjdkjERAG+WS0J6AYHJKqI/IGIWAtsy9IWMIAto2x4T2xgAEtHUEBBUBQURAEBEQVAQEEQFBREAQERBUBAQVAUFFQBAtGNDHy+idMghoLRYK6FA8th+U/QfScFjSAgF1d2yurfemuziLHVB92+9OuerbPaHHFgiquPtA3SaIfaCsxDsK6+9ZOLD9IaBscB4IEgKCJGhAb98Gb1tIQJkIdBifyV2bMSnMFqg7+GILlL9gR2H18ZcZ0HnL5DQckhVsH2j36ZUt0AaE24k+FI8ElL+AR2Fv3/5EQNkLeRj/8VIQUO44kQgJAUFCQJBwJhqSMFugj5fBn6afMxzSFey3Mh58DodkhdoHKoeP4OcMh1SxEw0JAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAsFhAysVBAjuNPLF15cri/3eCCgzzTx/iJvmCJTouAXJdOQIksOMgzfYyf6AuW6LQIyHXpBJTIgoM808f4ib5giU6LgFyXTkCJLDjIM32Mn+gLlui0CMh16QSUyIKDPBM4EhBEBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQiAF9vBRF8Vh/VBbFp9fLR/oPqj+bT6g+48sf9Z9vv36/eubM8Y+H9pGb8btHlZkPjPz2rSgexBdFmLT7qG4v9UxaQB8v1bwP9ctaVh/U/50eufigW5td++f70+fvl8+cOf7xUA3TPnI5fv+oMPOBkcvqv/cni4Lch95Vj7x9e/Y8qttLPZcWULvW1fw/XurCdw/nRy7+6s+/1V/Q97/8tV6r6p9PvVanv547/vtTs3WrA70Y//SoMPP7I7efNzXh+ZM+HtqvvbdRHV/quXzsA1Xx30zytA2oPqjWbFevcvnl3/W/4+KxPK+KzbZibPz2Vbscv39Unbkx8tsvNlOdNXT7F1avhctLMeelducjoF21vWle3tN8dxcfVGtVb/2Pu8dd+wW+WKud1T+L4fEPzXb7ZvzmUXXmxsjl59+fXPYkXIZuAyrG38NcRz0eZ7zU7jwEVJV+vP5HVPYvdP1BtVb1vtz7b6/GWpVWX5DB8ctuJ/16/NL+y+wy8qF+O3DYtjkM3W1TLAJyfCmcX+oZ9IDKfsfutFZlv8PWfFCt1cfLc70PertWpdWO3cj41dj1zsnN+M2j4szNkdvNWmn579ht0u1O9HRAzi+F40s9hxxQm/bldvVq+9O+OR8eqs3q8Wat7Lc/A+Mf+32s6/Gtd62cRm53OqaOlWZOelft7v7+29Sk3V8Kt5d6FjWgQzu1iz27Qz/Z7oN6rd5+/e+/Xm/W6mC1UiPjd48b41t+mR1Hbmdttys9b9K/TmzcZozq9FLPIwbUv3Gfji3Pb+Xnv6oPD/5evTxXa2Xzlj82fvs6ls1O+nn806PeR35/sh3ZeejuWRPvu3NGdXmpZ1LPA/Vp92e3To+cPmh2PHf1e/DlWp2fOXP8ZrT6xbwev3/U/8gHy5Hdh25OT0697bpP+Oj0Us+lBXRor2ZVr/vh9Ef7yOmDZq2aY9TLtbp45rzxmx2HetSb8btHhZkPjVxafkPAfej3p+lvZcyYsNNLPRffTIWEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgIaIpx1YNQVxtcJwKaQkCjCGgKAY0ioClVL+9P/3hqLxpTX1nlP/21VR7bC4W1l3neKgKa0gRUX+u9+q++Vm5ZdP+nvnBTfVmnqUuL5Y2ApjQBPTYXkmuvJbfrHmgu31RaXBwzawQ0pQnoub7xxHN3adRPr+1uUNPTLtgFdNeBgKZcBHQ4BdReNa7eLbK6wHzGCGjK8Bao9vHyt0D3EFgJAppyEVB3iebugcbhy/9srtyaLwKachFQc/B1Ogpr96afrW9/kCcCmnIZ0PV5oM/fuys0b3k3moAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKC5P9ikMPgYHMpdgAAAABJRU5ErkJggg==" /><!-- --></p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>This package can be a recommended tool for empirical studies that
+require reducing assumptions and summarizing uncertainty analysis
+results. This vignette is just a demonstration. There are indeed other
+options you can explore with the <code>search.varma()</code> function.
+For instance, you can experiment with different evaluation metrics or
+restrict the model set based on your specific needs. Additionally,
+there’s an alternative approach where you can combine modeling with
+Principal Component Analysis (PCA) (see <code>estim.varma()</code>
+function). I encourage you to experiment with these options and see how
+they can enhance your data analysis journey.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-datasetPcp" class="csl-entry">
+International Commodity Prices. 2023. <span>“Primary Commodity Prices
+(Excel Database).”</span>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

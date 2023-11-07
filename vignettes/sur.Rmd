@@ -1,0 +1,108 @@
+---
+title: "SUR (longrun output growth)"
+output: rmarkdown::html_vignette
+bibliography: "`r system.file('REFERENCES.bib', package = 'ldt')`"
+vignette: >
+  %\VignetteIndexEntry{SUR (longrun output growth)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(kableExtra)
+library(ldt)
+```
+
+## Introduction
+The `search.sur()` function is one of the three main functions in the `ldt` package. This vignette explains a basic usage of this function using the world bank dataset (@datasetWorldbank). Output growth is a widely discussed topic in the field of economics. Several factors can influence the rate and quality of output growth, including physical and human capital, technological progress, institutions, trade openness, and macroeconomic stability @chirwa2016macroeconomic. We will use this package to identify the long-run determinants of GDP per capita growth while making minimal assumptions.
+
+ 
+## Data
+To minimize user discretion, we use all available data to select the set of potential regressors. Additionally, to avoid the endogeneity problem, we use information from before `r data.wdi$splitYear` to explain the dependent variable after this year. This results in `r ncol(data.wdi$x)` potential regressors and `r nrow(data.wdi$x)` observations.
+
+Of course, for this illustration, we use just the first 5 columns of data:
+
+```{r }
+data <- cbind(data.wdi$y, data.wdi$x[,1:5])
+colnames(data)[2] <- paste0(colnames(data)[2],".lag")
+```
+
+Here are the last few observations from this subset of the data:
+
+```{r datatail}
+tail(data)
+```
+
+And here are some summary statistics for each variable:
+
+```{r datasummary}
+sapply(as.data.frame(data), summary)
+```
+
+The columns of the data represent the following variables:
+
+```{r columndesc, echo=FALSE, results='asis'}
+for (c in colnames(data)){
+  if (endsWith(c, ".lag"))
+    next()
+  cat(paste0("- ", c, ": ", data.wdi$names[which(sapply(data.wdi$names,function(d)d$code==c))][[1]]$name), "\n\n")
+}
+```
+
+
+## Modelling
+We use the AIC metric to find four best explanatory models. Note that we restrict the modelset by setting a maximum value for the number of equations allowed in the models. Note that "intercept" and "lag" of the dependent variable are included in all equations by `numFixPartitions` argument.
+
+```{r search}
+
+search_res <- search.sur(data = get.data(data, endogenous = 1),
+                         combinations = get.combinations(sizes = c(1,2,3),
+                                                         numTargets = 1,
+                                                         numFixPartitions = 2), 
+                         metric <- get.search.metrics(typesIn = c("aic")),
+                         items = get.search.items(bestK = 4))
+print(search_res)
+```
+
+The output of the `search.SUR()` function does not contain any estimation results, but only the information required to replicate them. The `summary()` function returns a similar structure but with the estimation results included.
+
+```{r summary, warning=FALSE}
+search_sum <- summary(search_res)
+```
+
+The following code generates a table for presenting the result.
+
+```{r tableprepare} 
+models <- lapply(0:3, function(i)
+  search_sum$results[which(sapply(search_sum$results, function(d)
+    d$info==i && d$typeName=="best model"))][[1]]$value)
+names(models) <- paste("Best",c(1:4))
+table <- coefs.table(models, latex = FALSE, 
+                     regInfo = c("obs", "aic", "sic"))
+```
+
+```{r table, echo=FALSE}
+
+kb <- kable(table, "html", escape = FALSE,
+                  caption = "(Automatically Selected) Determinants of long-run GDP per capita growth")
+row_spec(kb, 0, bold = TRUE)
+
+```
+ 
+ 
+
+
+
+## Conclusion
+This package can be a recommended tool for empirical studies that require reducing assumptions and summarizing uncertainty analysis results. This vignette is just a demonstration. There are indeed other options you can explore with the `search.sur()` function. For instance, you can experiment with different evaluation metrics or restrict the model set based on your specific needs. Additionally, there’s an alternative approach where you can combine modeling with Principal Component Analysis (PCA) (see `estim.sur()` function). I encourage you to experiment with these options and see how they can enhance your data analysis journey.
+
+
+## References
+

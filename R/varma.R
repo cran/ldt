@@ -159,7 +159,7 @@ search.varma <- function(data = get.data(),
 #' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.search.metrics()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
-#' 
+#'
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
@@ -270,9 +270,10 @@ estim.varma.from.search <- function(searchResult, endogenous, exogenous, extra, 
                    endogenous = length(endogenous),
                    newData = searchResult$info$data$newX,
                    weights = NULL,
-                   lambdas = search_data$lambdas,
+                   lambdas = NULL, #don't transform again
                    addIntercept = FALSE,...)
-
+  attr(data, "ldt.new.appended") <- attr(search_data, "ldt.new.appended")
+  data$lambdas <- search_data$lambdas #correct value
 
   estim.varma(
     data = data,

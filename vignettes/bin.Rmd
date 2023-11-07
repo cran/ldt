@@ -1,0 +1,134 @@
+---
+title: "Binary Regression (loan default)"
+output: rmarkdown::html_vignette
+bibliography: "`r system.file('REFERENCES.bib', package = 'ldt')`"
+vignette: >
+  %\VignetteIndexEntry{Binary Regression (loan default)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ldt)
+```
+
+## Introduction
+The `search.bin()` function is one of the three main functions in the `ldt` package. This vignette explains a basic usage of this function using @datasetBerka dataset. Loan default refers to the failure to repay a loan according to the terms agreed upon in the loan contract. This topic has been extensively studied in the literature. According to @manz2019determinants, determinants of default can include macroeconomic events such as changes in interest and unemployment rates, bank-specific factors such as risk management strategies, and loan-specific factors such as its amount and purpose, as well as borrower creditworthiness. In this section, we will use the `ldt` package to conduct an experiment on this topic while making minimal theoretical assumptions.
+
+## Data 
+@datasetBerka dataset has a *loan table* with 682 observations, each labeled as *finished*, *finished with default*, *running*, and *running with default.* Each loan observation has an *account identification* that can provide other types of information from other tables, such as the characteristics of the account of the loan and its transactions. Each account has a *district identification* that can provide information about the demographic characteristics of the location of its branch. The combined table has `r ncol(data.berka$x)` features and `r nrow(data.berka$x)` observations.
+
+For this example, we use just the first 7 columns of data:
+
+```{r }
+data <- cbind(data.berka$y, data.berka$x[,1:7])
+```
+
+Here are the last few observations from this subset of the data:
+
+```{r datatail}
+tail(data)
+```
+
+And here are some summary statistics for each variable:
+
+```{r datasummary}
+sapply(as.data.frame(data), summary)
+```
+
+The columns of the data represent the following variables:
+
+```{r columndesc, echo=FALSE, results='asis'}
+for (c in colnames(data)){
+  cat(paste0("- ", c, ": ", data.berka$descriptions[which(sapply(data.berka$descriptions,function(d)d$id==c))][[1]]$description), "\n\n")
+}
+```
+
+## Modelling
+The target variable is the first variable. We use the out-of-sample AUC evaluation metric to find the best predicting model.
+
+```{r search}
+
+search_res <- search.bin(data = get.data(data, endogenous = 1, weights = data.berka$w),
+                         combinations = get.combinations(sizes = c(1,2,3),
+                                                         numTargets = 1),
+                         metric <- get.search.metrics(typesIn = c(), 
+                                                      typesOut = c("auc"),
+                                                      simFixSize = 20,
+                                                      trainRatio = 0.8,
+                                                      seed = 123),
+                         items = get.search.items(bestK = 0,
+                                                  inclusion = TRUE, 
+                                                  type1 = TRUE, 
+                                                  mixture4 = TRUE))
+print(search_res)
+```
+
+The output of the `search.bin()` function does not contain any estimation results, but only the information required to replicate them. The `summary()` function returns a similar structure but with the estimation results included.
+
+```{r summary}
+search_sum <- summary(search_res)
+```
+
+While choosing an out-of-sample metric indicates our interest in the predictive power of the best model, for presentation purposes, the `mixture4 = TRUE` part is also included in the `searchItems` argument. Therefore, we use the results to study the coefficients uncertainty. In this regard, we select the first four regressors with the highest inclusion weights (note the `inclusion = TRUE`) and plot their combined weighted distributions. Note that the parameters of the generalized lambda distribution are estimated from the first four moments of the combined distribution using the `s.gld.from.moments()`}` function in this package, with the distribution restricted to be unimodal with a continuous tail.
+
+First, we prepare data for plot:
+
+```{r prepareplot}
+
+inclusion_mat <- search_res$results[sapply(search_res$results, function(a)a$typeName == "inclusion")][[1]]$value
+inclusion_mat <- inclusion_mat[!(rownames(inclusion_mat) %in% c("label", "(Intercept)")), ]
+sorted_inclusion_mat <- inclusion_mat[order(inclusion_mat[,1], decreasing = TRUE),]
+selected_vars <- rownames(sorted_inclusion_mat)[1:4]
+
+mixture_mat <- search_sum$results[sapply(search_sum$results, function(a)a$typeName == "mixture")][[1]]$value
+moments <- lapply(selected_vars, function(v)mixture_mat[rownames(mixture_mat)==v,])
+gld_parms <- lapply(moments, function(c) s.gld.from.moments(c[[1]], c[[2]],
+                        c[[3]], c[[4]],
+                        start = c(0.25, 0.25),
+                        type = 4,
+                        nelderMeadOptions = get.options.neldermead(100000,1e-6)))
+
+```
+
+Then we plot the estimated distributions:
+
+```{r plot, fig.height=4, fig.subcap=selected_vars, fig.cap="Determinants of Loan Default: Variables with the highest inclusion weights, automatically selected. Each plot presents a combined distribution of all estimated coefficients, estimated by generalized lambda distribution.", out.width='.40\\linewidth', fig.ncol=2}
+ 
+# plots
+probs <- seq(0.01,0.99,0.01)
+i <- 0
+for (gld in gld_parms){
+  i <- i + 1
+  x <- s.gld.quantile(probs, gld[1],gld[2],gld[3],gld[4])
+  y <- s.gld.density.quantile(probs, gld[1],gld[2],gld[3],gld[4])
+
+  plot(x, y, type = "l", xaxt = "n", xlab = NA, ylab = NA, col = "blue", lwd = 2, 
+       main = selected_vars[i])
+  lower <- x[abs(probs - 0.05)<1e-10]
+  upper <- x[abs(probs - 0.95)<1e-10] 
+  axis(1, at = c(lower, 0, upper), labels = c(round(lower, 2), 0, round(upper, 2)))
+  xleft <- x[x <= lower]
+  xright <- x[x >= upper]
+  yleft <- y[x <= lower]
+  yright <- y[x >= upper]
+  polygon(c(min(x), xleft, lower), c(0, yleft, 0), col = "gray", density = 30, angle = 45)
+  polygon(c(max(x), upper, xright), c(0, 0, yright), col = "gray", density = 30, angle = -45)
+  text(mean(x), mean(y), "90%", col = "gray")
+}
+```
+
+
+## Conclusion
+This package can be a recommended tool for empirical studies that require reducing assumptions and summarizing uncertainty analysis results. This vignette is just a demonstration. There are indeed other options you can explore with the `search.bin()` function. For instance, you can experiment with different evaluation metrics or restrict the model set based on your specific needs. Additionally, there’s an alternative approach where you can combine modeling with Principal Component Analysis (PCA) (see `estim.bin()` function). I encourage you to experiment with these options and see how they can enhance your data analysis journey.
+
+
+## References
+

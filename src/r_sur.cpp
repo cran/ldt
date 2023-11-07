@@ -120,14 +120,14 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
 
   auto model = SurExtended(
       data_.Data.RowsCount, data_.NumEndo, data_.NumExo, hasR, true, true,
-      data_.NewObsCount, searchSigMaxIter, true,
+      data_.NewX.RowsCount, searchSigMaxIter, true,
       hasPcaY ? &pcaOptionsY0 : nullptr, hasPcaX ? &pcaOptionsX0 : nullptr);
   auto W = std::make_unique<double[]>(model.WorkSize);
   auto S = std::make_unique<double[]>(model.StorageSize);
 
   model.Calculate(data_.Data, data_.NumEndo, S.get(), W.get(),
                   hasR ? &restriction_ : nullptr, searchSigMaxProb,
-                  data_.NewObsCount > 0 ? &data_.NewX : nullptr, nullptr);
+                  data_.NewX.RowsCount > 0 ? &data_.NewX : nullptr, nullptr);
 
   // save isRestricted before running simulation because pR changes
   auto isRestricted = ldt::Matrix<double>();
@@ -287,7 +287,7 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
                   : R_NilValue),
       _["metrics"] = as_matrix(metricsRes, metricsResRowNames, endoNames_pca),
       _["projection"] =
-          data_.NewObsCount == false
+          data_.NewX.RowsCount == false
               ? R_NilValue
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Projections.Means),

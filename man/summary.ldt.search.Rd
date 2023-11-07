@@ -4,12 +4,12 @@
 \alias{summary.ldt.search}
 \title{Summary for an \code{ldt.search} object}
 \usage{
-\method{summary}{ldt.search}(object, test = TRUE, ...)
+\method{summary}{ldt.search}(object, test = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{ldt.search} object.}
 
-\item{test}{If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process.}
+\item{test}{If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process (Provided that negative seed is used).}
 
 \item{...}{Additional arguments.}
 }

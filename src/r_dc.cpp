@@ -32,6 +32,8 @@ SEXP SearchDc(List data, List combinations, List metrics, List modelChecks,
   UpdateSearchData(data, data_);
 
   auto exoStart = data_.NumEndo;
+  if (data_.HasWeight)
+    exoStart++;
   auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
   auto paramNames =
       std::vector<std::string>(colNames.begin() + exoStart, colNames.end());

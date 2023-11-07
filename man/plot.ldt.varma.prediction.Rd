@@ -22,7 +22,7 @@
 
 \item{xAxisArgs}{Arguments to pass to \code{axis} function}
 
-\item{fanPlotArgs}{Additional arguments for the \link{fan.plot} function.}
+\item{fanPlotArgs}{Additional arguments for the \link{fan.plot} function. \code{lambda} is added automatically.}
 
 \item{simMetric}{Name of metric to plot its details, provided that simulation details are available. If \code{NULL}, simulation details are not plotted.}
 

@@ -1,10 +1,13 @@
 
-paste00 <- function(x, collapse = ", ") {
-  paste(sprintf(paste0("%.", options()$digits, "g"), x), collapse = collapse)
-}
+
 
 # Define the print method for 'options' class
 rec.print.list <- function(x, indent = "") {
+
+  paste00 <- function(x, collapse = ", ") {
+    paste(sprintf(paste0("%.", options()$digits, "g"), x), collapse = collapse)
+  }
+
   for(i in seq_along(x)) {
     if (is.null(x[[i]])){
       cat(indent, names(x)[i], ": (NULL)\n", sep = "")
@@ -164,9 +167,9 @@ print.ldt.search <- function(x, ...) {
           if (x$info$items$inclusion){
             inclusion <- values[which(sapply(values, function(y){y$typeName == "inclusion"}))][[1]]
             cat(indent, "Inclusion weights average:\n")
-            mi <- which.max(inclusion$value[,1])
+            mi <- which.max(ifelse(is.na(inclusion$value[,1]), -Inf, inclusion$value[,1])) #ignore NA
             rec.print.list(list(
-              "maximum value" = max(inclusion$value[,1]),
+              "maximum value" = max(inclusion$value[,1], na.rm = TRUE),
               "name" = rownames(inclusion$value)[mi],
               "count" = inclusion$value[,2][mi]
             ), indent = c(indent, "  "))
@@ -305,6 +308,8 @@ print.ldt.estim <- function(x, ...) {
     for (i in seq_len(nrow(df))){
       if (!is.null(x$estimations$isRestricted) && x$estimations$isRestricted[i,dep_var] == 1)
         stars[[i]] <- paste0("r", strrep(" ", ms - 1))
+      else if (is.na(df[i,4]))
+        stars[[i]] <- paste0("", strrep(" ", ms))
       else if (df[i,4] < .001)
         stars[[i]] <- "***"
       else if(df[i,4] < .01)
@@ -426,72 +431,6 @@ print.ldt.estim.projection <- function(x, ...) {
 
 
 
-get_coef_stars <- function(pvalue, formatLatex) {
-  if (is.nan(pvalue)) { # e.g., restricted to zero
-    return(if (formatLatex) "\\textsuperscript{(r)}" else "<sup>(r)</sup>")
-  }
-  paste0(
-    (if (formatLatex) "\\textsuperscript{" else "<sup>"),
-    if (pvalue <= 0.01) {
-      "***"
-    } else if (pvalue <= 0.05) {
-      "**"
-    } else if (pvalue <= 0.1) {
-      "*"
-    } else {
-      ""
-    }, (if (formatLatex) "}" else "</sup>")
-  )
-}
-
-get_coef_func <- function(tableFun, formatNumFun, formatLatex){
-
-  if (is.function(tableFun)){
-    # no action
-  }
-  else if (tableFun == "sign") {
-    tableFun <- function(j, coef, std, pvalue) {
-      if (coef > 0) {
-        "+"
-      } else if (coef < 0) {
-        "-"
-      } else {
-        "0"
-      }
-    }
-  }
-  else if (tableFun == "sign_star") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(if (coef > 0) {
-        "+"
-      } else if (coef < 0) {
-        "-"
-      } else {
-        "0"
-      }, get_coef_stars(pvalue, formatLatex))
-    }
-  }
-  else if (tableFun == "coef") {
-    tableFun <- function(j, coef, std, pvalue) {
-      formatNumFun(j, coef)
-    }
-  }
-  else if (tableFun == "coef_star") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(formatNumFun(j, coef), get_coef_stars(pvalue, formatLatex))
-    }
-  }
-  else if (tableFun == "coef_star_std") {
-    tableFun <- function(j, coef, std, pvalue) {
-      paste0(formatNumFun(j, coef), get_coef_stars(pvalue, formatLatex), " (", formatNumFun(j, std), ")")
-    }
-  }
-  else
-    stop("tableFun must be a function or a valid character string.")
-
-  tableFun
-}
-
 #' Create Table of Coefficients
 #'
 #' This function summarizes a list of estimated models (output of \code{estim.?} functions) and creates
@@ -513,7 +452,7 @@ get_coef_func <- function(tableFun, formatNumFun, formatLatex){
 #' If it is an integer, it insert that number of explanatory variables in the table.
 #' It can be a list of available explanatory variables.
 #' Use \code{...} for empty rows.
-#' @param formatLatex If \code{TRUE}, default options are for 'latex', otherwise, 'html'.
+#' @param latex If \code{TRUE}, default options are for 'latex', otherwise, 'html'.
 #' @param numFormat default formatting for the numbers.
 #'
 #' @details
@@ -542,11 +481,79 @@ get_coef_func <- function(tableFun, formatNumFun, formatLatex){
 coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", formatNumFun  = NULL,
                         regInfo = NULL, textFun = NULL,
                         textFun_sub = NULL, textFun_max = 20,
-                        expList = NA, formatLatex = TRUE,
+                        expList = NA, latex = TRUE,
                         numFormat = "%.2f") {
 
   if (is.null(estimList$counts) == FALSE)
     estimList <- list(m = estimList)
+
+
+  .get.coef.stars <- function(pvalue, latex) {
+    if (is.nan(pvalue)) { # e.g., restricted to zero
+      return(if (latex) "\\textsuperscript{(r)}" else "<sup>(r)</sup>")
+    }
+    paste0(
+      (if (latex) "\\textsuperscript{" else "<sup>"),
+      if (pvalue <= 0.01) {
+        "***"
+      } else if (pvalue <= 0.05) {
+        "**"
+      } else if (pvalue <= 0.1) {
+        "*"
+      } else {
+        ""
+      }, (if (latex) "}" else "</sup>")
+    )
+  }
+
+  .get.coef.func <- function(tableFun, formatNumFun, latex){
+
+    if (is.function(tableFun)){
+      # no action
+    }
+    else if (tableFun == "sign") {
+      tableFun <- function(j, coef, std, pvalue) {
+        if (coef > 0) {
+          "+"
+        } else if (coef < 0) {
+          "-"
+        } else {
+          "0"
+        }
+      }
+    }
+    else if (tableFun == "sign_star") {
+      tableFun <- function(j, coef, std, pvalue) {
+        paste0(if (coef > 0) {
+          "+"
+        } else if (coef < 0) {
+          "-"
+        } else {
+          "0"
+        }, .get.coef.stars(pvalue, latex))
+      }
+    }
+    else if (tableFun == "coef") {
+      tableFun <- function(j, coef, std, pvalue) {
+        formatNumFun(j, coef)
+      }
+    }
+    else if (tableFun == "coef_star") {
+      tableFun <- function(j, coef, std, pvalue) {
+        paste0(formatNumFun(j, coef), .get.coef.stars(pvalue, latex))
+      }
+    }
+    else if (tableFun == "coef_star_std") {
+      tableFun <- function(j, coef, std, pvalue) {
+        paste0(formatNumFun(j, coef), .get.coef.stars(pvalue, latex), " (", formatNumFun(j, std), ")")
+      }
+    }
+    else
+      stop("tableFun must be a function or a valid character string.")
+
+    tableFun
+  }
+
 
 
   if (is.null(regInfo))
@@ -586,7 +593,7 @@ coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", forma
   }
 
   # Function to format the coefficients:
-  tableFun <- get_coef_func(tableFun, formatNumFun, formatLatex)
+  tableFun <- .get.coef.func(tableFun, formatNumFun, latex)
 
   # Create column names
   col_names <- names(estimList)
@@ -669,6 +676,8 @@ coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", forma
 
         if (r == "")
           v <- "" # for an empty cell/line
+        else if (r == "obs")
+          v <- formatNumFun(j, nrow(e$estimations$Y))
         else if (r == "sigma2")
           v <- formatNumFun(j, e$estimations$sigma[d, d])
         else{
@@ -683,7 +692,7 @@ coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", forma
               if (is.na(fp)) {
                 warning("p-value of 'F' statistics is NA.")
               }
-              v <- paste0(v, get_coef_stars(fp))
+              v <- paste0(v, .get.coef.stars(fp))
             }
 
           }

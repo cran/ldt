@@ -1,7 +1,12 @@
 CXX_STD = CXX17
 
-#  PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer -Wno-parentheses -Wno-deprecated-declarations
-#  PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) -fsanitize=address,undefined -lasan -lubsan
+#PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer -Wno-parentheses -Wno-deprecated-declarations
+#PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) -fsanitize=address,undefined -lasan -lubsan
+
+
+#PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -Wno-parentheses -Wno-deprecated-declarations
+#PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)

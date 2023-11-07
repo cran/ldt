@@ -4,7 +4,7 @@
 \alias{summary.ldt.search.item}
 \title{Summary for an \code{ldt.search.item} object}
 \usage{
-\method{summary}{ldt.search.item}(object, searchResult = NULL, test = TRUE, ...)
+\method{summary}{ldt.search.item}(object, searchResult = NULL, test = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{ldt.search.item} object.}

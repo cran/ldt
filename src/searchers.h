@@ -82,12 +82,6 @@ struct LDT_EXPORT SearchData {
   /// @brief number of exogenous variables
   Ti NumExo;
 
-  /// @brief number of observations in the data
-  Ti ObsCount;
-
-  /// @brief number of new observations
-  Ti NewObsCount;
-
   /// @brief Box-Cox transformation parameters
   std::vector<Tv> Lambdas;
 

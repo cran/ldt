@@ -280,12 +280,12 @@ test_that("Discrete choice search (NA) works", {
 test_that("Discrete choice search works with inclusion weights", {
   skip_on_cran()
 
-  res <- search.bin(data = get.data(x[,1:7]),
+  res <- search.bin(data = get.data(x[,1:7], weights = x[,7]),
                     combinations = get.combinations(sizes = c(1,2,3)),
                     metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
                     items = get.search.items(all = TRUE, inclusion = TRUE))
 
-  inclusion = matrix(0,8,2, dimnames = list(colnames(res$info$data$data), NULL))
+  inclusion = matrix(0,8,2, dimnames = list(colnames(res$info$data$data)[-2], NULL))
   for (m in res$results[which(sapply(res$results,
                                      function(r) r$evalName == "aic" && r$typeName == "model" && r$targetName == "V1"))]){
     for (d in (m$value$endogenous)){
@@ -389,7 +389,7 @@ test_that("Discrete choice search works with coefficients (extreme bounds)", {
 test_that("Discrete choice search works with coefficients (mixture)", {
   skip_on_cran()
 
-  res <- search.bin(data = get.data(x[,1:7]),
+  res <- search.bin(data = get.data(x[,1:7], weights = x[,7]),
                     combinations = get.combinations(sizes = c(1,2,3)),
                     metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
                     items = get.search.items(all = TRUE, type1 = TRUE, mixture4 = TRUE))

@@ -37,9 +37,7 @@ A list suitable for use in \code{ldt::search.?} functions. The list contains:
 \item{data}{The final data matrix. Endogenous variables are in the first columns, followed by weights (if provided), then the intercept (if added), and finally the exogenous variables.}
 \item{numEndo}{The number of endogenous variables in the data.}
 \item{numExo}{The number of exogenous variables in the data (including 'intercept' if it is added).}
-\item{obsCount}{The number of observations in the original data.}
 \item{newX}{The matrix of new observations for exogenous variables.}
-\item{newObsCount}{The number of observations in the new data.}
 \item{lambdas}{The lambda parameters used in the Box-Cox transformation.}
 \item{hasIntercept}{Indicates whether an intercept column is added to the final matrix.}
 \item{hasWeight}{Indicates whether there is a weight column in the final matrix.}

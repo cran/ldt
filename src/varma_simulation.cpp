@@ -312,20 +312,23 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     }
 
     if (boxCoxLambdas) {
-      for (int j = 0; j < yy; j++) {
-        Array<Tv>::BoxCoxInv0(last.Data[j], boxCoxLambdas->at(j));
+      for (Ti a = 0; a < yy; a++) {
+        auto lm = boxCoxLambdas->at(a);
+        Array<Tv>::BoxCoxInv0(last.Data[a], lm);
 
-        Array<Tv>::BoxCoxInv(act.ColBegin(j), act.RowsCount,
-                             boxCoxLambdas->at(j));
-
-        Array<Tv>::BoxCoxInv(forc.ColBegin(j), forc.RowsCount,
-                             boxCoxLambdas->at(j));
+        // we should transform a-th row:
+        for (Ti j = 0; j < act.ColsCount; j++) {
+          Array<Tv>::BoxCoxInv0(act.Get0r(a, j), lm);
+          Array<Tv>::BoxCoxInv0(forc.Get0r(a, j), lm);
+        }
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int j = 0; j < yy; j++)
-          Array<Tv>::BoxCoxInv(std.ColBegin(j), std.RowsCount,
-                               boxCoxLambdas->at(j));
+        for (Ti a = 0; a < yy; a++) {
+          auto lm = boxCoxLambdas->at(a);
+          for (Ti j = 0; j < act.ColsCount; j++)
+            Array<Tv>::BoxCoxInv0(std.Get0r(a, j), lm);
+        }
       }
     }
 
@@ -538,20 +541,23 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
     }
 
     if (boxCoxLambdas) {
-      for (int j = 0; j < yy; j++) {
-        Array<Tv>::BoxCoxInv0(last.Data[j], boxCoxLambdas->at(j));
+      for (Ti a = 0; a < yy; a++) {
+        auto lm = boxCoxLambdas->at(a);
+        Array<Tv>::BoxCoxInv0(last.Data[a], lm);
 
-        Array<Tv>::BoxCoxInv(act.ColBegin(j), act.RowsCount,
-                             boxCoxLambdas->at(j));
-
-        Array<Tv>::BoxCoxInv(forc.ColBegin(j), forc.RowsCount,
-                             boxCoxLambdas->at(j));
+        // we should transform a-th row:
+        for (Ti j = 0; j < act.ColsCount; j++) {
+          Array<Tv>::BoxCoxInv0(act.Get0r(a, j), lm);
+          Array<Tv>::BoxCoxInv0(forc.Get0r(a, j), lm);
+        }
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int j = 0; j < yy; j++)
-          Array<Tv>::BoxCoxInv(std.ColBegin(j), std.RowsCount,
-                               boxCoxLambdas->at(j));
+        for (Ti a = 0; a < yy; a++) {
+          auto lm = boxCoxLambdas->at(a);
+          for (Ti j = 0; j < act.ColsCount; j++)
+            Array<Tv>::BoxCoxInv0(std.Get0r(a, j), lm);
+        }
       }
     }
 

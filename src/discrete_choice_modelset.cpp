@@ -278,7 +278,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOneReg(
     Ti i = -1;
     for (const auto &b : this->CurrentIndices.Vec) {
       i++;
-      Ti a = b - (this->pData->HasWeight ? 2 : 1);
+      Ti a = b - 1;
       type1Mean.Mat.Data[a] = DModel.Beta.Data[i];
       type1Var.Mat.Data[a] = DModel.BetaVar.Get0(i, i);
     }

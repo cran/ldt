@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>SUR (longrun output growth)</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">SUR (longrun output growth)</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(ldt)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>search.sur()</code> function is one of the three main
+functions in the <code>ldt</code> package. This vignette explains a
+basic usage of this function using the world bank dataset (<span class="citation">World Bank (2022)</span>). Output growth is a widely
+discussed topic in the field of economics. Several factors can influence
+the rate and quality of output growth, including physical and human
+capital, technological progress, institutions, trade openness, and
+macroeconomic stability <span class="citation">Chirwa and Odhiambo
+(2016)</span>. We will use this package to identify the long-run
+determinants of GDP per capita growth while making minimal
+assumptions.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>To minimize user discretion, we use all available data to select the
+set of potential regressors. Additionally, to avoid the endogeneity
+problem, we use information from before 2005 to explain the dependent
+variable after this year. This results in 571 potential regressors and
+208 observations.</p>
+<p>Of course, for this illustration, we use just the first 5 columns of
+data:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data.wdi<span class="sc">$</span>y, data.wdi<span class="sc">$</span>x[,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">colnames</span>(data)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">colnames</span>(data)[<span class="dv">2</span>],<span class="st">&quot;.lag&quot;</span>)</span></code></pre></div>
+<p>Here are the last few observations from this subset of the data:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">tail</span>(data)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt;     NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; WSM      0.6948973                 NA             NA                NA</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; XKX      3.5026405                 NA             NA                NA</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; YEM     -5.7036924                 NA             NA                NA</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; ZAF     -0.2084907         0.83394060      -1.533726         0.2149429</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; ZMB      1.9830446        -0.63088082             NA                NA</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; ZWE      1.2915497        -0.05297394             NA        -3.1003477</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;     AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; WSM     5.16498292    -0.65382289</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; XKX             NA             NA</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; YEM    14.88937834     0.01804223</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; ZAF     2.20864028    -0.08807695</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; ZMB     4.42032159     0.37414717</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; ZWE    -0.01642054     0.86883765</span></span></code></pre></div>
+<p>And here are some summary statistics for each variable:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sapply</span>(<span class="fu">as.data.frame</span>(data), summary)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;         NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Min.        -5.7036924         -2.7562067      -1.533726       -16.9560997</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1st Qu.     -0.1431228          0.7235014       1.308611        -2.9008332</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Median       1.0235845          1.7697597       2.876800        -1.2511855</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Mean         1.1094147          1.9232678       3.856278        -1.6759932</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.      2.4052532          2.8698123       5.600846         0.2268538</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Max.         7.1613101         12.7823340      20.814750         7.3208970</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         9.0000000         73.0000000     134.000000       146.0000000</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;         AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; Min.         -6.526751    -6.62157767</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 1st Qu.       1.310606    -0.29306446</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Median        4.326556     0.01489903</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; Mean          4.329299     0.05915160</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.       6.856201     0.57567407</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; Max.         15.949830     2.23869809</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         80.000000     7.00000000</span></span></code></pre></div>
+<p>The columns of the data represent the following variables:</p>
+<ul>
+<li><p>NY.GDP.PCAP.KD: GDP per capita (constant 2015 US$)</p></li>
+<li><p>AG.AGR.TRAC.NO: Agricultural machinery, tractors</p></li>
+<li><p>AG.CON.FERT.PT.ZS: Fertilizer consumption (% of fertilizer
+production)</p></li>
+<li><p>AG.CON.FERT.ZS: Fertilizer consumption (kilograms per hectare of
+arable land)</p></li>
+<li><p>AG.LND.AGRI.K2: Agricultural land (sq. km)</p></li>
+</ul>
+</div>
+<div id="modelling" class="section level2">
+<h2>Modelling</h2>
+<p>We use the AIC metric to find four best explanatory models. Note that
+we restrict the modelset by setting a maximum value for the number of
+equations allowed in the models. Note that “intercept” and “lag” of the
+dependent variable are included in all equations by
+<code>numFixPartitions</code> argument.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.sur</span>(<span class="at">data =</span> <span class="fu">get.data</span>(data, <span class="at">endogenous =</span> <span class="dv">1</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                         <span class="at">combinations =</span> <span class="fu">get.combinations</span>(<span class="at">sizes =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                                         <span class="at">numTargets =</span> <span class="dv">1</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                                                         <span class="at">numFixPartitions =</span> <span class="dv">2</span>), </span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>                         metric <span class="ot">&lt;-</span> <span class="fu">get.search.metrics</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>)),</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                         <span class="at">items =</span> <span class="fu">get.search.items</span>(<span class="at">bestK =</span> <span class="dv">4</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: SUR </span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 5, searched: 5 , failed: 0 (0%)</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.01670997 minutes </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  Length of results: 4 </span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;  Target (NY.GDP.PCAP.KD):</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;    Evaluation (aic):</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;        endogenous: NY.GDP.PCAP.KD</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;        exogenous: (3x1) (Intercept), NY.GDP.PCAP.KD.lag, AG.CON.FERT.PT.ZS</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;        metric: 213.8385</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;  ** results for 4 best model(s) are saved</span></span></code></pre></div>
+<p>The output of the <code>search.SUR()</code> function does not contain
+any estimation results, but only the information required to replicate
+them. The <code>summary()</code> function returns a similar structure
+but with the estimation results included.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
+<p>The following code generates a table for presenting the result.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">3</span>, <span class="cf">function</span>(i)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  search_sum<span class="sc">$</span>results[<span class="fu">which</span>(<span class="fu">sapply</span>(search_sum<span class="sc">$</span>results, <span class="cf">function</span>(d)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    d<span class="sc">$</span>info<span class="sc">==</span>i <span class="sc">&amp;&amp;</span> d<span class="sc">$</span>typeName<span class="sc">==</span><span class="st">&quot;best model&quot;</span>))][[<span class="dv">1</span>]]<span class="sc">$</span>value)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">names</span>(models) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Best&quot;</span>,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(models, <span class="at">latex =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                     <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>))</span></code></pre></div>
+<table>
+<caption>
+(Automatically Selected) Determinants of long-run GDP per capita growth
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;">
+</th>
+<th style="text-align:left;font-weight: bold;">
+Best 1
+</th>
+<th style="text-align:left;font-weight: bold;">
+Best 2
+</th>
+<th style="text-align:left;font-weight: bold;">
+Best 3
+</th>
+<th style="text-align:left;font-weight: bold;">
+Best 4
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:left;">
+0.34<sup></sup>
+</td>
+<td style="text-align:left;">
+0.80<sup>*</sup>
+</td>
+<td style="text-align:left;">
+0.41<sup></sup>
+</td>
+<td style="text-align:left;">
+0.85<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NY.GDP.PCAP.KD.lag
+</td>
+<td style="text-align:left;">
+0.41<sup>*</sup>
+</td>
+<td style="text-align:left;">
+-0.10<sup></sup>
+</td>
+<td style="text-align:left;">
+0.20<sup>*</sup>
+</td>
+<td style="text-align:left;">
+0.04<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.CON.FERT.PT.ZS
+</td>
+<td style="text-align:left;">
+0.08<sup></sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.AGR.TRAC.NO
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+0.07<sup></sup>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.CON.FERT.ZS
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+0.08<sup>**</sup>
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AG.LND.AGRI.K2
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+0.21<sup></sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+obs
+</td>
+<td style="text-align:left;">
+51
+</td>
+<td style="text-align:left;">
+58
+</td>
+<td style="text-align:left;">
+106
+</td>
+<td style="text-align:left;">
+133
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+aic
+</td>
+<td style="text-align:left;">
+213.84
+</td>
+<td style="text-align:left;">
+234.47
+</td>
+<td style="text-align:left;">
+430.61
+</td>
+<td style="text-align:left;">
+546.35
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sic
+</td>
+<td style="text-align:left;">
+219.63
+</td>
+<td style="text-align:left;">
+240.65
+</td>
+<td style="text-align:left;">
+438.60
+</td>
+<td style="text-align:left;">
+555.02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>This package can be a recommended tool for empirical studies that
+require reducing assumptions and summarizing uncertainty analysis
+results. This vignette is just a demonstration. There are indeed other
+options you can explore with the <code>search.sur()</code> function. For
+instance, you can experiment with different evaluation metrics or
+restrict the model set based on your specific needs. Additionally,
+there’s an alternative approach where you can combine modeling with
+Principal Component Analysis (PCA) (see <code>estim.sur()</code>
+function). I encourage you to experiment with these options and see how
+they can enhance your data analysis journey.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-chirwa2016macroeconomic" class="csl-entry">
+Chirwa, Themba, and Nicholas Odhiambo. 2016. <span>“Macroeconomic
+Determinants of Economic Growth: A Review of International
+Literature.”</span> <em>South East European Journal of Economics and
+Business</em> 11 (2): 33–47. <a href="https://doi.org/10.1515/jeb-2016-0009">https://doi.org/10.1515/jeb-2016-0009</a>.
+</div>
+<div id="ref-datasetWorldbank" class="csl-entry">
+World Bank. 2022. <span>“World Development Indicators.”</span>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

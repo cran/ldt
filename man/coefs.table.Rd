@@ -14,7 +14,7 @@ coefs.table(
   textFun_sub = NULL,
   textFun_max = 20,
   expList = NA,
-  formatLatex = TRUE,
+  latex = TRUE,
   numFormat = "\%.2f"
 )
 }
@@ -44,7 +44,7 @@ If it is an integer, it insert that number of explanatory variables in the table
 It can be a list of available explanatory variables.
 Use \code{...} for empty rows.}
 
-\item{formatLatex}{If \code{TRUE}, default options are for 'latex', otherwise, 'html'.}
+\item{latex}{If \code{TRUE}, default options are for 'latex', otherwise, 'html'.}
 
 \item{numFormat}{default formatting for the numbers.}
 }

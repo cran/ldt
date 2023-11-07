@@ -162,13 +162,10 @@ void SearcherSummary::Push(std::shared_ptr<EstimationKeep> &coef,
     }
 
     if (pItems->KeepInclusionWeights) {
-      Ti adj = pData->HasWeight ? -1 : 0;
-      Tv w = 1;
-
       for (auto &i : coef->Endogenous)
-        InclusionsInfo.at(i).PushNew(coef->Weight, w);
+        InclusionsInfo.at(i).PushNew(coef->Weight, 1);
       for (auto &i : coef->Exogenouses)
-        InclusionsInfo.at(i + adj).PushNew(coef->Weight, w);
+        InclusionsInfo.at(i).PushNew(coef->Weight, 1);
     }
 
     return; // the rest is based on mean and variances which is not

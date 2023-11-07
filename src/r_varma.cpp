@@ -138,9 +138,10 @@ SEXP EstimVarma(List data, IntegerVector params, int seasonsCount,
   }
 
   auto restriction = VarmaRestrictionType::kMaFinal; // TODO: as an option
-  auto sizes = VarmaSizes(
-      data_.ObsCount, data_.NumEndo, data_.NumExo, params_.at(0), params_.at(1),
-      params_.at(2), params_.at(3), params_.at(4), params_.at(5), seasonsCount);
+  auto sizes =
+      VarmaSizes(data_.Data.RowsCount, data_.NumEndo, data_.NumExo,
+                 params_.at(0), params_.at(1), params_.at(2), params_.at(3),
+                 params_.at(4), params_.at(5), seasonsCount);
 
   // L-BFGS
   LimitedMemoryBfgsbOptions optim;

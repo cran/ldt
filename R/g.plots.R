@@ -259,9 +259,6 @@ fan.plot <- function (data,
   if (startInd > 1)
     do.call(lines, c(list(medians[1:startInd]), actualArgs))
 
-  if (startInd == length(medians))
-    return() # no fan to plot
-
   cols <- colorRampPalette(c("white", boundColor, "white"),
                            alpha = TRUE)(ncol(quants) + 1)
   cols <- cols[2:(length(cols) - 1)]
@@ -275,7 +272,7 @@ fan.plot <- function (data,
   else {
     gradient_cols <- colorRampPalette(c(boundColor, "white"),
                                       alpha = TRUE)(100)
-    for (i in c((startInd+1):length(medians))) {
+    for (i in c((startInd):length(medians))) {
       x <- c(i - 0.4, i + 0.4)
       y1 <- seq(medians[i], quants[i, ncol(quants)], length.out = 100)
       y2 <- seq(medians[i], quants[i, 1], length.out = 100)
@@ -301,7 +298,7 @@ fan.plot <- function (data,
 #' @param x An object of class \code{ldt.varma.prediction}, which is the output of [predict.ldt.estim.varma] function.
 #' @param variable Index or name of the variable to be plotted.
 #' @param xAxisArgs Arguments to pass to \code{axis} function
-#' @param fanPlotArgs Additional arguments for the [fan.plot] function.
+#' @param fanPlotArgs Additional arguments for the [fan.plot] function. \code{lambda} is added automatically.
 #' @param simMetric Name of metric to plot its details, provided that simulation details are available. If \code{NULL}, simulation details are not plotted.
 #' @param simLineArgs Arguments to pass to \code{line} function for simulation lines (if available).
 #' @param simPointsArgs Arguments to pass to \code{points} function for simulation points (if available).

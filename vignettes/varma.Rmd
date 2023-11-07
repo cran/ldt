@@ -1,0 +1,93 @@
+---
+title: "VARMA (commodity prices)"
+output: rmarkdown::html_vignette
+bibliography: "`r system.file('REFERENCES.bib', package = 'ldt')`"
+vignette: >
+  %\VignetteIndexEntry{VARMA (commodity prices)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ldt)
+```
+
+## Introduction
+The `search.varma()` function is one of the three main functions in the `ldt` package. This vignette explains a basic usage of this function using the commodity prices dataset (@datasetPcp). Commodity prices refer to the prices at which raw materials or primary foodstuffs are bought and sold. This dataset contains monthly data on primary commodity prices, including 68 different commodities with some starting in January 1990 and others in later periods. 
+
+
+## Data 
+For this example, we use just the first 5 columns of data:
+
+```{r }
+data <- data.pcp$data[,1:5]
+```
+
+Here are the last few observations from this subset of the data:
+
+```{r datatail}
+tail(data)
+```
+
+And here are some summary statistics for each variable:
+
+```{r datasummary}
+sapply(data, summary)
+```
+
+The columns of the data represent the following variables:
+
+```{r columndesc, echo=FALSE, results='asis'}
+for (c in colnames(data)){
+  cat(paste0("- ", c, ": ", data.pcp$descriptions[c]), "\n\n")
+}
+```
+
+## Modelling
+We use the first variable (i.e., `r colnames(data)[[1]]`) as the target variable and the MAPE metric to find the best predicting model. Out-of-sample evaluation affects the choice of maximum model complexity, as it involves reestimating the model using maximum likelihood several times. Although the `simUsePreviousEstim` argument helps with initializing maximum likelihood estimation, VARMA model estimation is time-consuming due to its large number of parameters. We impose some restrictions in the modelset. We set a maximum value for the number of equations allowed in the models. Additionally, we set a maximum value for the parameters of the VARMA model.
+
+
+
+```{r search}
+
+search_res <- search.varma(data = get.data(data, endogenous = 5),
+                           combinations = get.combinations(sizes = c(1,2,3),
+                                                           numTargets = 1),
+                           maxParams = c(2,0,0),
+                           metric <- get.search.metrics(typesIn = c(), 
+                                                        typesOut = c("mape"),
+                                                        simFixSize = 6),
+                           maxHorizon = 5)
+print(search_res)
+```
+
+The output of the `search.varma()` function does not contain any estimation results, but only the information required to replicate them. The `summary()` function returns a similar structure but with the estimation results included.
+
+```{r summary}
+search_sum <- summary(search_res)
+```
+
+We can plot the predicted values along with the out-of-sample evaluations:
+
+```{r plot, fig.width=6, fig.height=5}
+best_model <- search_sum$results[[1]]$value
+pred <- predict(best_model, 
+                actualCount = 10, 
+                startFrequency = tdata::f.monthly(data.pcp$start,1))
+plot(pred, simMetric = "mape")
+```
+
+
+## Conclusion
+This package can be a recommended tool for empirical studies that require reducing assumptions and summarizing uncertainty analysis results. This vignette is just a demonstration. There are indeed other options you can explore with the `search.varma()` function. For instance, you can experiment with different evaluation metrics or restrict the model set based on your specific needs. Additionally, there’s an alternative approach where you can combine modeling with Principal Component Analysis (PCA) (see `estim.varma()` function). I encourage you to experiment with these options and see how they can enhance your data analysis journey.
+
+
+## References
+

@@ -1,8 +1,11 @@
 # *News*
 
-## ldt 0.4.5 (2023-10-30)
+## ldt 0.5.0 (2023-11-7)
 
-### Changes
+* Vignettes are back
+* Some fixes.
+
+## ldt 0.4.5 (2023-10-30)
 
 * Adding two suitable functions for creating data and combinations
 * Exporting more generic functions, esp. for printing and plotting
@@ -11,21 +14,15 @@
 
 ## ldt 0.3.2 (2023-07-26)
 
-### Changes
-
 * Add an option to transform back data in calculation of RMSE, MAE, etc.
 * Format text in exceptions, etc.
 * Some fixes.
 
 ## ldt 0.3.1 (2023-07-07)
 
-### Changes
-
 * Revised the running statistics part due to a reported error from CRAN
 
 ## ldt 0.3.0 (2023-07-05)
-
-### Changes
 
 * Moving frequency related functions to a 'tdata' package,
 * Renaming R functions,
@@ -34,8 +31,6 @@
 * Many fixes.
 
 ## ldt 0.2.0 (2023-02-27)
-
-### Changes
 
 * More options for AUC calculations (such as partial AUC),
 * Update 'RemoveNaStrategies()' function for handling large matrices,

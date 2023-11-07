@@ -223,6 +223,12 @@ public:
   /// @return the value at the given position
   Tw Get0(Ti i, Ti j) const;
 
+  /// @brief Similar to \ref Get0 but returns a reference to the element
+  /// @param i
+  /// @param j
+  /// @return
+  Tw &Get0r(Ti i, Ti j);
+
   /// @brief sets the (i,j)-th element of the Matrix (checks the bounds)
   /// @param i row index
   /// @param j column index

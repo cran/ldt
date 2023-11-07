@@ -283,19 +283,19 @@ test_that("estim.sur simulation works", {
 
 test_that("estim.sur lambda in simulation works", {
 
-  res1 = estim.sur(data = get.data(x[,1:6], endogenous = 2, lambdas = c(1, 1)),
+  res1 = estim.sur(data = get.data(x[,1:6], endogenous = 2),
                    simFixSize = 10, simSeed = 340 )
   expect_equal(res1$simulation$validIter, 10)
 
-  res2 = estim.sur(data = get.data(x[,1:6], endogenous = 2),
+  #data$lambdas <- c(1,1)
+  res2 = estim.sur(data = get.data(x[,1:6], endogenous = 2, lambdas = c(1,1)),
                    simFixSize = 10, simSeed = 340)
   expect_equal(res1$simulation, res2$simulation)
-  expect_equal(res1$metrics[c("mae", "rmse"),],
-               res2$metrics[c("mae", "rmse"),])
 
-  # Note that When λ=1, the Box-Cox transformation returns x-1
-  # It seems that this shift does not change some metrics
-  # However, check its mathematics
+
+  # There is no λ in the Box-Cox transformation which is f(x)=x
+  # Therefore, the outputs will be different
+  # Of course, I checked by changing the Cpp code
 
 })
 

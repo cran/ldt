@@ -12,6 +12,16 @@ bool SupportsParallel() {
 #endif
 }
 
+Rcpp::RObject tryGetValue(Rcpp::List dataR, const char *name) {
+  Rcpp::RObject value;
+  if (dataR.containsElementNamed(name)) {
+    value = dataR[name];
+  } else {
+    value = R_NilValue;
+  }
+  return value;
+}
+
 std::vector<std::vector<int>> listToVectorOfVectors(List list) {
   std::vector<std::vector<int>> result;
   for (int i = 0; i < list.size(); i++) {
@@ -28,15 +38,14 @@ void UpdateSearchData(List &dataR, SearchData &data) {
 
   data.NumEndo = as<int>(dataR["numEndo"]);
   data.NumExo = as<int>(dataR["numExo"]);
-  data.ObsCount = as<int>(dataR["obsCount"]);
-  data.NewObsCount = as<int>(dataR["newObsCount"]);
 
-  if (data.NewObsCount > 0) {
+  auto nex = tryGetValue(dataR, "newX");
+  if (nex != R_NilValue) {
     auto mat1 = as<NumericMatrix>(dataR["newX"]);
     data.NewX.SetData(&mat1[0], mat1.nrow(), mat1.ncol());
   }
 
-  auto lambdasR = dataR["lambdas"];
+  auto lambdasR = tryGetValue(dataR, "lambdas");
   if (lambdasR != R_NilValue)
     data.Lambdas = as<std::vector<double>>(lambdasR);
 
@@ -630,9 +639,14 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                              _["searchedCount"] = wrap(result.SearchedCount),
                              _["failedCount"] = wrap(fcount),
                              _["failedDetails"] = wrap(failDetails));
-  if (fcount > 0 && printMsg)
-    Rprintf("** Search process ended successfully. However, there are some "
-            "failed estimations. See 'result$counts' for more details.");
+  if (fcount > 0 && printMsg) {
+    if (fcount == result.SearchedCount)
+      Rprintf("** Search process ended successfully. However, all "
+              "estimations failed. See 'result$counts' for more details.\n");
+    else
+      Rprintf("** Search process ended successfully. However, there are some "
+              "failed estimations. See 'result$counts' for more details.\n");
+  }
 
   // results:
   if ((Ti)targetNames.size() != items.LengthTargets)

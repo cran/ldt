@@ -100,7 +100,7 @@ hatvalues0 <- function(object, equation, addNA = TRUE){
   res <- diag(H)
 
   if (addNA && method == "varma"){
-    omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid)
+    omit_obs <- nrow(object$info$data) - nrow(object$estimations$resid)
     res <- c(rep(NA, omit_obs), res)
   }
   res
@@ -110,7 +110,7 @@ cooks.distance0 <- function(object, equation, addNA = TRUE){
   method <- tolower(attr(object, "method"))
   omit_obs <- 0
   if (method == "varma")
-    omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid)
+    omit_obs <- nrow(object$info$data) - nrow(object$estimations$resid)
 
   h <- hatvalues0(object, equation, FALSE)
   r <- residuals.ldt.estim(object, equation)
@@ -172,7 +172,7 @@ residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, 
     }
   }
 
-  omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid) # for VARMA
+  omit_obs <- nrow(object$info$data) - nrow(object$estimations$resid) # for VARMA
   if (method == "varma")
     resid <- rbind(matrix(NA, ncol = ncol(resid), nrow = omit_obs), resid)
 
@@ -284,6 +284,10 @@ predict.ldt.estim <- function(object, ...){
 #'
 #' @return An object of class \code{ldt.varma.prediction}, which is a list with predicted \code{means} and (if available) \code{variances}.
 #'
+#' @details
+#' If estimation data undergoes a Box-Cox transformation, the resulting values will not be transformed accordingly.
+#'
+#'
 #' @export
 predict.ldt.estim.varma <- function(object,
                                     actualCount = 0,
@@ -296,8 +300,16 @@ predict.ldt.estim.varma <- function(object,
   if (is.null(object$prediction) || is.null(object$prediction$means))
     stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")
 
+  added <- attr(object$info$data, "ldt.new.appended")
+  ldata <- nrow(object$info$data$data)
+  if (!is.null(added) && added > 0)
+    ldata <- nrow(object$info$data$data) - added
+
+  aY <- object$info$data$data[1:ldata,
+                              colnames(object$estimations$Y), drop=FALSE]#don't use Y (It is differenced in integrated models)
+
   if (is.na(actualCount))
-    actualCount <- nrow(object$estimations$Y)
+    actualCount <- nrow(aY)
 
   hasVar = !is.null(object$prediction$vars)
   if (is.null(startFrequency))
@@ -312,7 +324,7 @@ predict.ldt.estim.varma <- function(object,
     preds <- t(object$prediction$means)
   # get actual
   if (actualCount > 0){
-    actuals <- tail(object$estimations$Y, actualCount)
+    actuals <- tail(aY, actualCount)
     preds <- rbind(actuals, preds)
   }
   preds_var <- NULL
@@ -326,7 +338,7 @@ predict.ldt.estim.varma <- function(object,
                     vars)
   }
 
-  dstart <- tdata::next.freq(startFrequency, nrow(object$estimations$Y) - actualCount)
+  dstart <- tdata::next.freq(startFrequency, ldata - actualCount)
   freqs <- tdata::get.seq0(dstart, nrow(preds))
 
   rownames(preds) <- freqs
@@ -341,7 +353,7 @@ predict.ldt.estim.varma <- function(object,
 
   if (!is.null(object$simulation))
     res$simulation <- object$simulation
-  res$lambda <- object$info$data$lambdas
+  res$lambdas <- object$info$data$lambdas
 
   # We should not use use Box-cox lambdas in this function for transforming variances
   # In plotting, there will be an option to transform the intervals

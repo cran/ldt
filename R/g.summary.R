@@ -30,7 +30,7 @@ get.metric.from.estim <- function(model, metricName, targetName) {
 #' @return If the object contains the indices of endogenous variables of an estimated model, it returns the estimation output.
 #' Otherwise, it returns object.
 #' @export
-summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ...) {
+summary.ldt.search.item <- function(object, searchResult = NULL, test = FALSE, ...) {
 
   if (is.null(object))
     stop("argument is null.")
@@ -103,7 +103,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
   #if (object$typeName == "cdf")
   #if (object$typeName == "mixture")
 
-  return(object)
+  return(object$value)
 }
 
 
@@ -114,7 +114,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 #' Use this function to get the full estimation of the models reported in the output of a search process.
 #'
 #' @param object An \code{ldt.search} object.
-#' @param test If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process.
+#' @param test If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process (Provided that negative seed is used).
 #' @param ... Additional arguments.
 #'
 #' @details
@@ -123,7 +123,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 #'
 #' @return The output replaces the value of \code{object$results} with the summary from [summary.ldt.search.item].
 #' @export
-summary.ldt.search <- function(object, test = TRUE, ...) {
+summary.ldt.search <- function(object, test = FALSE, ...) {
 
   if (is.null(object))
     stop("argument is null.")

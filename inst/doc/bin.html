@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Binary Regression (loan default)</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Binary Regression (loan default)</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(ldt)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>search.bin()</code> function is one of the three main
+functions in the <code>ldt</code> package. This vignette explains a
+basic usage of this function using <span class="citation">Berka and
+Sochorova (1993)</span> dataset. Loan default refers to the failure to
+repay a loan according to the terms agreed upon in the loan contract.
+This topic has been extensively studied in the literature. According to
+<span class="citation">Manz (2019)</span>, determinants of default can
+include macroeconomic events such as changes in interest and
+unemployment rates, bank-specific factors such as risk management
+strategies, and loan-specific factors such as its amount and purpose, as
+well as borrower creditworthiness. In this section, we will use the
+<code>ldt</code> package to conduct an experiment on this topic while
+making minimal theoretical assumptions.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p><span class="citation">Berka and Sochorova (1993)</span> dataset has
+a <em>loan table</em> with 682 observations, each labeled as
+<em>finished</em>, <em>finished with default</em>, <em>running</em>, and
+<em>running with default.</em> Each loan observation has an <em>account
+identification</em> that can provide other types of information from
+other tables, such as the characteristics of the account of the loan and
+its transactions. Each account has a <em>district identification</em>
+that can provide information about the demographic characteristics of
+the location of its branch. The combined table has 58 features and 682
+observations.</p>
+<p>For this example, we use just the first 7 columns of data:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data.berka<span class="sc">$</span>y, data.berka<span class="sc">$</span>x[,<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>])</span></code></pre></div>
+<p>Here are the last few observations from this subset of the data:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">tail</span>(data)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt;        label ln(amount) ln(payments) rate duration_12 duration_36 duration_60</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; [677,]     0   11.98866     8.405144    0           0           1           0</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; [678,]     0   12.77338     8.902183    0           0           0           0</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; [679,]     0   10.86880     8.383890    0           1           0           0</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; [680,]     0   11.84573     8.667680    0           0           0           0</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; [681,]     0   10.92651     7.748460    0           0           0           0</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [682,]     0   12.39214     8.297793    0           0           0           1</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;        duration_24</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; [677,]           0</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; [678,]           0</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; [679,]           0</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; [680,]           1</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; [681,]           1</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; [682,]           0</span></span></code></pre></div>
+<p>And here are some summary statistics for each variable:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sapply</span>(<span class="fu">as.data.frame</span>(data), summary)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;            label ln(amount) ln(payments) rate duration_12 duration_36</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Min.    0.000000   8.513185     5.717028    0   0.0000000   0.0000000</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1st Qu. 0.000000  11.108439     7.814803    0   0.0000000   0.0000000</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Median  0.000000  11.669313     8.277412    0   0.0000000   0.0000000</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Mean    0.111437  11.614518     8.157249    0   0.1920821   0.1906158</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 3rd Qu. 0.000000  12.257972     8.667938    0   0.0000000   0.0000000</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Max.    1.000000  13.289267     9.201300    0   1.0000000   1.0000000</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;         duration_60 duration_24</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; Min.        0.00000    0.000000</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 1st Qu.     0.00000    0.000000</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; Median      0.00000    0.000000</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Mean        0.21261    0.202346</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.     0.00000    0.000000</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; Max.        1.00000    1.000000</span></span></code></pre></div>
+<p>The columns of the data represent the following variables:</p>
+<ul>
+<li><p>label: default=1</p></li>
+<li><p>ln(amount): amount of money (log)</p></li>
+<li><p>ln(payments): monthly payments (log)</p></li>
+<li><p>rate: interest rate</p></li>
+<li><p>duration_12: dummy variable indicating a 12-month loan
+duration</p></li>
+<li><p>duration_36: dummy variable indicating a 36-month loan
+duration</p></li>
+<li><p>duration_60: dummy variable indicating a 60-month loan
+duration</p></li>
+<li><p>duration_24: dummy variable indicating a 24-month loan
+duration</p></li>
+</ul>
+</div>
+<div id="modelling" class="section level2">
+<h2>Modelling</h2>
+<p>The target variable is the first variable. We use the out-of-sample
+AUC evaluation metric to find the best predicting model.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.bin</span>(<span class="at">data =</span> <span class="fu">get.data</span>(data, <span class="at">endogenous =</span> <span class="dv">1</span>, <span class="at">weights =</span> data.berka<span class="sc">$</span>w),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                         <span class="at">combinations =</span> <span class="fu">get.combinations</span>(<span class="at">sizes =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                                         <span class="at">numTargets =</span> <span class="dv">1</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                         metric <span class="ot">&lt;-</span> <span class="fu">get.search.metrics</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(), </span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>                                                      <span class="at">typesOut =</span> <span class="fu">c</span>(<span class="st">&quot;auc&quot;</span>),</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                                                      <span class="at">simFixSize =</span> <span class="dv">20</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>                                                      <span class="at">trainRatio =</span> <span class="fl">0.8</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>                                                      <span class="at">seed =</span> <span class="dv">123</span>),</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>                         <span class="at">items =</span> <span class="fu">get.search.items</span>(<span class="at">bestK =</span> <span class="dv">0</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>                                                  <span class="at">inclusion =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>                                                  <span class="at">type1 =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>                                                  <span class="at">mixture4 =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: Binary </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 29, searched: 29 , failed: 7 (24.1%)</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.01655978 minutes </span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;  Length of results: 2 </span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;  Failures:</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;    1. ldt::statistics-&gt;matrix singularity: 7 (24.1%)</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;  Target (label):</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt;    Evaluation (aucOut):</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt;       Inclusion weights average:</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt;        maximum value: 0.6738315</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt;        name: ln(payments)</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt;        count: 6</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt;       Mixture significant [mean-1.95*std, mean, mean+1.95*std]:</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt;        ln(amount): (3x1) 0.1843058, 0.6110107, 1.037716</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt;        ln(payments): (3x1) 0.7696544, 1.032932, 1.296209</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; --------</span></span></code></pre></div>
+<p>The output of the <code>search.bin()</code> function does not contain
+any estimation results, but only the information required to replicate
+them. The <code>summary()</code> function returns a similar structure
+but with the estimation results included.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
+<p>While choosing an out-of-sample metric indicates our interest in the
+predictive power of the best model, for presentation purposes, the
+<code>mixture4 = TRUE</code> part is also included in the
+<code>searchItems</code> argument. Therefore, we use the results to
+study the coefficients uncertainty. In this regard, we select the first
+four regressors with the highest inclusion weights (note the
+<code>inclusion = TRUE</code>) and plot their combined weighted
+distributions. Note that the parameters of the generalized lambda
+distribution are estimated from the first four moments of the combined
+distribution using the <code>s.gld.from.moments()</code>}` function in
+this package, with the distribution restricted to be unimodal with a
+continuous tail.</p>
+<p>First, we prepare data for plot:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>inclusion_mat <span class="ot">&lt;-</span> search_res<span class="sc">$</span>results[<span class="fu">sapply</span>(search_res<span class="sc">$</span>results, <span class="cf">function</span>(a)a<span class="sc">$</span>typeName <span class="sc">==</span> <span class="st">&quot;inclusion&quot;</span>)][[<span class="dv">1</span>]]<span class="sc">$</span>value</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>inclusion_mat <span class="ot">&lt;-</span> inclusion_mat[<span class="sc">!</span>(<span class="fu">rownames</span>(inclusion_mat) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;label&quot;</span>, <span class="st">&quot;(Intercept)&quot;</span>)), ]</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>sorted_inclusion_mat <span class="ot">&lt;-</span> inclusion_mat[<span class="fu">order</span>(inclusion_mat[,<span class="dv">1</span>], <span class="at">decreasing =</span> <span class="cn">TRUE</span>),]</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>selected_vars <span class="ot">&lt;-</span> <span class="fu">rownames</span>(sorted_inclusion_mat)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>mixture_mat <span class="ot">&lt;-</span> search_sum<span class="sc">$</span>results[<span class="fu">sapply</span>(search_sum<span class="sc">$</span>results, <span class="cf">function</span>(a)a<span class="sc">$</span>typeName <span class="sc">==</span> <span class="st">&quot;mixture&quot;</span>)][[<span class="dv">1</span>]]<span class="sc">$</span>value</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>moments <span class="ot">&lt;-</span> <span class="fu">lapply</span>(selected_vars, <span class="cf">function</span>(v)mixture_mat[<span class="fu">rownames</span>(mixture_mat)<span class="sc">==</span>v,])</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>gld_parms <span class="ot">&lt;-</span> <span class="fu">lapply</span>(moments, <span class="cf">function</span>(c) <span class="fu">s.gld.from.moments</span>(c[[<span class="dv">1</span>]], c[[<span class="dv">2</span>]],</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>                        c[[<span class="dv">3</span>]], c[[<span class="dv">4</span>]],</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>                        <span class="at">start =</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.25</span>),</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>                        <span class="at">type =</span> <span class="dv">4</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>                        <span class="at">nelderMeadOptions =</span> <span class="fu">get.options.neldermead</span>(<span class="dv">100000</span>,<span class="fl">1e-6</span>)))</span></code></pre></div>
+<p>Then we plot the estimated distributions:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a> </span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co"># plots</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>probs <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fl">0.01</span>,<span class="fl">0.99</span>,<span class="fl">0.01</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="cf">for</span> (gld <span class="cf">in</span> gld_parms){</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">s.gld.quantile</span>(probs, gld[<span class="dv">1</span>],gld[<span class="dv">2</span>],gld[<span class="dv">3</span>],gld[<span class="dv">4</span>])</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">s.gld.density.quantile</span>(probs, gld[<span class="dv">1</span>],gld[<span class="dv">2</span>],gld[<span class="dv">3</span>],gld[<span class="dv">4</span>])</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="fu">plot</span>(x, y, <span class="at">type =</span> <span class="st">&quot;l&quot;</span>, <span class="at">xaxt =</span> <span class="st">&quot;n&quot;</span>, <span class="at">xlab =</span> <span class="cn">NA</span>, <span class="at">ylab =</span> <span class="cn">NA</span>, <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>, </span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>       <span class="at">main =</span> selected_vars[i])</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  lower <span class="ot">&lt;-</span> x[<span class="fu">abs</span>(probs <span class="sc">-</span> <span class="fl">0.05</span>)<span class="sc">&lt;</span><span class="fl">1e-10</span>]</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  upper <span class="ot">&lt;-</span> x[<span class="fu">abs</span>(probs <span class="sc">-</span> <span class="fl">0.95</span>)<span class="sc">&lt;</span><span class="fl">1e-10</span>] </span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="fu">axis</span>(<span class="dv">1</span>, <span class="at">at =</span> <span class="fu">c</span>(lower, <span class="dv">0</span>, upper), <span class="at">labels =</span> <span class="fu">c</span>(<span class="fu">round</span>(lower, <span class="dv">2</span>), <span class="dv">0</span>, <span class="fu">round</span>(upper, <span class="dv">2</span>)))</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  xleft <span class="ot">&lt;-</span> x[x <span class="sc">&lt;=</span> lower]</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  xright <span class="ot">&lt;-</span> x[x <span class="sc">&gt;=</span> upper]</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  yleft <span class="ot">&lt;-</span> y[x <span class="sc">&lt;=</span> lower]</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  yright <span class="ot">&lt;-</span> y[x <span class="sc">&gt;=</span> upper]</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="fu">polygon</span>(<span class="fu">c</span>(<span class="fu">min</span>(x), xleft, lower), <span class="fu">c</span>(<span class="dv">0</span>, yleft, <span class="dv">0</span>), <span class="at">col =</span> <span class="st">&quot;gray&quot;</span>, <span class="at">density =</span> <span class="dv">30</span>, <span class="at">angle =</span> <span class="dv">45</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  <span class="fu">polygon</span>(<span class="fu">c</span>(<span class="fu">max</span>(x), upper, xright), <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, yright), <span class="at">col =</span> <span class="st">&quot;gray&quot;</span>, <span class="at">density =</span> <span class="dv">30</span>, <span class="at">angle =</span> <span class="sc">-</span><span class="dv">45</span>)</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>  <span class="fu">text</span>(<span class="fu">mean</span>(x), <span class="fu">mean</span>(y), <span class="st">&quot;90%&quot;</span>, <span class="at">col =</span> <span class="st">&quot;gray&quot;</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>}</span></code></pre></div>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Determinants of Loan Default: Variables with the highest inclusion weights, automatically selected. Each plot presents a combined distribution of all estimated coefficients, estimated by generalized lambda distribution." width=".40\linewidth" /><img src="data:image/png;base64,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" alt="Determinants of Loan Default: Variables with the highest inclusion weights, automatically selected. Each plot presents a combined distribution of all estimated coefficients, estimated by generalized lambda distribution." width=".40\linewidth" /><img src="data:image/png;base64,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" alt="Determinants of Loan Default: Variables with the highest inclusion weights, automatically selected. Each plot presents a combined distribution of all estimated coefficients, estimated by generalized lambda distribution." width=".40\linewidth" /><img src="data:image/png;base64,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" alt="Determinants of Loan Default: Variables with the highest inclusion weights, automatically selected. Each plot presents a combined distribution of all estimated coefficients, estimated by generalized lambda distribution." width=".40\linewidth" />
+<p class="caption">
+Determinants of Loan Default: Variables with the highest inclusion
+weights, automatically selected. Each plot presents a combined
+distribution of all estimated coefficients, estimated by generalized
+lambda distribution.
+</p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>This package can be a recommended tool for empirical studies that
+require reducing assumptions and summarizing uncertainty analysis
+results. This vignette is just a demonstration. There are indeed other
+options you can explore with the <code>search.bin()</code> function. For
+instance, you can experiment with different evaluation metrics or
+restrict the model set based on your specific needs. Additionally,
+there’s an alternative approach where you can combine modeling with
+Principal Component Analysis (PCA) (see <code>estim.bin()</code>
+function). I encourage you to experiment with these options and see how
+they can enhance your data analysis journey.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-datasetBerka" class="csl-entry">
+Berka, Petr, and Marta Sochorova. 1993. <span>“PKDD’99 Discovery
+Challenge, a Collaborative Effort in Knowledge Discovery from
+Databases.”</span>
+</div>
+<div id="ref-manz2019determinants" class="csl-entry">
+Manz, Florian. 2019. <span>“Determinants of Non-Performing Loans: What
+Do We Know? A Systematic Review and Avenues for Future Research.”</span>
+<em>Management Review Quarterly</em> 69 (4): 351–89. <a href="https://doi.org/10.1007/s11301-019-00156-7">https://doi.org/10.1007/s11301-019-00156-7</a>.
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

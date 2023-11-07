@@ -23,3 +23,6 @@ An object of class \code{ldt.varma.prediction}, which is a list with predicted \
 This function extracts predicted mean and its variance from an \code{ldt.estim.varma} object.
 new data must be provided while estimating the model.
 }
+\details{
+If estimation data undergoes a Box-Cox transformation, the resulting values will not be transformed accordingly.
+}

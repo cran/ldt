@@ -426,61 +426,6 @@ public:
   // ................ DESCRIPTIVES
 
   template <bool skipNAN>
-  static void GetDescriptive(const Tw *data, const Ti &length,
-                             const DescriptiveType &type, Tw &result) {
-
-    switch (type) {
-    case DescriptiveType::kMin:
-      Min<skipNAN>(data, length, result);
-      break;
-    case DescriptiveType::kMax:
-      Max<skipNAN>(data, length, result);
-      break;
-    case DescriptiveType::kLast:
-      Last<skipNAN>(data, length, result);
-      break;
-    case DescriptiveType::kFirst:
-      First<skipNAN>(data, length, result);
-      break;
-    case DescriptiveType::kMean:
-      result = Mean<skipNAN>(data, length);
-      break;
-    case DescriptiveType::kVariance: {
-      result = Variance<skipNAN, true>(data, length); // sample statistics
-    } break;
-    case DescriptiveType::kVariancePop: {
-      result = Variance<skipNAN, false>(data, length);
-    } break;
-    case DescriptiveType::kStd: {
-      result = Variance<skipNAN, true>(data, length);
-      result = std::sqrt(result);
-    } break;
-    case DescriptiveType::kStdPop: {
-      result = Variance<skipNAN, false>(data, length);
-      result = std::sqrt(result);
-    } break;
-
-    case DescriptiveType::kSkewness: {
-      result = Skewness<skipNAN, true>(data, length); // sample statistics
-    } break;
-    case DescriptiveType::kSkewnessPop: {
-      result = Skewness<skipNAN, false>(data, length);
-    } break;
-
-    case DescriptiveType::kKurtosis: {
-      result = Kurtosis<skipNAN, true>(data, length); // sample statistics
-    } break;
-    case DescriptiveType::kKurtosisPop: {
-      result = Kurtosis<skipNAN, false>(data, length);
-    } break;
-
-    default:
-      throw LdtException(ErrorType::kLogic, "array.h",
-                         "invalid or not-implemented descriptive statistics");
-    }
-  }
-
-  template <bool skipNAN>
   static void Min(const Tw *data, const Ti &length, Tw &min) {
     if (length == 0)
       min = NAN;
@@ -734,7 +679,7 @@ public:
   /// @param weights The weights vector.
   /// @return The mean
   template <bool isWeighted, bool skipNAN>
-  static Tw Mean(const Tw *data, Ti length, const Tw *weights) {
+  static Tw Mean(const Tw *data, Ti length, const Tw *weights = nullptr) {
     Tw mean = 0;
     Moments<isWeighted, skipNAN, 1>(data, length, weights, mean);
     return mean;
@@ -749,7 +694,7 @@ public:
   /// @param weights The weights vector.
   /// @return The variance
   template <bool isWeighted, bool skipNAN>
-  static Tw Variance(const Tw *data, Ti length, const Tw *weights) {
+  static Tw Variance(const Tw *data, Ti length, const Tw *weights = nullptr) {
     Tw mean = 0, variance = 0;
     Moments<isWeighted, skipNAN, 2>(data, length, weights, mean, &variance);
     return variance;
@@ -764,7 +709,7 @@ public:
   /// @param weights The weights vector.
   /// @return The skewness
   template <bool isWeighted, bool skipNAN>
-  static Tw Skewness(const Tw *data, Ti length, const Tw *weights) {
+  static Tw Skewness(const Tw *data, Ti length, const Tw *weights = nullptr) {
     Tw mean = 0, variance = 0, skewness = 0;
 
     Moments<isWeighted, skipNAN, 3>(data, length, weights, mean, &variance,
@@ -781,7 +726,7 @@ public:
   /// @param weights The weights vector.
   /// @return The kurtosis
   template <bool isWeighted, bool skipNAN>
-  static Tw Kurtosis(const Tw *data, Ti length, const Tw *weights) {
+  static Tw Kurtosis(const Tw *data, Ti length, const Tw *weights = nullptr) {
     Tw mean = 0, variance = 0, skewness = 0, kurtosis = 0;
     Moments<isWeighted, skipNAN, 4>(data, length, weights, mean, &variance,
                                     &skewness, &kurtosis);
@@ -831,6 +776,63 @@ public:
       } else if constexpr (true) {
         first = data[0];
       }
+    }
+  }
+
+  template <bool skipNAN>
+  static void GetDescriptive(const Tw *data, const Ti &length,
+                             const DescriptiveType &type, Tw &result) {
+
+    switch (type) {
+    case DescriptiveType::kMin:
+      Min<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kMax:
+      Max<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kLast:
+      Last<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kFirst:
+      First<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kMean:
+      result = Mean<false, skipNAN>(data, length);
+      break;
+    case DescriptiveType::kVariance: {
+      result = Variance<false, skipNAN>(data, length); // sample statistics
+    } break;
+    case DescriptiveType::kVariancePop: {
+      result = Variance<false, skipNAN>(data, length);
+    } break;
+    case DescriptiveType::kStd: {
+      result = Variance<false, skipNAN>(data, length);
+      result = std::sqrt(result);
+    } break;
+    case DescriptiveType::kStdPop: {
+      result = Variance<false, skipNAN>(data, length);
+      result = std::sqrt(result);
+    } break;
+
+    case DescriptiveType::kSkewness: {
+      throw std::logic_error("not implemented!");
+      result = Skewness<false, skipNAN>(data, length); // sample statistics
+    } break;
+    case DescriptiveType::kSkewnessPop: {
+      result = Skewness<false, skipNAN>(data, length);
+    } break;
+
+    case DescriptiveType::kKurtosis: {
+      throw std::logic_error("not implemented!");
+      result = Kurtosis<false, skipNAN>(data, length); // sample statistics
+    } break;
+    case DescriptiveType::kKurtosisPop: {
+      result = Kurtosis<false, skipNAN>(data, length);
+    } break;
+
+    default:
+      throw LdtException(ErrorType::kLogic, "array.h",
+                         "invalid or not-implemented descriptive statistics");
     }
   }
 };
