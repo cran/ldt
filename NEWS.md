@@ -1,5 +1,10 @@
 # *News*
 
+## ldt 0.5.1 (2023-12-4)
+
+* Enhanced options for checking the upper and lower bounds of forecasts.
+* Some fixes.
+
 ## ldt 0.5.0 (2023-11-7)
 
 * Vignettes are back

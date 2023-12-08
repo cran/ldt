@@ -83,8 +83,21 @@ void UpdateModelCheckItems(List &checksR, SearchModelChecks &checks,
   checks.MinObsCount = as<int>(checksR["minObsCount"]);
   checks.MinDof = as<int>(checksR["minDof"]);
   checks.MinOutSim = as<int>(checksR["minOutSim"]);
-  checks.PredictionBoundMultiplier =
-      as<double>(checksR["predictionBoundMultiplier"]);
+
+  auto predictionBound = tryGetValue(checksR, "predictionBound");
+  if (predictionBound != R_NilValue) {
+    auto L = as<List>(predictionBound);
+
+    if (L.containsElementNamed("lower")) {
+      auto lower = as<NumericMatrix>(L["lower"]);
+      checks.PredictionLower.SetData(&lower[0], lower.nrow(), lower.ncol());
+    }
+
+    if (L.containsElementNamed("upper")) {
+      auto upper = as<NumericMatrix>(L["upper"]);
+      checks.PredictionUpper.SetData(&upper[0], upper.nrow(), upper.ncol());
+    }
+  }
 
   checks.MinR2 = as<double>(checksR["minR2"]);
   checks.MaxAic = as<double>(checksR["maxAic"]);

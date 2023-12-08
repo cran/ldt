@@ -14,7 +14,7 @@ get.search.modelchecks(
   maxAic = Inf,
   maxSic = Inf,
   prediction = FALSE,
-  predictionBoundMultiplier = 4
+  predictionBound = 10
 )
 }
 \arguments{
@@ -36,9 +36,9 @@ get.search.modelchecks(
 
 \item{prediction}{If \code{TRUE}, model data is predicted given all data and is ignored if this process fails. If \code{FALSE}, you might get a 'best model' that cannot be used for prediction.}
 
-\item{predictionBoundMultiplier}{A positive number used to create a bound and check predictions.
-The bound is created by multiplying this value by the average growth rate of the data.
-A model is ignored if its prediction lies outside of this bound. Use zero to disable this check.}
+\item{predictionBound}{A list containing two matrices: \code{lower} and \code{upper}, which represent the bounds for checking predictions. Each column corresponds to a target variable, and each row corresponds to a horizon. If the data has been transformed using a Box-Cox transformation, these bounds will be compared with the transformed data.
+Alternatively, \code{predictionBound} can be a numeric value. In this case, the bounds are created by creating a confidence interval, assuming normality and using mean and standard errors of the growth rates.
+Any model that produces a prediction outside of these bounds will be ignored. To disable this check, set \code{predictionBound} to \code{NULL}.}
 }
 \value{
 A list with the given options.

@@ -4,12 +4,12 @@
 \alias{boxCoxTransform}
 \title{Box-Cox Transformation of Numeric Matrix}
 \usage{
-boxCoxTransform(data, lambda, ...)
+boxCoxTransform(data, lambdas, ...)
 }
 \arguments{
 \item{data}{A numeric matrix to be transformed.}
 
-\item{lambda}{A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation.
+\item{lambdas}{A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation.
 Use \code{NULL} for no transformation, \code{NA} for estimating the lambda parameter for each variable,
 a single number for equal lambda parameter for all variables, and a numeric vector for distinct lambda parameters for the corresponding variables.}
 
@@ -17,7 +17,7 @@ a single number for equal lambda parameter for all variables, and a numeric vect
 }
 \value{
 \item{data}{transformed data}
-\item{lambda}{final lambda vector used in the calculations.}
+\item{lambdas}{final lambda vector used in the calculations.}
 }
 \description{
 This function applies the Box-Cox transformation to the columns of a numeric matrix.

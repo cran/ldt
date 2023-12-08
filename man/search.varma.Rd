@@ -13,7 +13,7 @@ search.varma(
   options = get.search.options(),
   maxParams = c(1, 0, 0, 0, 0, 0),
   seasonsCount = 0,
-  maxHorizon = 0,
+  maxHorizon = 1,
   simUsePreviousEstim = FALSE,
   olsStdMultiplier = 2,
   lbfgsOptions = get.options.lbfgs()
@@ -83,7 +83,8 @@ metric_options <- get.search.metrics(typesIn = c("aic")) # We use SIC for search
 search_res <- search.varma(data = get.data(data, endogenous = num_eq + num_y_ir),
                            combinations = get.combinations(sizes = y_sizes,
                                                            numTargets = 3),
-                           metrics = metric_options)
+                           metrics = metric_options,
+                           maxHorizon = 0)
 print(search_res)
 
 

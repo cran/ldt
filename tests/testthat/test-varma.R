@@ -306,7 +306,7 @@ test_that("ARMA search works for In-Sample", {
 test_that("ARMA search works for In-Sample with exogenous", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:5], endogenous = 1),
+  res = search.varma(data = get.data(x[,1:5], endogenous = 1, newData = x),
                      combinations = get.combinations(sizes = c(1),
                                                      innerGroups = list(c(1), c(1,2))),
                      items = get.search.items(bestK = 3, all = TRUE),
@@ -321,7 +321,7 @@ test_that("ARMA search works for In-Sample with exogenous", {
 test_that("VARMA search works for In-Sample with exogenous", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:7], endogenous = 3),
+  res = search.varma(data = get.data(x[,1:7], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 3,
                                                      innerGroups = list(c(1,2))),
@@ -338,7 +338,7 @@ test_that("VARMA search works for In-Sample with exogenous", {
 test_that("VARMA search works when changing Indexes NO exogenous", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:3], endogenous = 3),
+  res = search.varma(data = get.data(x[,1:3], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
                                                      innerGroups = NULL),
@@ -364,7 +364,7 @@ test_that("VARMA search works when changing Indexes NO exogenous", {
 test_that("VARMA search works when changing Indexes WITH exogenous", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:5], endogenous = 3),
+  res = search.varma(data = get.data(x[,1:5], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
                                                      innerGroups = list(c(1),c(2))),
@@ -373,7 +373,7 @@ test_that("VARMA search works when changing Indexes WITH exogenous", {
                      items = get.search.items(all = TRUE))
   allMetrics = sort(sapply(res$results, function(k){k$value$metric}))
 
-  res0 = search.varma(data = get.data(x[,c(2,1,3,4,5)], endogenous = 3),
+  res0 = search.varma(data = get.data(x[,c(2,1,3,4,5)], endogenous = 3, newData = x),
                       combinations = get.combinations(sizes = c(1,2),
                                                       numTargets = 2,
                                                       innerGroups = list(c(1),c(2))),
@@ -394,27 +394,46 @@ test_that("VARMA search works when changing Indexes WITH exogenous", {
 test_that("V-ARMA search works for Out-Sample", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,c(1:5)], endogenous = 3, newData = x[c(1,2),4:7]),
+  res = search.varma(data = get.data(x[,c(1:5)], endogenous = 3, newData = x[5:10,]),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
-                                                     innerGroups = list(c(1),c(2))),
+                                                     innerGroups = list(c(1,2))),
                      maxParams = c(2,1,2,0,0,0),
-                     simUsePreviousEstim = FALSE, maxHorizon = 2,
+                     simUsePreviousEstim = FALSE,
+                     maxHorizon = 2,
                      metrics = get.search.metrics(c(), c("crps", "mae", "rmse"),
-                                                  horizons = c(1L,2L), simFixSize = 2),
+                                                  horizons = c(1:2), simFixSize = 2),
                      items = get.search.items(all = TRUE),
-                     modelChecks = get.search.modelchecks(estimation = TRUE, prediction = TRUE,
-                                                          predictionBoundMultiplier = 200))
+                     modelChecks = get.search.modelchecks(estimation = TRUE,
+                                                          prediction = TRUE, predictionBound = 5))
 
   sumRes = summary(res, test = TRUE)
   expect_equal(sumRes$counts, res$counts)
 })
 
+test_that("V-ARMA search works for Out-Sample, no intercept", {
+  skip_on_cran()
+
+  res = search.varma(data = get.data(x[,c(1:7)], endogenous = 3, newData = x[5:10,]),
+                     combinations = get.combinations(sizes = c(1,2),
+                                                     numTargets = 2,
+                                                     innerGroups = list(c(3))), #TODO: c(2) fails, why?!
+                     maxParams = c(1,1,1,0,0,0),
+                     simUsePreviousEstim = FALSE,
+                     maxHorizon = 2,
+                     metrics = get.search.metrics(c(), c("mae"),
+                                                  horizons = c(1:2), simFixSize = 2),
+                     items = get.search.items(all = TRUE),
+                     modelChecks = get.search.modelchecks(estimation = TRUE))
+
+  sumRes = summary(res, test = TRUE)
+  expect_equal(sumRes$counts, res$counts)
+})
 
 test_that("VARMA search works when parallel", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:5], endogenous = 3),
+  res = search.varma(data = get.data(x[,1:5], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
                                                      innerGroups = list(c(1),c(2))),
@@ -424,7 +443,7 @@ test_that("VARMA search works when parallel", {
                      items = get.search.items(all = TRUE))
   allMetrics = sort(sapply(res$results, function(k){k$value$metric}))
 
-  res0 = search.varma(data = get.data(x[,c(1:5)], endogenous = 3),
+  res0 = search.varma(data = get.data(x[,c(1:5)], endogenous = 3, newData = x),
                       combinations = get.combinations(sizes = c(1,2),
                                                       numTargets = 2,
                                                       innerGroups = list(c(1),c(2))),
@@ -442,7 +461,7 @@ test_that("VARMA search works when parallel", {
 test_that("VARMA search works with restricted aic", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,1:7], endogenous = 3),
+  res = search.varma(data = get.data(x[,1:7], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
                                                      innerGroups = list(c(1,2))),
@@ -462,7 +481,7 @@ test_that("VARMA search works with restricted aic", {
 test_that("VARMA search works with inclusion weights", {
   skip_on_cran()
 
-  res = search.varma(data = get.data(x[,c(1:7)], endogenous = 3),
+  res = search.varma(data = get.data(x[,c(1:7)], endogenous = 3, newData = x),
                      combinations = get.combinations(sizes = c(1,2),
                                                      numTargets = 2,
                                                      innerGroups = list(c(1,2))),
@@ -506,8 +525,8 @@ test_that("VARMA search works with predictions (bests)", {
                      maxHorizon = 3,
                      simUsePreviousEstim = FALSE,
                      options = get.search.options(parallel = FALSE),
-                     metrics = get.search.metrics(c("sic"),c("mae")),
-                     modelChecks = get.search.modelchecks(predictionBoundMultiplier = 300),
+                     metrics = get.search.metrics(c("sic"),c("mae"),horizons = c(1:3)),
+                     modelChecks = get.search.modelchecks(predictionBound = 300),
                      items = get.search.items(all = TRUE, type1 = TRUE, bestK = 3))
 
 
@@ -527,9 +546,9 @@ test_that("VARMA search works with predictions (cdfs)", {
                      maxHorizon = 3,
                      simUsePreviousEstim = FALSE,
                      metrics = get.search.metrics(c("sic"),c("rmse"),
-                                                  horizons = c(1L,2L), simFixSize = 2),
+                                                  horizons = c(1:3), simFixSize = 2),
                      items = get.search.items(all = TRUE, type1 = TRUE, cdfs = c(0,1,0)),
-                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBound = 0))
 
   sumRes <- summary(res, test = TRUE)
   h = 2
@@ -574,9 +593,9 @@ test_that("VARMA search works with predictions (extreme bounds)", {
                      maxHorizon = 3,
                      simUsePreviousEstim = FALSE,
                      metrics = get.search.metrics(c("sic"),c("rmse"),
-                                                  horizons = c(1L,2L), simFixSize = 2),
+                                                  horizons = c(1:3), simFixSize = 2),
                      items = get.search.items(all = TRUE, type1 = TRUE, extremeMultiplier = 2),
-                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBound = 0))
 
   sumRes <- summary(res, test = TRUE)
 
@@ -612,9 +631,9 @@ test_that("VARMA search works with predictions (mixture)", {
                      maxHorizon = 3,
                      simUsePreviousEstim = FALSE,
                      metrics = get.search.metrics(c("sic"),c("rmse"),
-                                                  horizons = c(1L,2L), simFixSize = 2),
+                                                  horizons = c(1:3), simFixSize = 2),
                      items = get.search.items(all = TRUE, type1 = TRUE, mixture4 = TRUE),
-                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                     modelChecks = get.search.modelchecks(estimation = FALSE, prediction = FALSE, predictionBound = 0))
 
   sumRes <- summary(res, test = TRUE)
 
@@ -669,7 +688,7 @@ test_that("estim.varma SplitSearch works (no subsetting)", {
                            , extremeMultiplier = 2
   )
   metrics = get.search.metrics(c("sic", "aic"),
-                               horizons = c(1L,2L), simFixSize = 2) # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+                               horizons = c(1:3), simFixSize = 2) # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
   options = get.search.options(FALSE,
                                #reportInterval = 1
   )

@@ -233,10 +233,11 @@ struct LDT_EXPORT SearchModelChecks {
   /// must not be missing.
   bool Prediction = false;
 
-  /// @brief The predictions of the model must lie within a bound. The bound is
-  /// the value multiplied by the average growth rate. Use zero to disable this
-  /// check.
-  Tv PredictionBoundMultiplier = 0;
+  /// @brief Lower bound for predictions
+  Matrix<Tv> PredictionLower;
+
+  /// @brief Upper bound for predictions
+  Matrix<Tv> PredictionUpper;
 
   /// @brief Updates the options such as \ref Estimation or \ref Prediction
   /// based on other options
@@ -244,7 +245,7 @@ struct LDT_EXPORT SearchModelChecks {
   void Update(const SearchMetricOptions &metrics);
 
   /// @brief After \ref Update, determines the type of checks
-  bool mCheckCN = false, mCheckCN_all = false, mCheckPredBound = false;
+  bool mCheckCN = false, mCheckCN_all = false;
 };
 
 /// @brief Items to be kept during a search

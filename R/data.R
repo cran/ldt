@@ -91,7 +91,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
       if (is.character(endogenous))
         stop("data has no column name while endogenous is a list of names.")
 
-      colnames(data) <- c(paste0("Y", 1:numEndo), paste0("X", 1:numExo))
+      colnames(data) <- c(if (numEndo > 0) paste0("Y", 1:numEndo), if (numExo > 0) paste0("X", 1:numExo))
       if (numExo > 0){
         if (!is.null(newData)){
           if (ncol(newData) != numExo)
@@ -156,7 +156,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   if (!is.null(lambdas)) {
     bcRes <- boxCoxTransform(data[, 1:numEndo,drop=FALSE], lambdas, ...)
     data[, 1:numEndo] <- bcRes$data
-    lambdas <- bcRes$lambda
+    lambdas <- bcRes$lambdas
   }
 
   if(!is.null(weights)){
@@ -373,46 +373,46 @@ eqList2Matrix <- function(equations, data, addIntercept = FALSE) {
 #' This function applies the Box-Cox transformation to the columns of a numeric matrix.
 #'
 #' @param data A numeric matrix to be transformed.
-#' @param lambda A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation.
+#' @param lambdas A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation.
 #' Use \code{NULL} for no transformation, \code{NA} for estimating the lambda parameter for each variable,
 #' a single number for equal lambda parameter for all variables, and a numeric vector for distinct lambda parameters for the corresponding variables.
 #' @param ... additional parameters for \code{MASS::boxcox} function.
 #'
 #' @return
 #' \item{data}{transformed data}
-#' \item{lambda}{final lambda vector used in the calculations.}
+#' \item{lambdas}{final lambda vector used in the calculations.}
 #'
 #' @examples
 #' data <- matrix(rnorm(40), ncol = 2)
 #' result <- ldt:::boxCoxTransform(data, c(0.5, 0.5))
 #'
 #' @importFrom MASS boxcox
-boxCoxTransform <- function(data, lambda, ...) {
+boxCoxTransform <- function(data, lambdas, ...) {
 
   if (!is.matrix(data) || !is.numeric(data))
     stop("Data should be a numeric matrix")
 
-  if (!is.null(lambda) && !is.numeric(lambda) && length(lambda) != 1 && length(lambda) != ncol(data))
-    stop("lambda should be NULL, NA, a single number, or a vector of numbers with length equal to 'ncol(data)'.")
+  if (!is.null(lambdas) && !is.numeric(lambdas) && length(lambdas) != 1 && length(lambdas) != ncol(data))
+    stop("lambdas should be NULL, NA, a single number, or a vector of numbers with length equal to 'ncol(data)'.")
 
-  if (is.null(lambda))
-    return(list(data = data, lambda = NULL))
+  if (is.null(lambdas))
+    return(list(data = data, lambdas = NULL))
 
   lambda_used <- numeric(ncol(data))
   res <- data
 
   for (i in 1:ncol(data)) {
-    if ((length(lambda) == 1 && is.na(lambda)) ||
-        (length(lambda) == ncol(data) && is.na(lambda[i]))) { # estimate
+    if ((length(lambdas) == 1 && is.na(lambdas)) ||
+        (length(lambdas) == ncol(data) && is.na(lambdas[i]))) { # estimate
       model <- boxcox(data[,i]~1, plotit = FALSE, ...)
       li <- model$x[which.max(model$y)]
     }
-    else if (length(lambda) == 1)
-      li <- lambda
-    else if (length(lambda) == ncol(data))
-      li <- lambda[i]
+    else if (length(lambdas) == 1)
+      li <- lambdas
+    else if (length(lambdas) == ncol(data))
+      li <- lambdas[i]
     else
-      stop("Invalid lambda argument")
+      stop("Invalid lambdas argument")
 
     lambda_used[i] <- li
 
@@ -422,7 +422,7 @@ boxCoxTransform <- function(data, lambda, ...) {
       res[,i] <- (data[,i]^li - 1) / li
   }
 
-  return(list(data = res, lambda = lambda_used))
+  return(list(data = res, lambdas = lambda_used))
 }
 
 

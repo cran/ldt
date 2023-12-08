@@ -77,12 +77,6 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
   if (metrics.mIsTimeSeries == false)
     Prediction = false;
 
-  if (Prediction == false) {
-    mCheckPredBound = true;
-    PredictionBoundMultiplier = 0;
-  } else
-    Estimation = true;
-
   if (metrics.SimFixSize > 0 && MinOutSim > metrics.SimFixSize)
     throw LdtException(
         ErrorType::kLogic, "searcher-summary",
@@ -100,7 +94,6 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
   mCheckCN_all = Estimation && std::isinf(MaxConditionNumber) ==
                                    false; // note that maximum condition number
                                           // does not affect estimation here
-  mCheckPredBound = metrics.mIsTimeSeries && PredictionBoundMultiplier > 0;
 
   if (Estimation == false && (metrics.MetricsIn.size() > 0 || checkN ||
                               checkDof || checkAic || checkSic || checkR2))

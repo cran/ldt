@@ -156,7 +156,7 @@ template <typename Tw> void Array<Tw>::BoxCoxInv0(Tw &value, const Tw &lambda) {
   if (std::isnan(lambda))
     return;
   if (lambda != 0) {
-    value = std::exp(lambda * value + 1);
+    value = std::pow(lambda * value + 1, 1 / lambda);
   } else {
     value = std::exp(value);
   }

@@ -348,7 +348,7 @@ plot.ldt.varma.prediction <- function(x,
   plotArgs <- fanPlotArgs$plotArgs
   if (is.null(plotArgs))
     plotArgs <- list()
-  plotArgs <- modifyList(list(xaxt = "n"), plotArgs)
+  plotArgs <- modifyList(list(xaxt = "n", main = var_name), plotArgs)
   fanPlotArgs$plotArgs <- plotArgs
 
   ylimSuggest <- c(NA,NA) # forecasts in evaluation might need more vertical space

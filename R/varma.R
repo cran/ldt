@@ -36,15 +36,23 @@ search.varma <- function(data = get.data(),
                          options = get.search.options(),
                          maxParams = c(1,0,0,0,0,0),
                          seasonsCount = 0,
-                         maxHorizon = 0,
+                         maxHorizon = 1,
                          simUsePreviousEstim = FALSE,
                          olsStdMultiplier = 2.0,
                          lbfgsOptions = get.options.lbfgs()){
   stopifnot(is.list(data))
   stopifnot(is.list(combinations))
+  stopifnot(maxHorizon >= 0)
 
   if (data$hasWeight)
     stop("VARMA search does not support weighted observations.")
+
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
+  else
+    stopifnot(is.list(modelChecks))
+
+  modelChecks <- update.search.modelchecks(data$data, combinations$numTargets, maxHorizon, modelChecks)
 
   data <- get.data.append.newX(data, maxHorizon = maxHorizon)
 
@@ -56,10 +64,9 @@ search.varma <- function(data = get.data(),
     stopifnot(is.list(metrics))
   metrics <- get.search.metrics.update(metrics, combinations$numTargets)
 
-  if (is.null(modelChecks))
-    modelChecks = get.search.modelchecks()
-  else
-    stopifnot(is.list(modelChecks))
+  if (length(metrics$typesOut) != 0 && maxHorizon != max(metrics$horizons))
+    warning("'maxHorizon' argument is different from the maximum horizon in the 'metrics' argument.")
+
   if (is.null(items))
     items = get.search.items()
   else
@@ -69,15 +76,16 @@ search.varma <- function(data = get.data(),
   else
     stopifnot(is.list(options))
 
+  stopifnot(is.numeric(maxParams))
+  stopifnot(is.zero.or.positive.number(seasonsCount))
+  seasonsCount <- as.integer(seasonsCount)
 
-  stopifnot(is.numeric(maxParams) && length(maxParams) <= 6)
   if (length(maxParams) < 6)
     maxParams <- c(maxParams, rep(0, 6 - length(maxParams)))
   maxParams <- as.integer(maxParams)
-  stopifnot(all(maxParams>=0)) #handles NA case
+  stopifnot(any(maxParams[c(1,3,4,6)] != 0))
+  stopifnot(all(maxParams >= 0)) #handles NA case
 
-  stopifnot(is.zero.or.positive.number(seasonsCount))
-  seasonsCount <- as.integer(seasonsCount)
   if (seasonsCount < 2 && any(maxParams[4:6] != 0))
     stop("Invalid 'maxParams' argument. Seasonal part (at indices 4:6) must be zero for non-seasonal model.")
 

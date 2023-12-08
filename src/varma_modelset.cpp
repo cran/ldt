@@ -17,14 +17,12 @@ VarmaSearcher::VarmaSearcher(
     const SearchMetricOptions &metrics, const SearchModelChecks &checks,
     const Ti &numPartitions, const DatasetTs<true> &source,
     const VarmaSizes &sizes, const std::vector<Ti> &exoIndexes,
-    const Matrix<Tv> *forLowerBounds, const Matrix<Tv> *forUpperBounds,
     LimitedMemoryBfgsbOptions *optimOptions, const Tv &stdMultiplier,
     const bool &usePreviousEstim, const Ti &maxHorizonCheck)
     : SearcherReg::SearcherReg(data, combinations, options, items, metrics,
                                checks, numPartitions, true, exoIndexes, 6),
       UsePreviousEstim(usePreviousEstim), StdMultiplier(stdMultiplier),
-      mMaxHorizonCheck(maxHorizonCheck), pForLowerBounds(forLowerBounds),
-      pForUpperBounds(forUpperBounds), Sizes(sizes), Source(source) {
+      mMaxHorizonCheck(maxHorizonCheck), Sizes(sizes), Source(source) {
   // copy source for parallel (It uses the indexes)
 
   // TODO: how should we treat number of fixed partitions if we want to always
@@ -179,27 +177,30 @@ std::string VarmaSearcher::EstimateOneReg(Tv *work, Ti *workI,
 
       // check bounds
 
-      Ti i = -1;
-      for (auto &t : this->CurrentIndices.Vec) { // is it a target?
-        i++;
-        if (t < this->pItems->LengthTargets) {
-          Ti j = -1;
-          for (auto &h : this->pMetrics->Horizons) {
-            j++;
+      if (pChecks->PredictionLower.Data && pChecks->PredictionUpper.Data) {
+        Ti i = -1;
+        for (auto &t : this->CurrentIndices.Vec) { // is it a target?
+          i++;
+          if (t < this->pItems->LengthTargets) {
+            Ti j = -1;
+            for (auto &h : this->pMetrics->Horizons) {
+              j++;
 
-            if (this->pOptions->RequestCancel)
-              return "";
+              if (this->pOptions->RequestCancel)
+                return "";
 
-            if (pForLowerBounds &&
-                FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) <
-                    pForLowerBounds->Get0(i, j))
-              throw LdtException(ErrorType::kLogic, "varma-modelset",
-                                 "model check: prediction lower bound");
-            if (pForUpperBounds &&
-                FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) >
-                    pForUpperBounds->Get0(i, j))
-              throw LdtException(ErrorType::kLogic, "varma-modelset",
-                                 "model check: prediction upper bound");
+              auto f = FModel.Forecast.Get0r(i, h + FModel.StartIndex - 1);
+              auto lower = pChecks->PredictionLower.Get0(h - 1, t);
+              auto upper = pChecks->PredictionUpper.Get0(h - 1, t);
+
+              if (f < lower)
+                throw LdtException(ErrorType::kLogic, "varma-modelset",
+                                   "model check: prediction lower bound");
+
+              if (f > upper)
+                throw LdtException(ErrorType::kLogic, "varma-modelset",
+                                   "model check: prediction upper bound");
+            }
           }
         }
       }
@@ -349,30 +350,6 @@ VarmaModelset::VarmaModelset(const SearchData &data,
            1; // The first target determines the number of observations
               // (this is required for out-of-sample exogenous data)
 
-  bool hasBounds = checks.Prediction && checks.PredictionBoundMultiplier > 0;
-  if (metrics.MetricsOut.size() != 0 && hasBounds) {
-    ForecastLowers = Matrix<Tv>(
-        new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-        items.LengthTargets, metrics.Horizons.size()); // data will be deleted
-    ForecastUppers = Matrix<Tv>(
-        new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-        items.LengthTargets, metrics.Horizons.size()); // data will be deleted
-    for (Ti i = 0; i < items.LengthTargets; i++) {
-      auto last = source.pData->Get0(i, T - 1);
-      Tv g = 0;
-      for (Ti j = 1; j < T; j++)
-        g += source.pData->Get0(i, j) - source.pData->Get0(i, j - 1);
-      g /= T - 1;
-      g = std::abs(checks.PredictionBoundMultiplier * g);
-      Ti j = -1;
-      for (auto &h : metrics.Horizons) {
-        j++;
-        ForecastLowers.Set0(i, j, last - h * g);
-        ForecastUppers.Set0(i, j, last + h * g);
-      }
-    }
-  }
-
   for (auto const &s : combinations.Sizes) {
     if (s <= 0)
       throw LdtException(
@@ -397,10 +374,8 @@ VarmaModelset::VarmaModelset(const SearchData &data,
 
                   auto se = new VarmaSearcher(
                       data, combinations, options, items, metrics, checks, s,
-                      source, vsizes, exo,
-                      hasBounds ? &ForecastLowers : nullptr,
-                      hasBounds ? &ForecastUppers : nullptr, optimOptions,
-                      stdMultiplier, usePreviousEstim, maxHorizonCheck);
+                      source, vsizes, exo, optimOptions, stdMultiplier,
+                      usePreviousEstim, maxHorizonCheck);
                   Searchers.push_back(se);
                 }
               }

@@ -75,17 +75,17 @@ get.search.options <- function(parallel = FALSE, reportInterval = 0){
 #' @param maxAic A number used to ignore estimations with a high 'AIC' (if implemented in the search).
 #' @param maxSic A number used to ignore estimations with a high 'SIC' (if implemented in the search).
 #' @param prediction If \code{TRUE}, model data is predicted given all data and is ignored if this process fails. If \code{FALSE}, you might get a 'best model' that cannot be used for prediction.
-#' @param predictionBoundMultiplier A positive number used to create a bound and check predictions.
-#' The bound is created by multiplying this value by the average growth rate of the data.
-#' A model is ignored if its prediction lies outside of this bound. Use zero to disable this check.
+#' @param predictionBound A list containing two matrices: \code{lower} and \code{upper}, which represent the bounds for checking predictions. Each column corresponds to a target variable, and each row corresponds to a horizon. If the data has been transformed using a Box-Cox transformation, these bounds will be compared with the transformed data.
+#' Alternatively, \code{predictionBound} can be a numeric value. In this case, the bounds are created by creating a confidence interval, assuming normality and using mean and standard errors of the growth rates.
+#' Any model that produces a prediction outside of these bounds will be ignored. To disable this check, set \code{predictionBound} to \code{NULL}.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
-                                    minObsCount = 0, minDof = 0, minOutSim = 0,
-                                    minR2 = -Inf, maxAic = Inf, maxSic = Inf,
-                                    prediction = FALSE, predictionBoundMultiplier = 4){
+get.search.modelchecks <- function(estimation = TRUE, maxConditionNumber = Inf,
+                                   minObsCount = 0, minDof = 0, minOutSim = 0,
+                                   minR2 = -Inf, maxAic = Inf, maxSic = Inf,
+                                   prediction = FALSE, predictionBound = 10){
 
   stopifnot(is.logical(estimation) && length(estimation) == 1)
   stopifnot(is.logical(prediction) && length(prediction) == 1)
@@ -94,11 +94,23 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
   stopifnot(is.zero.or.positive.number(minDof))
   stopifnot(is.zero.or.positive.number(minOutSim))
   stopifnot(is.zero.or.positive.number(maxConditionNumber))
-  stopifnot(is.zero.or.positive.number(predictionBoundMultiplier))
   stopifnot(is.number(minR2))
   stopifnot(is.number(maxAic))
   stopifnot(is.number(maxSic))
 
+  if (prediction){
+    estimation = TRUE
+
+    if (!is.null(predictionBound)){
+      if (is.numeric(predictionBound))
+        stopifnot(is.zero.or.positive.number(predictionBound))
+      else{ # I will check the dimensions and etc. in update. method
+        stopifnot(is.list(predictionBound))
+        if (is.null(predictionBound$lower) || is.null(predictionBound$upper))
+          stop("'predictionBound' must be a list with two members: upper and lower.")
+      }
+    }
+  }
 
   res = list(
     estimation = estimation,
@@ -107,9 +119,62 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
     minOutSim = minOutSim, maxSic = maxSic,
     minR2 = minR2, maxAic = maxAic,
     maxSic = maxSic, prediction = prediction,
-    predictionBoundMultiplier = predictionBoundMultiplier)
+    predictionBound = predictionBound)
   class(res) <- c("ldt.list", "list")
   res
+}
+
+
+update.search.modelchecks <- function(data, numTargets, maxHorizon, options){
+
+  if (options$prediction){
+
+    if (is.number(options$predictionBound)){
+      multiplier <- as.numeric(options$predictionBound)
+      options$predictionBound = list()
+
+      data <- data[,c(1:numTargets), drop = FALSE]
+      n <- ncol(data)
+      m <- nrow(data)
+
+      growth_rates <- data[2:m,,drop=FALSE] / data[1:(m-1),,drop=FALSE] - 1
+      mean_growth <- apply(growth_rates, 2, mean, na.rm = TRUE)
+      sd_growth <- apply(growth_rates, 2, sd, na.rm = TRUE)
+
+      #use last observation and create the bounds:
+      options$predictionBound$lower = matrix(nrow = maxHorizon, ncol = numTargets)
+      options$predictionBound$upper = matrix(nrow = maxHorizon, ncol = numTargets)
+      for (i in 1:n) {
+        lower_growth <- 1 + mean_growth[i] - multiplier*sd_growth[i]
+        upper_growth <- 1 + mean_growth[i] + multiplier*sd_growth[i]
+        if (data[m,i] < 0) {
+          options$predictionBound$lower[,i] <- data[m,i]*cumprod(upper_growth)
+          options$predictionBound$upper[,i] <- data[m,i]*cumprod(lower_growth)
+        } else {
+          options$predictionBound$lower[,i] <- data[m,i]*cumprod(lower_growth)
+          options$predictionBound$upper[,i] <- data[m,i]*cumprod(upper_growth)
+        }
+      }
+
+      options$predictionBound$multiplier <- multiplier
+    }
+
+    # checks
+    if (!is.null(options$predictionBound)){
+      stopifnot(is.list(options$predictionBound))
+      stopifnot(is.matrix(options$predictionBound$lower))
+      stopifnot(is.matrix(options$predictionBound$upper))
+      stopifnot(nrow(options$predictionBound$lower) == maxHorizon)
+      stopifnot(nrow(options$predictionBound$upper) == maxHorizon)
+      stopifnot(ncol(options$predictionBound$lower) == numTargets)
+      stopifnot(ncol(options$predictionBound$upper) == numTargets)
+      stopifnot(all(options$predictionBound$lower < options$predictionBound$upper))
+    }
+  }
+  else
+    options$predictionBound = NULL
+
+  options
 }
 
 

@@ -497,8 +497,6 @@ class LDT_EXPORT VarmaSearcher : public SearcherReg {
   const bool UsePreviousEstim = false;
   const Tv StdMultiplier = 2.0;
   const Ti mMaxHorizonCheck = 0;
-  const Matrix<Tv> *pForLowerBounds = nullptr;
-  const Matrix<Tv> *pForUpperBounds = nullptr;
   const VarmaSizes Sizes;
   DatasetTs<true> Source;
 
@@ -524,8 +522,6 @@ public:
                 const SearchModelChecks &checks, const Ti &numPartitions,
                 const DatasetTs<true> &source, const VarmaSizes &sizes,
                 const std::vector<Ti> &exoIndexes,
-                const Matrix<Tv> *forLowerBounds,
-                const Matrix<Tv> *forUpperBounds,
                 LimitedMemoryBfgsbOptions *optimOptions,
                 const Tv &stdMultiplier, const bool &usePreviousEstim,
                 const Ti &maxHorizonCheck);
@@ -538,9 +534,6 @@ public:
   ModelSet Modelset;
 
   std::vector<Searcher *> Searchers;
-
-  Matrix<Tv> ForecastLowers;
-  Matrix<Tv> ForecastUppers;
 
   VarmaModelset(){};
 
@@ -555,8 +548,6 @@ public:
   ~VarmaModelset() {
     for (auto s : Searchers)
       delete s;
-    delete[] ForecastLowers.Data;
-    delete[] ForecastUppers.Data;
   };
 };
 
