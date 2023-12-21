@@ -87,10 +87,14 @@ template <typename Tw = Tv> Tw Math_Beta(Tw x, Tw y) {
 }
 
 template <typename Tw = Tv> Tw Math_iBeta(Tw x, Tw y, Tw z) {
+  if (std::isnan(z))
+    return NAN;
   return boost::math::ibeta(x, y, z);
 }
 
 template <typename Tw = Tv> Tw Math_iBetaInv(Tw x, Tw y, Tw z) {
+  if (std::isnan(z))
+    return NAN;
   return boost::math::ibeta_inv(x, y, z);
 }
 

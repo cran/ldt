@@ -1,6 +1,6 @@
-5299007e8e62e1c61f254796609e7782 *DESCRIPTION
+2053b656436200a546861416a2e64356 *DESCRIPTION
 20ff254216053d3ecaa45c65a47817e6 *NAMESPACE
-ee8118c4283bc26364aedc32ab817abb *NEWS.md
+a54510f5dacf4745b191efbb85a55bf4 *NEWS.md
 b025893054205a94eaf70c1067ae9872 *R/RcppExports.R
 1843d1fd76e6303a3a6a17323a63e42b *R/bin.R
 68bfbdebf72e81505ece84ec65534391 *R/data.R
@@ -17,7 +17,7 @@ dbb525aa4b6764e66331978c9d637c41 *R/statistics.R
 8535a15a792ed036282e455833fd7c0a *R/steps.R
 2d401fd16c20025f69df7a664ee4668b *R/sur.R
 a49ac8a433778f7370c7367c1e62dd2e *R/varma.R
-0ff4d9b0545eb7d7c7f2c9d0a7531f74 *build/partial.rdb
+b5d949dc3e6661673f28f9b601d15253 *build/partial.rdb
 0fcb6f6ef8a3f63aabfef01c87625849 *build/vignette.rds
 70fca3ed4fcb97036881409418484c18 *data/data.berka.rda
 7fc76fe7c9f8388a2bcb3a898688629c *data/data.pcp.rda
@@ -26,13 +26,13 @@ a49ac8a433778f7370c7367c1e62dd2e *R/varma.R
 2593be0e0a09d14149ae52ad26d1c1b6 *inst/REFERENCES.bib
 7fe9dc3f5cb843a5c098b42567e51ac7 *inst/doc/bin.R
 e25f600a5d0591e39ce6d855c9180f38 *inst/doc/bin.Rmd
-dbf92dbcb04e64de34d00b45823f1b31 *inst/doc/bin.html
+c972d9a9692d6f3e06c299177709ca96 *inst/doc/bin.html
 f018ca7750ee3ad1d4fae0b4962d75f1 *inst/doc/sur.R
 f779410baf2d37d26a206663b2db98cb *inst/doc/sur.Rmd
-37ed7ab7c800dcfea41a4a1ae48986fc *inst/doc/sur.html
+b7414fda7f29d6d50c299f1b86d4fb5c *inst/doc/sur.html
 b0d59ac3e0d0cfa23ca76d6effa5ab03 *inst/doc/varma.R
 35ab67b8872df1838297aa674b5ea2ba *inst/doc/varma.Rmd
-e0ca3e05efadc6653de7116284f64425 *inst/doc/varma.html
+660dc27ee8a3f66c2667d338f340ff14 *inst/doc/varma.html
 865cd7f8f13f1889fa0231fb99fde1a0 *man/AIC.ldt.estim.Rd
 3e097f4f7b4bc8ef031f28b01e8975fd *man/BIC.ldt.estim.Rd
 952b4eb885d6bffdb12152e926a819ce *man/adjust_indices_after_remove.Rd
@@ -132,7 +132,7 @@ ae68998372897d8be557f6570d979d5e *src/distribution_gld.cpp
 2fd4f7810406deda3561281d3e1d00d5 *src/group_data.cpp
 7a70a927d1cb696c595171e751ee635b *src/hcluster.cpp
 96ee34f26c715302a603a6abc9aae478 *src/helpers.cpp
-9ad12e51a9c2ebd7b5759ae6c8dc4676 *src/helpers.h
+24d94c6df7061d0bb09da1627d94d93e *src/helpers.h
 c8cddc5ddaa18d78155cda89d86f6c51 *src/lapack.h
 90cbaae985efbf34edd7e15fdf770aea *src/lbfgsb.c
 07a3447b5222d1a8044b559d97778cd7 *src/lbfgsb.h

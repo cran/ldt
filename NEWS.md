@@ -1,5 +1,9 @@
 # *News*
 
+## ldt 0.5.2 (2023-12-18)
+
+* A Fix for BH 1.84.0
+
 ## ldt 0.5.1 (2023-12-4)
 
 * Enhanced options for checking the upper and lower bounds of forecasts.
