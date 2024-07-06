@@ -21,7 +21,7 @@ using namespace ldt;
 
 // #pragma region Constructors
 
-template <typename Tw> Matrix<Tw>::~Matrix<Tw>() { Data = nullptr; }
+template <typename Tw> Matrix<Tw>::~Matrix() { Data = nullptr; }
 
 template <typename Tw> Matrix<Tw>::Matrix() {}
 

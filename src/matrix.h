@@ -22,7 +22,7 @@ private:
   Ti stride;
 
 public:
-  MatIterator<Tw>(Tw *p, Ti s);
+  MatIterator(Tw *p, Ti s);
 
   MatIterator<Tw> &operator++();
 
@@ -54,45 +54,45 @@ public:
   // #pragma region Constructors
 
   /// @brief Initializes a new instance of the class
-  Matrix<Tw>();
+  Matrix();
 
   /// @brief Initializes an m x n matrix with no data
   /// @param m number of rows
   /// @param n number of columns
-  Matrix<Tw>(Ti m, Ti n = 1);
+  Matrix(Ti m, Ti n = 1);
 
   /// @brief Initializes an m x n matrix (column-wise)
   /// @param values data for the matrix. see \ref Data.
   /// @param m number of rows
   /// @param n number of columns
-  Matrix<Tw>(Tw *values, Ti m, Ti n = 1);
+  Matrix(Tw *values, Ti m, Ti n = 1);
 
   /// @brief Initializes a vector (values.size() x 1)
   /// @param values values of the vector. In this case, \ref Data is a reference
   /// to the vector's array.
-  Matrix<Tw>(std::vector<Tw> *values);
+  Matrix(std::vector<Tw> *values);
 
   /// @brief Initializes an m x n matrix (column-wise)
   /// @param values data for the matrix. see \ref Data.
   /// @param m number of rows
   /// @param n number of columns
-  Matrix<Tw>(std::vector<Tw> *values, Ti m, Ti n = 1);
-
-  /// @brief Initializes an m x n matrix (column-wise)
-  /// @param defaultValue default value of the matrix
-  /// @param values data for the matrix. see \ref Data.
-  /// @param m number of rows
-  /// @param n number of columns
-  Matrix<Tw>(Tw defaultValue, Tw *values, Ti m, Ti n = 1);
+  Matrix(std::vector<Tw> *values, Ti m, Ti n = 1);
 
   /// @brief Initializes an m x n matrix (column-wise)
   /// @param defaultValue default value of the matrix
   /// @param values data for the matrix. see \ref Data.
   /// @param m number of rows
   /// @param n number of columns
-  Matrix<Tw>(Tw defaultValue, std::vector<Tw> &values, Ti m, Ti n = 1);
+  Matrix(Tw defaultValue, Tw *values, Ti m, Ti n = 1);
 
-  ~Matrix<Tw>();
+  /// @brief Initializes an m x n matrix (column-wise)
+  /// @param defaultValue default value of the matrix
+  /// @param values data for the matrix. see \ref Data.
+  /// @param m number of rows
+  /// @param n number of columns
+  Matrix(Tw defaultValue, std::vector<Tw> &values, Ti m, Ti n = 1);
+
+  ~Matrix();
 
   // #pragma endregion
 

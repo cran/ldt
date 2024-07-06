@@ -273,7 +273,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -372,6 +372,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
+margin-bottom: 0em;
 }
 .hanging div.csl-entry {
 margin-left:2em;
@@ -587,7 +588,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(ldt)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;kableExtra&#39; was built under R version 4.4.1</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(ldt)</span></code></pre></div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>The <code>search.sur()</code> function is one of the three main
@@ -610,42 +612,42 @@ variable after this year. This results in 571 potential regressors and
 208 observations.</p>
 <p>Of course, for this illustration, we use just the first 5 columns of
 data:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data.wdi<span class="sc">$</span>y, data.wdi<span class="sc">$</span>x[,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">colnames</span>(data)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">colnames</span>(data)[<span class="dv">2</span>],<span class="st">&quot;.lag&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data.wdi<span class="sc">$</span>y, data.wdi<span class="sc">$</span>x[,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">colnames</span>(data)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">colnames</span>(data)[<span class="dv">2</span>],<span class="st">&quot;.lag&quot;</span>)</span></code></pre></div>
 <p>Here are the last few observations from this subset of the data:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">tail</span>(data)</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt;     NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; WSM      0.6948973                 NA             NA                NA</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; XKX      3.5026405                 NA             NA                NA</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; YEM     -5.7036924                 NA             NA                NA</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; ZAF     -0.2084907         0.83394060      -1.533726         0.2149429</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; ZMB      1.9830446        -0.63088082             NA                NA</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; ZWE      1.2915497        -0.05297394             NA        -3.1003477</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;     AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; WSM     5.16498292    -0.65382289</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; XKX             NA             NA</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; YEM    14.88937834     0.01804223</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; ZAF     2.20864028    -0.08807695</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; ZMB     4.42032159     0.37414717</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; ZWE    -0.01642054     0.86883765</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">tail</span>(data)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;     NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; WSM      0.6948973                 NA             NA                NA</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; XKX      3.5026405                 NA             NA                NA</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; YEM     -5.7036924                 NA             NA                NA</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; ZAF     -0.2084907         0.83394060      -1.533726         0.2149429</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; ZMB      1.9830446        -0.63088082             NA                NA</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; ZWE      1.2915497        -0.05297394             NA        -3.1003477</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;     AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; WSM     5.16498292    -0.65382289</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; XKX             NA             NA</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; YEM    14.88937834     0.01804223</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; ZAF     2.20864028    -0.08807695</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; ZMB     4.42032159     0.37414717</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; ZWE    -0.01642054     0.86883765</span></span></code></pre></div>
 <p>And here are some summary statistics for each variable:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sapply</span>(<span class="fu">as.data.frame</span>(data), summary)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;         NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Min.        -5.7036924         -2.7562067      -1.533726       -16.9560997</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1st Qu.     -0.1431228          0.7235014       1.308611        -2.9008332</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Median       1.0235845          1.7697597       2.876800        -1.2511855</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Mean         1.1094147          1.9232678       3.856278        -1.6759932</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.      2.4052532          2.8698123       5.600846         0.2268538</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Max.         7.1613101         12.7823340      20.814750         7.3208970</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         9.0000000         73.0000000     134.000000       146.0000000</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;         AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; Min.         -6.526751    -6.62157767</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 1st Qu.       1.310606    -0.29306446</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Median        4.326556     0.01489903</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; Mean          4.329299     0.05915160</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.       6.856201     0.57567407</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; Max.         15.949830     2.23869809</span></span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         80.000000     7.00000000</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">sapply</span>(<span class="fu">as.data.frame</span>(data), summary)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt;         NY.GDP.PCAP.KD NY.GDP.PCAP.KD.lag AG.AGR.TRAC.NO AG.CON.FERT.PT.ZS</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Min.        -5.7036924         -2.7562067      -1.533726       -16.9560997</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 1st Qu.     -0.1431228          0.7235014       1.308611        -2.9008332</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; Median       1.0235845          1.7697597       2.876800        -1.2511855</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; Mean         1.1094147          1.9232678       3.856278        -1.6759932</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.      2.4052532          2.8698123       5.600846         0.2268538</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; Max.         7.1613101         12.7823340      20.814750         7.3208970</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         9.0000000         73.0000000     134.000000       146.0000000</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;         AG.CON.FERT.ZS AG.LND.AGRI.K2</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Min.         -6.526751    -6.62157767</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 1st Qu.       1.310606    -0.29306446</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Median        4.326556     0.01489903</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Mean          4.329299     0.05915160</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 3rd Qu.       6.856201     0.57567407</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Max.         15.949830     2.23869809</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; NA&#39;s         80.000000     7.00000000</span></span></code></pre></div>
 <p>The columns of the data represent the following variables:</p>
 <ul>
 <li><p>NY.GDP.PCAP.KD: GDP per capita (constant 2015 US$)</p></li>
@@ -664,40 +666,40 @@ we restrict the modelset by setting a maximum value for the number of
 equations allowed in the models. Note that “intercept” and “lag” of the
 dependent variable are included in all equations by
 <code>numFixPartitions</code> argument.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.sur</span>(<span class="at">data =</span> <span class="fu">get.data</span>(data, <span class="at">endogenous =</span> <span class="dv">1</span>),</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                         <span class="at">combinations =</span> <span class="fu">get.combinations</span>(<span class="at">sizes =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                                         <span class="at">numTargets =</span> <span class="dv">1</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                                                         <span class="at">numFixPartitions =</span> <span class="dv">2</span>), </span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>                         metric <span class="ot">&lt;-</span> <span class="fu">get.search.metrics</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>)),</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                         <span class="at">items =</span> <span class="fu">get.search.items</span>(<span class="at">bestK =</span> <span class="dv">4</span>))</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: SUR </span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 5, searched: 5 , failed: 0 (0%)</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.01687205 minutes </span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  Length of results: 4 </span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;  Target (NY.GDP.PCAP.KD):</span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;    Evaluation (aic):</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;        endogenous: NY.GDP.PCAP.KD</span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;        exogenous: (3x1) (Intercept), NY.GDP.PCAP.KD.lag, AG.CON.FERT.PT.ZS</span></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;        metric: 213.8385</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;  ** results for 4 best model(s) are saved</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>search_res <span class="ot">&lt;-</span> <span class="fu">search.sur</span>(<span class="at">data =</span> <span class="fu">get.data</span>(data, <span class="at">endogenous =</span> <span class="dv">1</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>                         <span class="at">combinations =</span> <span class="fu">get.combinations</span>(<span class="at">sizes =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>                                                         <span class="at">numTargets =</span> <span class="dv">1</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>                                                         <span class="at">numFixPartitions =</span> <span class="dv">2</span>), </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>                         metric <span class="ot">&lt;-</span> <span class="fu">get.search.metrics</span>(<span class="at">typesIn =</span> <span class="fu">c</span>(<span class="st">&quot;aic&quot;</span>)),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>                         <span class="at">items =</span> <span class="fu">get.search.items</span>(<span class="at">bestK =</span> <span class="dv">4</span>))</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: SUR </span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 5, searched: 5 , failed: 0 (0%)</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.01669675 minutes </span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;  Length of results: 4 </span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;  Target (NY.GDP.PCAP.KD):</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt;    Evaluation (aic):</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt;        endogenous: NY.GDP.PCAP.KD</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;        exogenous: (3x1) (Intercept), NY.GDP.PCAP.KD.lag, AG.CON.FERT.PT.ZS</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt;        metric: 213.8385</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt;  ** results for 4 best model(s) are saved</span></span></code></pre></div>
 <p>The output of the <code>search.SUR()</code> function does not contain
 any estimation results, but only the information required to replicate
 them. The <code>summary()</code> function returns a similar structure
 but with the estimation results included.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
 <p>The following code generates a table for presenting the result.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">3</span>, <span class="cf">function</span>(i)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  search_sum<span class="sc">$</span>results[<span class="fu">which</span>(<span class="fu">sapply</span>(search_sum<span class="sc">$</span>results, <span class="cf">function</span>(d)</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    d<span class="sc">$</span>info<span class="sc">==</span>i <span class="sc">&amp;&amp;</span> d<span class="sc">$</span>typeName<span class="sc">==</span><span class="st">&quot;best model&quot;</span>))][[<span class="dv">1</span>]]<span class="sc">$</span>value)</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">names</span>(models) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Best&quot;</span>,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>))</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(models, <span class="at">latex =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                     <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">3</span>, <span class="cf">function</span>(i)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  search_sum<span class="sc">$</span>results[<span class="fu">which</span>(<span class="fu">sapply</span>(search_sum<span class="sc">$</span>results, <span class="cf">function</span>(d)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>    d<span class="sc">$</span>info<span class="sc">==</span>i <span class="sc">&amp;&amp;</span> d<span class="sc">$</span>typeName<span class="sc">==</span><span class="st">&quot;best model&quot;</span>))][[<span class="dv">1</span>]]<span class="sc">$</span>value)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">names</span>(models) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Best&quot;</span>,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>table <span class="ot">&lt;-</span> <span class="fu">coefs.table</span>(models, <span class="at">latex =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                     <span class="at">regInfo =</span> <span class="fu">c</span>(<span class="st">&quot;obs&quot;</span>, <span class="st">&quot;aic&quot;</span>, <span class="st">&quot;sic&quot;</span>))</span></code></pre></div>
 <table>
 <caption>
 (Automatically Selected) Determinants of long-run GDP per capita growth
@@ -880,7 +882,7 @@ they can enhance your data analysis journey.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-chirwa2016macroeconomic" class="csl-entry">
 Chirwa, Themba, and Nicholas Odhiambo. 2016. <span>“Macroeconomic
 Determinants of Economic Growth: A Review of International

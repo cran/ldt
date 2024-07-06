@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -148,6 +148,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
+margin-bottom: 0em;
 }
 .hanging div.csl-entry {
 margin-left:2em;
@@ -435,33 +436,33 @@ for the parameters of the VARMA model.</p>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>                           <span class="at">maxHorizon =</span> <span class="dv">5</span>)</span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Warning in search.varma(data = get.data(data, endogenous = 5), combinations =</span></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; get.combinations(sizes = c(1, : &#39;maxHorizon&#39; argument is different from the</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; maximum horizon in the &#39;metrics&#39; argument.</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: VARMA </span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 22, searched: 22 , failed: 0 (0%)</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.01677709 minutes </span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;  Length of results: 1 </span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;  Target (PALLFNF):</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;    Evaluation (mape):</span></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;        endogenous: (3x1) PALLFNF, PEXGALL, PNFUEL</span></span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;        exogenous: (Intercept)</span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt;        metric: 2.705854</span></span>
-<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; --------</span></span></code></pre></div>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; maximum horizon in the &#39;metrics&#39; argument.</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">print</span>(search_res)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; LDT search result:</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;  Method in the search process: VARMA </span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;  Expected number of models: 22, searched: 22 , failed: 0 (0%)</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;  Elapsed time: 0.0166841 minutes </span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;  Length of results: 1 </span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; --------</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;  Target (PALLFNF):</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;    Evaluation (mape):</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;       Best model:</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;        endogenous: (3x1) PALLFNF, PEXGALL, PNFUEL</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;        exogenous: (Intercept)</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;        metric: 2.705854</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; --------</span></span></code></pre></div>
 <p>The output of the <code>search.varma()</code> function does not
 contain any estimation results, but only the information required to
 replicate them. The <code>summary()</code> function returns a similar
 structure but with the estimation results included.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>search_sum <span class="ot">&lt;-</span> <span class="fu">summary</span>(search_res)</span></code></pre></div>
 <p>We can plot the predicted values along with the out-of-sample
 evaluations:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>best_model <span class="ot">&lt;-</span> search_sum<span class="sc">$</span>results[[<span class="dv">1</span>]]<span class="sc">$</span>value</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(best_model, </span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                <span class="at">actualCount =</span> <span class="dv">10</span>, </span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                <span class="at">startFrequency =</span> tdata<span class="sc">::</span><span class="fu">f.monthly</span>(data.pcp<span class="sc">$</span>start,<span class="dv">1</span>))</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">plot</span>(pred, <span class="at">simMetric =</span> <span class="st">&quot;mape&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>best_model <span class="ot">&lt;-</span> search_sum<span class="sc">$</span>results[[<span class="dv">1</span>]]<span class="sc">$</span>value</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(best_model, </span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                <span class="at">actualCount =</span> <span class="dv">10</span>, </span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                <span class="at">startFrequency =</span> tdata<span class="sc">::</span><span class="fu">f.monthly</span>(data.pcp<span class="sc">$</span>start,<span class="dv">1</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">plot</span>(pred, <span class="at">simMetric =</span> <span class="st">&quot;mape&quot;</span>)</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 <div id="conclusion" class="section level2">
@@ -479,7 +480,7 @@ they can enhance your data analysis journey.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-datasetPcp" class="csl-entry">
 International Commodity Prices. 2023. <span>“Primary Commodity Prices
 (Excel Database).”</span>

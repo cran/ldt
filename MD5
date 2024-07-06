@@ -1,4 +1,4 @@
-2053b656436200a546861416a2e64356 *DESCRIPTION
+aa0be3aa7629a2c7439948487afd55d9 *DESCRIPTION
 20ff254216053d3ecaa45c65a47817e6 *NAMESPACE
 a54510f5dacf4745b191efbb85a55bf4 *NEWS.md
 b025893054205a94eaf70c1067ae9872 *R/RcppExports.R
@@ -17,8 +17,8 @@ dbb525aa4b6764e66331978c9d637c41 *R/statistics.R
 8535a15a792ed036282e455833fd7c0a *R/steps.R
 2d401fd16c20025f69df7a664ee4668b *R/sur.R
 a49ac8a433778f7370c7367c1e62dd2e *R/varma.R
-b5d949dc3e6661673f28f9b601d15253 *build/partial.rdb
-0fcb6f6ef8a3f63aabfef01c87625849 *build/vignette.rds
+bc695b3c6c89b2e895c996cbad910f1b *build/partial.rdb
+532a08a85fb8e6ed6ed5964c53a30d13 *build/vignette.rds
 70fca3ed4fcb97036881409418484c18 *data/data.berka.rda
 7fc76fe7c9f8388a2bcb3a898688629c *data/data.pcp.rda
 57c6682d6e02ac477b7517a851718464 *data/data.wdi.rda
@@ -26,13 +26,13 @@ b5d949dc3e6661673f28f9b601d15253 *build/partial.rdb
 2593be0e0a09d14149ae52ad26d1c1b6 *inst/REFERENCES.bib
 7fe9dc3f5cb843a5c098b42567e51ac7 *inst/doc/bin.R
 e25f600a5d0591e39ce6d855c9180f38 *inst/doc/bin.Rmd
-c972d9a9692d6f3e06c299177709ca96 *inst/doc/bin.html
+7993be30ff2cc814c006acccb75f765f *inst/doc/bin.html
 f018ca7750ee3ad1d4fae0b4962d75f1 *inst/doc/sur.R
 f779410baf2d37d26a206663b2db98cb *inst/doc/sur.Rmd
-b7414fda7f29d6d50c299f1b86d4fb5c *inst/doc/sur.html
+a447b2009f85894744af4689fdc5ffc7 *inst/doc/sur.html
 b0d59ac3e0d0cfa23ca76d6effa5ab03 *inst/doc/varma.R
 35ab67b8872df1838297aa674b5ea2ba *inst/doc/varma.Rmd
-660dc27ee8a3f66c2667d338f340ff14 *inst/doc/varma.html
+aa9bbc9dad6d557627e329d69e1fbeee *inst/doc/varma.html
 865cd7f8f13f1889fa0231fb99fde1a0 *man/AIC.ldt.estim.Rd
 3e097f4f7b4bc8ef031f28b01e8975fd *man/BIC.ldt.estim.Rd
 952b4eb885d6bffdb12152e926a819ce *man/adjust_indices_after_remove.Rd
@@ -140,8 +140,8 @@ cbf7a88911b04687bff70b6d10219a18 *src/ldt_base.h
 4acb81979feb8c4f44b9742cf70c5ec3 *src/linesearch.c
 e6583290c70be3b9772472a1d29ad09c *src/linpack.c
 d959b1242e0ac774b9c56efb3a15dd90 *src/lmbfgsb.cpp
-b9afe3203f0dc6ae17259acab7dc5a52 *src/matrix.cpp
-37bb58eedb3c9bde715c35d23d77485f *src/matrix.h
+20a3661a94ea2715c869032b3e6147e9 *src/matrix.cpp
+dc9615f5423ad2c76578a6630fecf926 *src/matrix.h
 d2d8c4af87a9edc9dc5a9dc00965b61d *src/matrix_la.cpp
 595ca5d1d8d3899f14ec3cd347b7752f *src/matrix_sym.cpp
 1a08704a55344341dafd85fae690ee36 *src/matrix_utils.h
